@@ -1,14 +1,16 @@
 # Group-05
-1) Vehicle booking and trip 
+1. Trip Advisor System
 
-  Many people face difficulty booking available vehicles, comparing prices, and planning trips efficiently. This often leads to wasted time, higher costs, and poor     travel planning.This project solves the problem by providing a platform where users can easily book vehicles, compare options, and get trip suggestions. It can       include route planning, cost estimation, and booking management in one place.
+A web-based system that helps users discover travel destinations, plan routes, estimate trip costs in one place. It makes travel planning easier for tourists and local travelers by providing route guidance, cost estimation, and vehicle availability across Nepal.
 
-2) Vehicle servicing
+2. Vehicle Service Management System
 
- People often forget servicing dates, struggle to find trusted service centers, No proper time for servicing and have no proper record of past maintenance. This can lead to poor vehicle performance and unexpected breakdowns.
- This project solves the problem by allowing users to track service history, receive reminders for upcoming servicing, have your own and proper time for servicing and find nearby service centers. It helps maintain vehicles properly and improves safety.
+A platform for booking and managing vehicle servicing appointments. It helps vehicle owners find trusted workshops, reduce waiting time, and track service updates, while service centers can manage bookings, queues, and customer records more efficiently.
 
-3) All finds (Finding everything for students)
+3. Pet Care & Vet Booking System
 
- Students face difficulty finding essential resources like notes, rooms, part-time jobs, events, and important notices in one place.
- This project solves the problem by creating a centralized platform where students can access study materials, find accommodation, explore opportunities, and stay updated with events and notices easily.
+A smart pet care system that allows pet owners to book vet appointments, store pet health records, and receive vaccination and checkup reminders. It helps users find nearby vets quickly and keeps pet care organized and stress-free.
+
+Selected topic:
+Trip advisor,
+Nepal travel: Discover Hidden Natural Retreats
