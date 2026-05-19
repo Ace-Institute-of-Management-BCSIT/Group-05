@@ -15,3 +15,6 @@ Selected topic:
 Trip advisor,
 
 Nepal travel: Discover Hidden Natural Retreats
+
+(npm init -y)
+npm install express mysql2 body-parser express-session path
