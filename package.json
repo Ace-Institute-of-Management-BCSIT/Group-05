@@ -1,0 +1,21 @@
+{
+  "name": "group-05",
+  "version": "1.0.0",
+  "description": "1. Trip Advisor System",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ace-Institute-of-Management-BCSIT/Group-05.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Ace-Institute-of-Management-BCSIT/Group-05/issues"
+  },
+  "homepage": "https://github.com/Ace-Institute-of-Management-BCSIT/Group-05#readme"
+}
