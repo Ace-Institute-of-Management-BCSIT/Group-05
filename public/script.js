@@ -59,6 +59,36 @@ let places = [
         image: 'City Streets',
         category: 'Urban',
         description: 'Immerse yourself in vibrant street art and contemporary culture in Tokyo\'s trendiest neighborhood. A perfect blend of traditional Japanese culture and modern urban art.'
+    },
+    {
+        id: 7,
+        name: 'Sunrise Ridge Viewpoint',
+        location: 'Pokhara, Nepal',
+        rating: 4.9,
+        reviews: 198,
+        image: 'Golden Peaks',
+        category: 'Nature',
+        description: 'Watch the Himalayan range glow at sunrise from this peaceful ridge above the valley. It is a calm, photogenic stop for travelers who want big views without a difficult hike.'
+    },
+    {
+        id: 8,
+        name: 'Riverside Heritage Walk',
+        location: 'Bhaktapur, Nepal',
+        rating: 4.8,
+        reviews: 256,
+        image: 'Old Streets',
+        category: 'Cultural',
+        description: 'A relaxed walking route through preserved courtyards, local craft shops, and traditional architecture. Perfect for travelers who want a slower, more immersive cultural experience.'
+    },
+    {
+        id: 9,
+        name: 'Hidden Valley Camp',
+        location: 'Langtang, Nepal',
+        rating: 4.7,
+        reviews: 164,
+        image: 'Mountain Camp',
+        category: 'Adventure',
+        description: 'A scenic basecamp surrounded by forested slopes and mountain air. Great for overnight stays, stargazing, and adventure-focused trips away from the crowds.'
     }
 ];
 
@@ -112,7 +142,7 @@ const placesGrid = document.getElementById('places-grid');
 const noResults = document.getElementById('no-results');
 const addPlaceModal = document.getElementById('add-place-modal');
 const placeDetailModal = document.getElementById('place-detail-modal');
-const addPlaceBtns = document.querySelectorAll('#add-place-btn, #cta-add-btn, .mobile-add-btn');
+const addPlaceBtns = document.querySelectorAll('#add-place-btn, #cta-add-btn, #featured-add-btn, .mobile-add-btn');
 const closeModalBtn = document.getElementById('close-modal-btn');
 const cancelBtn = document.getElementById('cancel-btn');
 const addPlaceForm = document.getElementById('add-place-form');
@@ -250,10 +280,7 @@ function renderPlaces() {
                     </div>
                     <div class="place-meta">
                         <div class="place-rating">
-                            <div class="stars">
-                                ${renderStars(place.rating)}
-                            </div>
-                            <span class="rating-value">${place.rating.toFixed(1)}</span>
+                            <span class="rating-badge">${place.rating.toFixed(1)} / 5</span>
                         </div>
                         <div class="place-reviews">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -271,19 +298,6 @@ function renderPlaces() {
     }
 
     updateSectionHeader(filteredPlaces.length);
-}
-
-function renderStars(rating) {
-    let stars = '';
-    for (let i = 1; i <= 5; i++) {
-        const filled = i <= rating;
-        stars += `
-            <svg class="star ${filled ? 'filled' : ''}" viewBox="0 0 24 24" stroke="currentColor">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-            </svg>
-        `;
-    }
-    return stars;
 }
 
 function getFilteredPlaces() {
@@ -368,10 +382,7 @@ function openPlaceDetail(id) {
 
     document.getElementById('detail-meta').innerHTML = `
         <div class="detail-rating">
-            <div class="stars">
-                ${renderStars(selectedPlace.rating)}
-            </div>
-            <span class="detail-rating-value">${selectedPlace.rating.toFixed(1)}</span>
+            <span class="rating-badge">${selectedPlace.rating.toFixed(1)} / 5</span>
         </div>
         <div style="width: 1px; height: 2rem; background: var(--border-color);"></div>
         <div class="detail-reviews">
@@ -410,19 +421,9 @@ function renderReviews() {
                     <div class="review-top">
                         <div>
                             <h4 class="review-author">${review.author}</h4>
-                            <div class="review-date">
-                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                                </svg>
-                                <span>${review.date}</span>
-                            </div>
+                            <div class="review-date">${review.date}</div>
                         </div>
-                        <div class="stars">
-                            ${renderStars(review.rating)}
-                        </div>
+                        <span class="rating-badge rating-badge-sm">${review.rating}/5</span>
                     </div>
                     <p class="review-text">${review.comment}</p>
                     <button class="review-helpful">
