@@ -103,6 +103,7 @@ const mainApp = document.getElementById('main-app');
 const loginForm = document.getElementById('login-form');
 const signupForm = document.getElementById('signup-form');
 const tabButtons = document.querySelectorAll('.tab-btn');
+const userBtn = document.getElementById('user-btn');
 const mobileMenuBtn = document.getElementById('mobile-menu-btn');
 const mobileMenu = document.getElementById('mobile-menu');
 const searchInput = document.getElementById('search-input');
@@ -134,14 +135,17 @@ function attachEventListeners() {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
 
-    loginForm.addEventListener('submit', handleLogin);
-    signupForm.addEventListener('submit', handleLogin);
-    mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+    if (loginForm) loginForm.addEventListener('submit', handleLogin);
+    if (signupForm) signupForm.addEventListener('submit', handleLogin);
+    if (userBtn) userBtn.addEventListener('click', openLoginPage);
+    if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
 
-    searchInput.addEventListener('input', (e) => {
-        searchQuery = e.target.value;
-        filterPlaces();
-    });
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            filterPlaces();
+        });
+    }
 
     addPlaceBtns.forEach(btn => {
         btn.addEventListener('click', openAddPlaceModal);
@@ -186,8 +190,12 @@ function switchTab(tab) {
 
 function handleLogin(e) {
     e.preventDefault();
-    loginPage.classList.remove('active');
-    mainApp.classList.add('active');
+    if (loginPage) loginPage.classList.remove('active');
+    if (mainApp) mainApp.classList.add('active');
+}
+
+function openLoginPage() {
+    window.location.href = 'login.html';
 }
 
 // Mobile Menu
