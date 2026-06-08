@@ -140,12 +140,8 @@ const searchInput = document.getElementById('search-input');
 const categoriesContainer = document.getElementById('categories');
 const placesGrid = document.getElementById('places-grid');
 const noResults = document.getElementById('no-results');
-const addPlaceModal = document.getElementById('add-place-modal');
 const placeDetailModal = document.getElementById('place-detail-modal');
 const addPlaceBtns = document.querySelectorAll('#add-place-btn, #cta-add-btn, #featured-add-btn, .mobile-add-btn');
-const closeModalBtn = document.getElementById('close-modal-btn');
-const cancelBtn = document.getElementById('cancel-btn');
-const addPlaceForm = document.getElementById('add-place-form');
 const backBtn = document.getElementById('back-btn');
 const clearFiltersBtn = document.getElementById('clear-filters-btn');
 const reviewForm = document.getElementById('review-form');
@@ -180,9 +176,6 @@ function attachEventListeners() {
     addPlaceBtns.forEach(btn => {
         btn.addEventListener('click', openAddPlaceModal);
     });
-    closeModalBtn.addEventListener('click', closeAddPlaceModal);
-    cancelBtn.addEventListener('click', closeAddPlaceModal);
-    addPlaceForm.addEventListener('submit', handleAddPlace);
 
     backBtn.addEventListener('click', closePlaceDetail);
     clearFiltersBtn.addEventListener('click', clearFilters);
@@ -335,35 +328,9 @@ function updateStats() {
     document.getElementById('stat-places').textContent = `${places.length}+`;
 }
 
-// Add Place Modal
 function openAddPlaceModal() {
-    addPlaceModal.classList.add('active');
+    window.location.href = './form.html';
     mobileMenu.classList.remove('active');
-}
-
-function closeAddPlaceModal() {
-    addPlaceModal.classList.remove('active');
-    addPlaceForm.reset();
-}
-
-function handleAddPlace(e) {
-    e.preventDefault();
-
-    const newPlace = {
-        id: Date.now(),
-        name: document.getElementById('place-name').value,
-        location: document.getElementById('place-location').value,
-        category: document.getElementById('place-category').value,
-        description: document.getElementById('place-description').value,
-        rating: 0,
-        reviews: 0,
-        image: 'New Location'
-    };
-
-    places.unshift(newPlace);
-    closeAddPlaceModal();
-    renderPlaces();
-    updateStats();
 }
 
 // Place Detail
