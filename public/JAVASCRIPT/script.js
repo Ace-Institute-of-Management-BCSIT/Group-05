@@ -1,94 +1,35 @@
-// Initial Data
+// Initial Data - Updated structure to match form fields
 let places = [
     {
         id: 1,
-        name: 'Emerald Lake',
-        location: 'British Columbia, Canada',
-        rating: 4.8,
-        reviews: 234,
-        image: 'Mountain Lake',
-        category: 'Nature',
-        description: 'A stunning alpine lake surrounded by towering peaks and pristine wilderness. The crystal-clear waters reflect the surrounding mountains, creating a breathtaking vista that attracts photographers and nature lovers from around the world.'
-    },
-    {
-        id: 2,
-        name: 'Ancient Temple Ruins',
-        location: 'Angkor, Cambodia',
-        rating: 4.9,
-        reviews: 567,
-        image: 'Historical Site',
-        category: 'Historical',
-        description: 'Explore centuries-old temple complexes nestled in lush jungle. These magnificent structures showcase incredible architectural achievements and offer a glimpse into ancient civilizations.'
-    },
-    {
-        id: 3,
-        name: 'Paradise Beach',
-        location: 'Maldives',
-        rating: 4.7,
-        reviews: 423,
-        image: 'Beach Paradise',
-        category: 'Beach',
-        description: 'White sandy beaches meet crystal clear turquoise waters in this tropical paradise. Perfect for snorkeling, diving, or simply relaxing under the palm trees.'
-    },
-    {
-        id: 4,
-        name: 'Mountain Vista Trail',
-        location: 'Swiss Alps, Switzerland',
-        rating: 4.9,
-        reviews: 312,
-        image: 'Alpine Trail',
-        category: 'Adventure',
-        description: 'Challenge yourself with this spectacular mountain trail offering panoramic views of snow-capped peaks and alpine meadows. An unforgettable hiking experience for adventure enthusiasts.'
-    },
-    {
-        id: 5,
-        name: 'Hidden Waterfall',
-        location: 'Iceland',
-        rating: 4.6,
-        reviews: 189,
-        image: 'Waterfall Wonder',
-        category: 'Nature',
-        description: 'Discover this secluded waterfall cascading through dramatic volcanic landscapes. The raw power of nature on full display in one of Iceland\'s hidden gems.'
-    },
-    {
-        id: 6,
-        name: 'Urban Art District',
-        location: 'Tokyo, Japan',
-        rating: 4.5,
-        reviews: 278,
-        image: 'City Streets',
-        category: 'Urban',
-        description: 'Immerse yourself in vibrant street art and contemporary culture in Tokyo\'s trendiest neighborhood. A perfect blend of traditional Japanese culture and modern urban art.'
-    },
-    {
-        id: 7,
-        name: 'Sunrise Ridge Viewpoint',
-        location: 'Pokhara, Nepal',
-        rating: 4.9,
-        reviews: 198,
-        image: 'Golden Peaks',
-        category: 'Nature',
-        description: 'Watch the Himalayan range glow at sunrise from this peaceful ridge above the valley. It is a calm, photogenic stop for travelers who want big views without a difficult hike.'
-    },
-    {
-        id: 8,
-        name: 'Riverside Heritage Walk',
-        location: 'Bhaktapur, Nepal',
-        rating: 4.8,
-        reviews: 256,
-        image: 'Old Streets',
-        category: 'Cultural',
-        description: 'A relaxed walking route through preserved courtyards, local craft shops, and traditional architecture. Perfect for travelers who want a slower, more immersive cultural experience.'
-    },
-    {
-        id: 9,
-        name: 'Hidden Valley Camp',
-        location: 'Langtang, Nepal',
-        rating: 4.7,
-        reviews: 164,
-        image: 'Mountain Camp',
-        category: 'Adventure',
-        description: 'A scenic basecamp surrounded by forested slopes and mountain air. Great for overnight stays, stargazing, and adventure-focused trips away from the crowds.'
+        name: 'Khopra Danda',
+        localName: 'खोप्रा डाँडा',
+        tagline: 'Alpine meadow with panoramic mountain views above the clouds',
+        province: 'Gandaki',
+        district: 'Myagdi',
+        municipality: 'Annapurna RM',
+        category: 'Viewpoint',
+        shortDesc: 'A stunning high-altitude meadow offering breathtaking 360-degree views of the Annapurna, Dhaulagiri, and Nilgiri ranges. The experience of being above the clouds at sunrise is truly magical.',
+        bestTime: 'October - November, March - May',
+        duration: '3 days / 2 nights',
+        things: 'Sunrise hike, sunset watching, local tea houses, photography',
+        tips: 'Carry warm clothing, sunscreen, water. No mobile signal above 3000m. Respect the local community.',
+        difficulty: 'Moderate',
+        budget: 12000,
+        transport: 3000,
+        stay: 4000,
+        food: 3500,
+        fee: 500,
+        accomDesc: 'Community homestays and basic teahouses available along the route',
+        hotels: 'Pokhara (2 hotels)',
+        restaurants: 'Local teahouses and small eateries',
+        homestay: true,
+        parking: false,
+        toilets: true,
+        coverImage: 'Khopra Danda panoramic mountain view',
+        startPoint: 'Pokhara',
+        routeDesc: 'From Pokhara, take local bus to Baglung (3 hours), then jeep to Ghar (2 hours). Trek begins from Ghar - Day 1: Ghar to Poon Hill (4 hours). Day 2: Poon Hill to Khopra Danda (5 hours through rhododendron forest). Return via same route.',
+        destination: 'Khopra Danda viewpoint'
     }
 ];
 
@@ -143,6 +84,8 @@ const noResults = document.getElementById('no-results');
 const placeDetailModal = document.getElementById('place-detail-modal');
 const addPlaceBtns = document.querySelectorAll('#add-place-btn, #cta-add-btn, #featured-add-btn, .mobile-add-btn');
 const backBtn = document.getElementById('back-btn');
+const closeFormBtn = document.getElementById('close-form-btn');
+const addPlaceModal = document.getElementById('add-place-modal');
 const clearFiltersBtn = document.getElementById('clear-filters-btn');
 const reviewForm = document.getElementById('review-form');
 const starRating = document.getElementById('star-rating');
@@ -150,7 +93,7 @@ const starRating = document.getElementById('star-rating');
 // Initialize
 function init() {
     renderCategories();
-    renderPlaces();
+    // renderPlaces(); // Disabled - using static card layout for now
     updateStats();
     attachEventListeners();
 }
@@ -178,6 +121,7 @@ function attachEventListeners() {
     });
 
     backBtn.addEventListener('click', closePlaceDetail);
+    if (closeFormBtn) closeFormBtn.addEventListener('click', closeAddPlaceModal);
     clearFiltersBtn.addEventListener('click', clearFilters);
     reviewForm.addEventListener('submit', handleReviewSubmit);
 
@@ -329,8 +273,12 @@ function updateStats() {
 }
 
 function openAddPlaceModal() {
-    window.location.href = './form.html';
+    addPlaceModal.classList.add('active');
     mobileMenu.classList.remove('active');
+}
+
+function closeAddPlaceModal() {
+    addPlaceModal.classList.remove('active');
 }
 
 // Place Detail
@@ -338,34 +286,53 @@ function openPlaceDetail(id) {
     selectedPlace = places.find(p => p.id === id);
     if (!selectedPlace) return;
 
+    // Header info
     document.getElementById('detail-name').textContent = selectedPlace.name;
-    document.getElementById('detail-location').innerHTML = `
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-            <circle cx="12" cy="10" r="3"></circle>
-        </svg>
-        ${selectedPlace.location}
-    `;
+    document.getElementById('detail-local-name').textContent = selectedPlace.localName;
+    document.getElementById('detail-tagline').textContent = selectedPlace.tagline;
 
-    document.getElementById('detail-meta').innerHTML = `
-        <div class="detail-rating">
-            <span class="rating-badge">${selectedPlace.rating.toFixed(1)} / 5</span>
-        </div>
-        <div style="width: 1px; height: 2rem; background: var(--border-color);"></div>
-        <div class="detail-reviews">
-            <span>${selectedPlace.reviews}</span> reviews
-        </div>
-        <div style="width: 1px; height: 2rem; background: var(--border-color);"></div>
-        <div class="detail-category">${selectedPlace.category}</div>
-    `;
+    // Location info
+    document.getElementById('detail-location').textContent = `${selectedPlace.district}, ${selectedPlace.province}`;
+    document.getElementById('detail-location-full').textContent = `${selectedPlace.municipality}, ${selectedPlace.province} Province`;
 
-    document.getElementById('detail-desc').textContent = selectedPlace.description;
-    renderReviews();
+    // About
+    document.getElementById('detail-desc').textContent = selectedPlace.shortDesc;
+
+    // Trip Information
+    document.getElementById('detail-best-time').textContent = selectedPlace.bestTime;
+    document.getElementById('detail-duration').textContent = selectedPlace.duration;
+    document.getElementById('detail-difficulty').textContent = selectedPlace.difficulty;
+    document.getElementById('detail-category').textContent = selectedPlace.category;
+
+    // Things to Do
+    document.getElementById('detail-things').textContent = selectedPlace.things;
+
+    // Tips
+    document.getElementById('detail-tips').textContent = selectedPlace.tips;
+
+    // Route
+    document.getElementById('detail-start').textContent = selectedPlace.startPoint;
+    document.getElementById('detail-route').textContent = selectedPlace.routeDesc;
+    document.getElementById('detail-dest').textContent = selectedPlace.destination;
+
+    // Budget
+    document.getElementById('detail-budget').textContent = `NPR ${selectedPlace.budget.toLocaleString()}`;
+    document.getElementById('detail-transport').textContent = `NPR ${selectedPlace.transport.toLocaleString()}`;
+    document.getElementById('detail-stay').textContent = `NPR ${selectedPlace.stay.toLocaleString()}`;
+    document.getElementById('detail-food').textContent = `NPR ${selectedPlace.food.toLocaleString()}`;
+    document.getElementById('detail-fee').textContent = `NPR ${selectedPlace.fee.toLocaleString()}`;
+
+    // Facilities
+    document.getElementById('detail-accom').textContent = selectedPlace.accomDesc;
+    document.getElementById('detail-hotels').textContent = selectedPlace.hotels;
+    document.getElementById('detail-restaurants').textContent = selectedPlace.restaurants;
+
+    // Features
+    document.getElementById('feature-homestay').style.display = selectedPlace.homestay ? 'flex' : 'none';
+    document.getElementById('feature-parking').style.display = selectedPlace.parking ? 'flex' : 'none';
+    document.getElementById('feature-toilets').style.display = selectedPlace.toilets ? 'flex' : 'none';
 
     placeDetailModal.classList.add('active');
-    userRating = 0;
-    highlightStars(0);
-    document.getElementById('review-text').value = '';
 }
 
 function closePlaceDetail() {
@@ -430,6 +397,199 @@ function handleReviewSubmit(e) {
     userRating = 0;
     highlightStars(0);
     document.getElementById('review-text').value = '';
+}
+
+// ===== FORM FUNCTIONALITY =====
+const form = document.getElementById('placeForm');
+const pages = form ? [...form.querySelectorAll('.page')] : [];
+const steps = form ? [...form.querySelectorAll('.step')] : [];
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const publishBtn = document.getElementById('publishBtn');
+let current = 1;
+const total = pages.length;
+
+// File uploads - declared at top level so validateStep can access
+let coverFile = null;
+let galleryFiles = [];
+
+function showStep(n) {
+    current = n;
+    pages.forEach(p => p.classList.toggle('active', +p.dataset.page === n));
+    steps.forEach(s => {
+        const sn = +s.dataset.step;
+        s.classList.toggle('active', sn === n);
+        s.classList.toggle('done', sn < n);
+    });
+    if (prevBtn) prevBtn.disabled = n === 1;
+    if (nextBtn) nextBtn.style.display = n === total ? 'none' : 'inline-flex';
+    if (publishBtn) publishBtn.style.display = n === total ? 'inline-flex' : 'none';
+}
+
+function validateStep(n) {
+    const page = pages[n - 1];
+    if (!page) return true;
+    let ok = true;
+    page.querySelectorAll('[required]').forEach(el => {
+        const wrap = el.closest('.field');
+        const err = wrap?.querySelector('.err-msg');
+        const bad = !el.value.trim();
+        el.classList.toggle('error', bad);
+        if (err) err.classList.toggle('show', bad);
+        if (bad) ok = false;
+    });
+    if (n === 1 && !document.getElementById('categoryInput').value) {
+        const err = document.querySelector('#chips')?.parentElement.querySelector('.err-msg');
+        if (err) err.classList.add('show');
+        ok = false;
+    }
+    if (n === 3 && coverFile == null) {
+        const drop = document.getElementById('coverDrop');
+        if (drop) drop.parentElement.querySelector('.err-msg').classList.add('show');
+        ok = false;
+    }
+    return ok;
+}
+
+if (form) {
+    if (nextBtn) nextBtn.addEventListener('click', () => { if (validateStep(current)) showStep(Math.min(current + 1, total)); });
+    if (prevBtn) prevBtn.addEventListener('click', () => showStep(Math.max(current - 1, 1)));
+    steps.forEach(s => s.addEventListener('click', () => {
+        const target = +s.dataset.step;
+        if (target < current || validateStep(current)) showStep(target);
+    }));
+
+    // Chips
+    document.querySelectorAll('#chips .chip').forEach(c => {
+        c.addEventListener('click', () => {
+            document.querySelectorAll('#chips .chip').forEach(x => x.classList.remove('active'));
+            c.classList.add('active');
+            document.getElementById('categoryInput').value = c.dataset.cat;
+            const err = document.querySelector('#chips')?.parentElement.querySelector('.err-msg');
+            if (err) err.classList.remove('show');
+        });
+    });
+
+    // Uploads setup
+    function setupDrop(dropId, inputId, isMulti, onFiles) {
+        const drop = document.getElementById(dropId);
+        const input = document.getElementById(inputId);
+        if (!drop || !input) return;
+        drop.addEventListener('click', () => input.click());
+        drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+        drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+        drop.addEventListener('drop', e => {
+            e.preventDefault();
+            drop.classList.remove('drag');
+            onFiles([...e.dataTransfer.files]);
+        });
+        input.addEventListener('change', e => onFiles([...e.target.files]));
+    }
+
+    function renderCover() {
+        const wrap = document.getElementById('coverPreview');
+        if (!wrap) return;
+        wrap.innerHTML = '';
+        if (!coverFile) return;
+        const url = URL.createObjectURL(coverFile);
+        wrap.innerHTML = `<div class="preview"><img src="${url}"><button type="button" data-x>×</button></div>`;
+        wrap.querySelector('[data-x]').onclick = () => { coverFile = null; renderCover(); };
+    }
+
+    function renderGallery() {
+        const wrap = document.getElementById('galleryPreview');
+        if (!wrap) return;
+        wrap.innerHTML = '';
+        galleryFiles.forEach((f, i) => {
+            const url = URL.createObjectURL(f);
+            const div = document.createElement('div');
+            div.className = 'preview';
+            div.innerHTML = `<img src="${url}"><button type="button">×</button>`;
+            div.querySelector('button').onclick = () => { galleryFiles.splice(i, 1); renderGallery(); };
+            wrap.appendChild(div);
+        });
+    }
+
+    setupDrop('coverDrop', 'coverInput', false, (files) => {
+        if (files[0]) {
+            coverFile = files[0];
+            renderCover();
+            const err = document.getElementById('coverDrop')?.parentElement.querySelector('.err-msg');
+            if (err) err.classList.remove('show');
+        }
+    });
+
+    setupDrop('galleryDrop', 'galleryInput', true, (files) => {
+        galleryFiles = galleryFiles.concat(files);
+        renderGallery();
+    });
+
+    // Cancel & Draft
+    const cancelBtn = document.getElementById('cancelBtn');
+    const draftBtn = document.getElementById('draftBtn');
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            if (confirm('Discard this submission?')) {
+                form.reset();
+                coverFile = null;
+                galleryFiles = [];
+                renderCover();
+                renderGallery();
+                document.querySelectorAll('#chips .chip').forEach(c => c.classList.remove('active'));
+                document.getElementById('categoryInput').value = '';
+                showStep(1);
+            }
+        });
+    }
+
+    if (draftBtn) {
+        draftBtn.addEventListener('click', () => {
+            showToast('Draft saved locally', 'fa-bookmark');
+        });
+    }
+
+    // Submit
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        let all = true;
+        for (let i = 1; i <= total; i++) {
+            if (!validateStep(i)) {
+                showStep(i);
+                all = false;
+                break;
+            }
+        }
+        if (!all) return;
+        showToast('Destination published!', 'fa-check');
+        form.reset();
+        coverFile = null;
+        galleryFiles = [];
+        renderCover();
+        renderGallery();
+        document.querySelectorAll('#chips .chip').forEach(c => c.classList.remove('active'));
+        document.getElementById('categoryInput').value = '';
+        showStep(1);
+        closeAddPlaceModal();
+    });
+
+    function showToast(msg, icon) {
+        const t = document.getElementById('toast');
+        if (!t) return;
+        t.querySelector('div strong').textContent = msg;
+        t.querySelector('i').className = `fa-solid ${icon || 'fa-check'}`;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    // Clear errors on input
+    form.addEventListener('input', e => {
+        if (e.target.matches('.input,.select,.textarea')) {
+            e.target.classList.remove('error');
+            const err = e.target.closest('.field')?.querySelector('.err-msg');
+            if (err) err.classList.remove('show');
+        }
+    });
 }
 
 // Start the app

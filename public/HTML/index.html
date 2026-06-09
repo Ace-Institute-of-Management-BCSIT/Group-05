@@ -220,11 +220,55 @@
                 <div class="section-header">
                     <div>
                         <h2 class="section-title" id="section-title">All Destinations</h2>
-                        <p class="section-subtitle" id="section-subtitle">Sorted by rating • 6 places</p>
+                        <p class="section-subtitle" id="section-subtitle">Sorted by rating • 1 place</p>
                     </div>
                 </div>
 
-                <div id="places-grid" class="places-grid"></div>
+                <div id="places-grid" class="places-grid">
+                    <!-- Place Card -->
+                    <article class="place-card">
+                        <!-- Cover Image -->
+                        <div class="place-image">
+                            <svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M3 20h18"></path>
+                                <path d="M5 20l4-9 3 5 3-4 4 8"></path>
+                                <circle cx="17" cy="6" r="2"></circle>
+                            </svg>
+                            <!-- Category Badge -->
+                            <span class="place-category">Viewpoint</span>
+                        </div>
+
+                        <!-- Card Bottom Info -->
+                        <div class="place-info">
+                            <div class="place-info-top">
+                                <h3 class="place-name">Khopra Danda</h3>
+                                <p class="place-location-info">
+                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                    Myagdi, Gandaki
+                                </p>
+                            </div>
+                            <div class="place-info-middle">
+                                <div class="place-footer-meta">
+                                    <span class="rating-badge">4.8 / 5</span>
+                                    <span class="reviews-count">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="9" cy="7" r="4"></circle>
+                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                        </svg>
+                                        164 reviews
+                                    </span>
+                                </div>
+                            </div>
+                            <button class="btn-view-details" onclick="openPlaceDetail(1)">View Full Details</button>
+                        </div>
+                    </article>
+                </div>
+
                 <div id="no-results" class="no-results" style="display: none;">
                     <svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
@@ -303,63 +347,402 @@
     <!-- Place Detail Modal -->
     <div id="place-detail-modal" class="modal">
         <div class="modal-content modal-large">
-            <div class="detail-hero" id="detail-hero">
-                <button class="back-btn" id="back-btn">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <line x1="19" y1="12" x2="5" y2="12"></line>
-                        <polyline points="12 19 5 12 12 5"></polyline>
-                    </svg>
-                    <span>Back</span>
-                </button>
-                <div class="detail-hero-content">
-                    <svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    <h1 id="detail-name"></h1>
-                    <p class="detail-location" id="detail-location"></p>
-                </div>
+            <button class="close-modal-btn" id="back-btn">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <div class="detail-hero">
+                <svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M3 20h18"></path>
+                    <path d="M5 20l4-9 3 5 3-4 4 8"></path>
+                    <circle cx="17" cy="6" r="2"></circle>
+                </svg>
             </div>
 
             <div class="detail-content">
+                <!-- Header Section -->
                 <div class="detail-card">
-                    <div class="detail-meta" id="detail-meta"></div>
-                    <div class="detail-description">
-                        <h3>About this place</h3>
-                        <p id="detail-desc"></p>
+                    <div class="detail-header">
+                        <h1 id="detail-name">Khopra Danda</h1>
+                        <p id="detail-local-name" class="detail-local">खोप्रा डाँडा</p>
+                        <p id="detail-tagline" class="detail-tagline">Alpine meadow with panoramic mountain views above the clouds</p>
+                    </div>
+                    <div class="detail-location-section">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        <div>
+                            <p class="detail-location" id="detail-location">Myagdi, Gandaki</p>
+                            <p class="detail-location-full" id="detail-location-full">Annapurna Municipality, Gandaki Province</p>
+                        </div>
                     </div>
                 </div>
 
+                <!-- About Section -->
                 <div class="detail-card">
-                    <h2>Write a Review</h2>
-                    <form id="review-form">
-                        <div class="form-group">
-                            <label>Your Rating</label>
-                            <div class="star-rating" id="star-rating">
-                                <button type="button" class="star-btn" data-rating="1">★</button>
-                                <button type="button" class="star-btn" data-rating="2">★</button>
-                                <button type="button" class="star-btn" data-rating="3">★</button>
-                                <button type="button" class="star-btn" data-rating="4">★</button>
-                                <button type="button" class="star-btn" data-rating="5">★</button>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Your Review</label>
-                            <textarea id="review-text" placeholder="Share your experience..." rows="4"
-                                required></textarea>
-                        </div>
-
-                        <button type="submit" class="btn-primary">Submit Review</button>
-                    </form>
+                    <h2>About This Place</h2>
+                    <p id="detail-desc" class="detail-description">A stunning high-altitude meadow offering breathtaking 360-degree views of the Annapurna, Dhaulagiri, and Nilgiri ranges. The experience of being above the clouds at sunrise is truly magical.</p>
                 </div>
 
+                <!-- Trip Information -->
                 <div class="detail-card">
-                    <h2>Reviews <span id="review-count">(3)</span></h2>
-                    <div id="reviews-list"></div>
+                    <h2>Trip Information</h2>
+                    <div class="detail-grid">
+                        <div class="detail-col">
+                            <label class="detail-label">Best Time to Visit</label>
+                            <p id="detail-best-time">October - May</p>
+                        </div>
+                        <div class="detail-col">
+                            <label class="detail-label">Duration</label>
+                            <p id="detail-duration">3 days / 2 nights</p>
+                        </div>
+                        <div class="detail-col">
+                            <label class="detail-label">Difficulty Level</label>
+                            <p id="detail-difficulty" class="difficulty-badge">Moderate</p>
+                        </div>
+                        <div class="detail-col">
+                            <label class="detail-label">Category</label>
+                            <p id="detail-category" class="category-badge">Viewpoint</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Things to Do -->
+                <div class="detail-card">
+                    <h2>Things to Do</h2>
+                    <p id="detail-things">Sunrise hike, sunset watching, local tea houses, photography</p>
+                </div>
+
+                <!-- Travel Tips -->
+                <div class="detail-card">
+                    <h2>Travel Tips</h2>
+                    <p id="detail-tips">Carry warm clothing, sunscreen, water. No mobile signal above 3000m. Respect the local community.</p>
+                </div>
+
+                <!-- Route Information -->
+                <div class="detail-card">
+                    <h2>How to Reach</h2>
+                    <div class="detail-route">
+                        <div class="route-item">
+                            <div class="route-label">Starting Point</div>
+                            <p id="detail-start">Pokhara</p>
+                        </div>
+                        <div class="route-divider"></div>
+                        <div class="route-item">
+                            <div class="route-label">Route Description</div>
+                            <p id="detail-route">From Pokhara, take local bus to Baglung (3 hours), then jeep to Ghar (2 hours). Trek begins from Ghar...</p>
+                        </div>
+                        <div class="route-divider"></div>
+                        <div class="route-item">
+                            <div class="route-label">Destination</div>
+                            <p id="detail-dest">Khopra Danda viewpoint</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Budget Information -->
+                <div class="detail-card">
+                    <h2>Estimated Budget (NPR)</h2>
+                    <div class="detail-budget-grid">
+                        <div class="budget-item">
+                            <label class="detail-label">Total Budget</label>
+                            <p class="budget-value" id="detail-budget">NPR 12,000</p>
+                        </div>
+                        <div class="budget-item">
+                            <label class="detail-label">Transportation</label>
+                            <p id="detail-transport">NPR 3,000</p>
+                        </div>
+                        <div class="budget-item">
+                            <label class="detail-label">Accommodation</label>
+                            <p id="detail-stay">NPR 4,000</p>
+                        </div>
+                        <div class="budget-item">
+                            <label class="detail-label">Food</label>
+                            <p id="detail-food">NPR 3,500</p>
+                        </div>
+                        <div class="budget-item">
+                            <label class="detail-label">Entry Fee</label>
+                            <p id="detail-fee">NPR 500</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Facilities -->
+                <div class="detail-card">
+                    <h2>Facilities & Amenities</h2>
+                    <div class="facility-list">
+                        <div class="facility-desc">
+                            <label class="detail-label">Accommodation Available</label>
+                            <p id="detail-accom">Community homestays and basic teahouses available along the route</p>
+                        </div>
+                        <div class="facility-grid">
+                            <div class="facility-info">
+                                <label class="detail-label">Hotels Nearby</label>
+                                <p id="detail-hotels">Pokhara (2 hotels)</p>
+                            </div>
+                            <div class="facility-info">
+                                <label class="detail-label">Restaurants Nearby</label>
+                                <p id="detail-restaurants">Local teahouses and small eateries</p>
+                            </div>
+                        </div>
+                        <div class="facility-features">
+                            <div class="feature" id="feature-homestay">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                </svg>
+                                <span>Homestay Available</span>
+                            </div>
+                            <div class="feature" id="feature-parking">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <circle cx="12" cy="12" r="9"></circle>
+                                    <path d="M8 12h8"></path>
+                                </svg>
+                                <span>Parking Available</span>
+                            </div>
+                            <div class="feature" id="feature-toilets">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M9 1v2"></path>
+                                    <path d="M15 1v2"></path>
+                                    <path d="M3 5h18"></path>
+                                    <rect x="3" y="5" width="6" height="12" rx="1"></rect>
+                                    <rect x="15" y="5" width="6" height="12" rx="1"></rect>
+                                </svg>
+                                <span>Public Toilets Available</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Add Place Form Modal -->
+    <div id="add-place-modal" class="modal form-modal">
+        <div class="modal-content modal-form-large">
+            <button class="close-modal-btn" id="close-form-btn">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <div class="form-hero">
+                <span class="badge-form"><i class="fa-solid fa-compass"></i> New Submission</span>
+                <h2>Add a Hidden Place</h2>
+                <p>Help fellow travellers uncover Nepal's unseen villages, viewpoints, waterfalls and trails. Fill in what you know — every detail makes the trail clearer.</p>
+            </div>
+
+            <form id="placeForm" class="form-card" novalidate>
+                <!-- Stepper -->
+                <div class="stepper" id="stepper">
+                    <div class="step active" data-step="1"><div class="meta"><span class="num">1</span> Basics</div><div class="title">Basic Info</div><div class="bar"></div></div>
+                    <div class="step" data-step="2"><div class="meta"><span class="num">2</span> Story</div><div class="title">Description</div><div class="bar"></div></div>
+                    <div class="step" data-step="3"><div class="meta"><span class="num">3</span> Media</div><div class="title">Images</div><div class="bar"></div></div>
+                    <div class="step" data-step="4"><div class="meta"><span class="num">4</span> Route</div><div class="title">Accessibility</div><div class="bar"></div></div>
+                    <div class="step" data-step="5"><div class="meta"><span class="num">5</span> Cost</div><div class="title">Budget</div><div class="bar"></div></div>
+                    <div class="step" data-step="6"><div class="meta"><span class="num">6</span> Stay</div><div class="title">Facilities</div><div class="bar"></div></div>
+                </div>
+
+                <div class="body">
+                    <!-- STEP 1 -->
+                    <section class="page active" data-page="1">
+                        <div class="section-head">
+                            <div class="ico"><i class="fa-solid fa-location-dot"></i></div>
+                            <div><h3>Basic Information</h3><p>Where is this hidden gem and what is it?</p></div>
+                        </div>
+
+                        <div class="grid">
+                            <div class="field col-6">
+                                <label>Place Name <span class="req">*</span></label>
+                                <div class="input-wrap"><i class="fa-solid fa-mountain-sun"></i>
+                                    <input class="input" name="name" required placeholder="e.g. Khopra Danda"/></div>
+                                <div class="err-msg">Place name is required.</div>
+                            </div>
+                            <div class="field col-6">
+                                <label>Alternative / Local Name</label>
+                                <div class="input-wrap"><i class="fa-solid fa-language"></i>
+                                    <input class="input" name="localName" placeholder="e.g. खोप्रा डाँडा"/></div>
+                            </div>
+                            <div class="field col-12">
+                                <label>Short Tagline</label>
+                                <div class="input-wrap"><i class="fa-solid fa-quote-left"></i>
+                                    <input class="input" name="tagline" maxlength="120" placeholder="One line that sells the magic"/></div>
+                                <div class="helper">Max 120 characters</div>
+                            </div>
+                            <div class="field col-4">
+                                <label>Province</label>
+                                <div class="input-wrap"><i class="fa-solid fa-map"></i>
+                                    <select class="select" name="province"><option value="">Select</option>
+                                        <option>Koshi</option><option>Madhesh</option><option>Bagmati</option><option>Gandaki</option><option>Lumbini</option><option>Karnali</option><option>Sudurpaschim</option>
+                                    </select></div>
+                            </div>
+                            <div class="field col-4">
+                                <label>District</label>
+                                <div class="input-wrap"><i class="fa-solid fa-map-pin"></i>
+                                    <input class="input" name="district" placeholder="e.g. Myagdi"/></div>
+                            </div>
+                            <div class="field col-4">
+                                <label>Municipality / VDC</label>
+                                <div class="input-wrap"><i class="fa-solid fa-house-flag"></i>
+                                    <input class="input" name="municipality" placeholder="e.g. Annapurna RM"/></div>
+                            </div>
+
+                            <div class="field col-12">
+                                <label>Category <span class="req">*</span></label>
+                                <div class="chips" id="chips">
+                                    <div class="chip" data-cat="Hidden Village"><i class="fa-solid fa-house-chimney"></i> Hidden Village</div>
+                                    <div class="chip" data-cat="Viewpoint"><i class="fa-solid fa-binoculars"></i> Viewpoint</div>
+                                    <div class="chip" data-cat="Waterfall"><i class="fa-solid fa-water"></i> Waterfall</div>
+                                    <div class="chip" data-cat="Trekking Route"><i class="fa-solid fa-person-hiking"></i> Trekking Route</div>
+                                    <div class="chip" data-cat="Lake"><i class="fa-solid fa-droplet"></i> Lake</div>
+                                    <div class="chip" data-cat="Cultural Site"><i class="fa-solid fa-landmark"></i> Cultural Site</div>
+                                    <div class="chip" data-cat="Monastery"><i class="fa-solid fa-place-of-worship"></i> Monastery</div>
+                                    <div class="chip" data-cat="Cave"><i class="fa-solid fa-dungeon"></i> Cave</div>
+                                    <div class="chip" data-cat="Forest"><i class="fa-solid fa-tree"></i> Forest</div>
+                                    <div class="chip" data-cat="Camping Spot"><i class="fa-solid fa-campground"></i> Camping Spot</div>
+                                    <div class="chip" data-cat="Homestay"><i class="fa-solid fa-bed"></i> Homestay</div>
+                                    <div class="chip" data-cat="Adventure"><i class="fa-solid fa-helmet-safety"></i> Adventure</div>
+                                    <div class="chip" data-cat="Other"><i class="fa-solid fa-ellipsis"></i> Other</div>
+                                </div>
+                                <input type="hidden" name="category" id="categoryInput" required>
+                                <div class="err-msg">Please choose a category.</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- STEP 2 -->
+                    <section class="page" data-page="2">
+                        <div class="section-head">
+                            <div class="ico"><i class="fa-solid fa-feather"></i></div>
+                            <div><h3>Description</h3><p>Tell travellers what makes this place special.</p></div>
+                        </div>
+                        <div class="grid">
+                            <div class="field col-12">
+                                <label>Short Description <span class="req">*</span></label>
+                                <textarea class="textarea" name="shortDesc" required placeholder="A few sentences that capture the soul of the place..."></textarea>
+                                <div class="err-msg">Description is required.</div>
+                            </div>
+                            <div class="field col-6">
+                                <label>Best Time to Visit</label>
+                                <div class="input-wrap"><i class="fa-solid fa-calendar-days"></i>
+                                    <input class="input" name="bestTime" placeholder="e.g. Oct – Dec, Mar – May"/></div>
+                            </div>
+                            <div class="field col-6">
+                                <label>Travel Duration</label>
+                                <div class="input-wrap"><i class="fa-regular fa-clock"></i>
+                                    <input class="input" name="duration" placeholder="e.g. 3 days / 2 nights"/></div>
+                            </div>
+                            <div class="field col-12">
+                                <label>Things to Do</label>
+                                <textarea class="textarea" name="things" placeholder="Sunrise hike, local kitchen, cultural dance..."></textarea>
+                            </div>
+                            <div class="field col-12">
+                                <label>Travel Tips</label>
+                                <textarea class="textarea" name="tips" placeholder="Carry cash, no signal after the ridge, respect monastery rules..."></textarea>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- STEP 3 (simplified) -->
+                    <section class="page" data-page="3">
+                        <div class="section-head">
+                            <div class="ico"><i class="fa-solid fa-images"></i></div>
+                            <div><h3>Images & Media</h3><p>A cover image is required — gallery is optional.</p></div>
+                        </div>
+                        <div class="grid">
+                            <div class="field col-12">
+                                <label>Main Cover Image <span class="req">*</span></label>
+                                <div class="drop" id="coverDrop">
+                                    <div class="ico"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                                    <strong>Drag & drop or click to upload</strong>
+                                    <small>JPG / PNG · up to 5 MB</small>
+                                    <input type="file" id="coverInput" accept="image/*" hidden>
+                                </div>
+                                <div class="previews" id="coverPreview"></div>
+                                <div class="err-msg">Cover image is required.</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- STEP 4-6 (simplified for now) -->
+                    <section class="page" data-page="4">
+                        <div class="section-head">
+                            <div class="ico"><i class="fa-solid fa-route"></i></div>
+                            <div><h3>Route & Accessibility</h3><p>How does one actually get there?</p></div>
+                        </div>
+                        <div class="grid" style="margin-top:18px">
+                            <div class="field col-12">
+                                <label>Starting Point <span class="req">*</span></label>
+                                <div class="input-wrap"><i class="fa-solid fa-flag"></i>
+                                    <input class="input" name="start" required placeholder="e.g. Pokhara"/></div>
+                                <div class="err-msg">Starting point is required.</div>
+                            </div>
+                            <div class="field col-12">
+                                <label>Route Description <span class="req">*</span></label>
+                                <textarea class="textarea" name="routeDesc" required placeholder="Bus to Beni, jeep to Bagar, then trek..."></textarea>
+                                <div class="err-msg">Route description is required.</div>
+                            </div>
+                            <div class="field col-12">
+                                <label>Destination <span class="req">*</span></label>
+                                <div class="input-wrap"><i class="fa-solid fa-location-crosshairs"></i>
+                                    <input class="input" name="dest" required placeholder="e.g. Khopra Danda viewpoint"/></div>
+                                <div class="err-msg">Destination is required.</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="page" data-page="5">
+                        <div class="section-head">
+                            <div class="ico"><i class="fa-solid fa-wallet"></i></div>
+                            <div><h3>Cost Information</h3><p>Help travellers plan a realistic budget (NPR).</p></div>
+                        </div>
+                        <div class="grid">
+                            <div class="field col-6">
+                                <label>Total Budget</label>
+                                <div class="input-wrap"><i class="fa-solid fa-sack-dollar"></i>
+                                    <input class="input" type="number" min="0" name="budget" placeholder="e.g. 15000"/></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="page" data-page="6">
+                        <div class="section-head">
+                            <div class="ico"><i class="fa-solid fa-house-chimney-window"></i></div>
+                            <div><h3>Accommodation & Facilities</h3><p>What can travellers expect on the ground?</p></div>
+                        </div>
+                        <div class="grid">
+                            <div class="field col-12">
+                                <label>Available Accommodation</label>
+                                <textarea class="textarea" name="accomDesc" placeholder="Community homestays, basic teahouses..."></textarea>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Actions -->
+                <div class="form-actions">
+                    <div class="left">
+                        <button type="button" class="btn btn-ghost" id="cancelBtn"><i class="fa-solid fa-xmark"></i> Cancel</button>
+                    </div>
+                    <div class="right">
+                        <button type="button" class="btn btn-outline" id="prevBtn" disabled><i class="fa-solid fa-arrow-left"></i> Back</button>
+                        <button type="button" class="btn btn-outline" id="nextBtn">Continue <i class="fa-solid fa-arrow-right"></i></button>
+                        <button type="submit" class="btn btn-dark" id="publishBtn" style="display:none"><i class="fa-solid fa-paper-plane"></i> Publish</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fa-solid fa-check"></i>
+        <div><strong>Success!</strong><div style="font-size:12px;opacity:.85">Operation completed</div></div>
     </div>
 
     <script src="../JAVASCRIPT/script.js"></script>
