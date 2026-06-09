@@ -400,7 +400,7 @@ textarea:focus {
     position: relative;
     background:
         linear-gradient(135deg, rgba(33, 79, 66, 0.1), rgba(143, 211, 238, 0.12), rgba(146, 113, 78, 0.08));
-    padding: 4.5rem 0 4rem;
+    padding: 2rem 0 3rem;
     overflow: hidden;
 }
 
@@ -430,7 +430,7 @@ textarea:focus {
 
 .hero-content {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
 }
 
 .hero-title {
@@ -1179,9 +1179,10 @@ textarea:focus {
 }
 
 .back-btn {
-    position: absolute;
+    position: sticky;
     top: 1.5rem;
     left: 1.5rem;
+    align-self: flex-start;
     background: rgba(255, 255, 255, 0.82);
     padding: 0.75rem 1rem;
     border-radius: var(--border-radius);
@@ -1190,6 +1191,7 @@ textarea:focus {
     align-items: center;
     gap: 0.5rem;
     backdrop-filter: blur(12px);
+    z-index: 20;
 }
 
 .back-btn:hover {
@@ -1367,9 +1369,12 @@ textarea:focus {
 
 /* Detail Modal Styles */
 .close-modal-btn {
-    position: absolute;
+    position: sticky;
     top: 1.5rem;
     right: 1.5rem;
+    margin-left: auto;
+    margin-top: 0;
+    margin-bottom: 0;
     background: rgba(255, 255, 255, 0.92);
     padding: 0.6rem;
     border-radius: 50%;
@@ -1379,7 +1384,7 @@ textarea:focus {
     align-items: center;
     justify-content: center;
     border: 1px solid rgba(33, 79, 66, 0.1);
-    z-index: 10;
+    z-index: 20;
 }
 
 .close-modal-btn:hover {
