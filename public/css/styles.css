@@ -358,6 +358,10 @@ textarea:focus {
     font-size: 0.95rem;
 }
 
+.user-menu-wrapper {
+    position: relative;
+}
+
 .user-btn {
     background: transparent;
     padding: 0.5rem;
@@ -370,6 +374,103 @@ textarea:focus {
 
 .user-btn:hover {
     background: var(--bg-muted);
+}
+
+.user-profile-card {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.7rem);
+    min-width: 260px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.16);
+    padding: 1.1rem;
+    display: none;
+    z-index: 50;
+}
+
+.user-profile-card.active {
+    display: block;
+}
+
+.user-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.95rem;
+}
+
+.user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, var(--color-primary), #3b82f6);
+}
+
+.user-profile-header h3 {
+    font-size: 1.02rem;
+    margin: 0 0 0.2rem;
+}
+
+.user-profile-header p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.recommended-settings {
+    border-top: 1px solid var(--border-color);
+    padding-top: 0.85rem;
+    margin-bottom: 0.9rem;
+}
+
+.recommended-settings h4 {
+    font-size: 0.95rem;
+    margin: 0 0 0.7rem;
+    color: var(--text-primary);
+}
+
+.setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.setting-toggle {
+    border: none;
+    border-radius: 999px;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+    background: #e5e7eb;
+    color: #374151;
+    cursor: pointer;
+}
+
+.setting-toggle.active {
+    background: var(--color-primary);
+    color: white;
+}
+
+.profile-action-btn {
+    width: 100%;
+    border: none;
+    border-radius: 999px;
+    padding: 0.75rem 0.95rem;
+    background: var(--color-primary);
+    color: white;
+    cursor: pointer;
+}
+
+.profile-action-btn:hover {
+    opacity: 0.9;
 }
 
 .mobile-menu-btn {

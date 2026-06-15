@@ -75,8 +75,11 @@ const loginForm = document.getElementById('login-form');
 const signupForm = document.getElementById('signup-form');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const userBtn = document.getElementById('user-btn');
+const profileCard = document.getElementById('user-profile-card');
+const logoutBtn = document.getElementById('logout-btn');
 const mobileMenuBtn = document.getElementById('mobile-menu-btn');
 const mobileMenu = document.getElementById('mobile-menu');
+let profileHideTimer = null;
 const searchInput = document.getElementById('search-input');
 const categoriesContainer = document.getElementById('categories');
 const placesGrid = document.getElementById('places-grid');
@@ -95,6 +98,7 @@ function init() {
     renderCategories();
     // renderPlaces(); // Disabled - using static card layout for now
     updateStats();
+    initializeUserProfile();
     attachEventListeners();
 }
 
@@ -106,7 +110,8 @@ function attachEventListeners() {
 
     if (loginForm) loginForm.addEventListener('submit', handleLogin);
     if (signupForm) signupForm.addEventListener('submit', handleLogin);
-    if (userBtn) userBtn.addEventListener('click', openLoginPage);
+    if (userBtn) userBtn.addEventListener('click', toggleUserProfile);
+    if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
     if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
 
     if (searchInput) {
@@ -161,7 +166,78 @@ function handleLogin(e) {
     if (mainApp) mainApp.classList.add('active');
 }
 
-function openLoginPage() {
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) {
+        return decodeURIComponent(parts.pop().split(';').shift());
+    }
+    return '';
+}
+
+function initializeUserProfile() {
+    const userName = localStorage.getItem('userName') || getCookie('userName') || 'Traveler';
+    const userRole = localStorage.getItem('userRole') || getCookie('userRole') || 'User';
+    const profileName = document.getElementById('profile-name');
+    const profileRole = document.getElementById('profile-role');
+    const userAvatar = document.getElementById('user-avatar');
+    const isLoggedIn = Boolean(localStorage.getItem('userRole') || getCookie('userRole'));
+
+    if (profileName) profileName.textContent = userName;
+    if (profileRole) profileRole.textContent = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+    if (userAvatar) userAvatar.textContent = userName.charAt(0).toUpperCase();
+
+    if (isLoggedIn) {
+        showProfileCard();
+    }
+
+    if (userName && userName !== 'Traveler') {
+        userBtn?.setAttribute('aria-label', 'Open user profile');
+    }
+}
+
+function showProfileCard() {
+    if (!profileCard) return;
+
+    profileCard.classList.add('active');
+    profileCard.setAttribute('aria-hidden', 'false');
+
+    if (profileHideTimer) clearTimeout(profileHideTimer);
+    profileHideTimer = setTimeout(() => {
+        profileCard.classList.remove('active');
+        profileCard.setAttribute('aria-hidden', 'true');
+    }, 4000);
+}
+
+function hideProfileCard() {
+    if (!profileCard) return;
+    profileCard.classList.remove('active');
+    profileCard.setAttribute('aria-hidden', 'true');
+    if (profileHideTimer) clearTimeout(profileHideTimer);
+}
+
+function toggleUserProfile() {
+    const isLoggedIn = localStorage.getItem('isAdmin') === 'true' || localStorage.getItem('userRole') || getCookie('userRole');
+
+    if (!isLoggedIn) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    if (profileCard?.classList.contains('active')) {
+        hideProfileCard();
+    } else {
+        showProfileCard();
+    }
+}
+
+function logoutUser() {
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userName');
+    document.cookie = 'userRole=; path=/; max-age=0';
+    document.cookie = 'userName=; path=/; max-age=0';
+    hideProfileCard();
     window.location.href = 'login.html';
 }
 

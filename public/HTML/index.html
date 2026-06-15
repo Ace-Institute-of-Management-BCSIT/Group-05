@@ -43,12 +43,43 @@
                         </svg>
                         <span>Add Place</span>
                     </button>
-                    <button class="user-btn" id="user-btn" type="button" aria-label="Open login page">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                    </button>
+                    <div class="user-menu-wrapper">
+                        <button class="user-btn" id="user-btn" type="button" aria-label="Open user menu">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </button>
+                        <div class="user-profile-card" id="user-profile-card" aria-hidden="true">
+                            <div class="user-profile-header">
+                                <div class="user-avatar" id="user-avatar">U</div>
+                                <div>
+                                    <h3 id="profile-name">User</h3>
+                                    <p id="profile-role">Traveler</p>
+                                </div>
+                            </div>
+
+                            <div class="recommended-settings">
+                                <h4>Recommended Settings</h4>
+                                <div class="setting-item">
+                                    <span>Travel alerts</span>
+                                    <button class="setting-toggle active" type="button">On</button>
+                                </div>
+                                <div class="setting-item">
+                                    <span>Location tips</span>
+                                    <button class="setting-toggle active" type="button">On</button>
+                                </div>
+                                <div class="setting-item">
+                                    <span>Private mode</span>
+                                    <button class="setting-toggle" type="button">Off</button>
+                                </div>
+                            </div>
+
+                            <div class="user-profile-actions">
+                                <button class="profile-action-btn" id="logout-btn" type="button">Logout</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <button class="mobile-menu-btn" id="mobile-menu-btn">
