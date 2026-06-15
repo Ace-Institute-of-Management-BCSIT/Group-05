@@ -79,6 +79,17 @@
                                 </button>
                             </div>
 
+                            <div class="travel-status" id="travel-status" role="status">
+                                Sign in to start saving places and shaping your next trip.
+                            </div>
+
+                            <div class="travel-board" id="travel-board">
+                                <h5>Your Travel Board</h5>
+                                <div class="travel-board-content" id="travel-board-content">
+                                    <p class="empty-state">Nothing saved yet. Save a place or plan a trip to get started.</p>
+                                </div>
+                            </div>
+
                             <div class="user-profile-actions">
                                 <button class="profile-action-btn" id="logout-btn" type="button">Logout</button>
                             </div>
@@ -302,6 +313,7 @@
                             <div class="place-card-actions">
                                 <button class="btn-view-details" onclick="openPlaceDetail(1)">View Full Details</button>
                                 <button class="btn-save-place" type="button" onclick="event.stopPropagation(); savePlaceToCollection(1)">Save</button>
+                                <button class="btn-plan-place" type="button" onclick="event.stopPropagation(); organizeTrip(1)">Plan</button>
                             </div>
                         </div>
                     </article>

@@ -92,6 +92,8 @@ const addPlaceModal = document.getElementById('add-place-modal');
 const clearFiltersBtn = document.getElementById('clear-filters-btn');
 const reviewForm = document.getElementById('review-form');
 const starRating = document.getElementById('star-rating');
+const travelStatus = document.getElementById('travel-status');
+const travelBoardContent = document.getElementById('travel-board-content');
 
 // Initialize
 function init() {
@@ -194,6 +196,7 @@ function initializeUserProfile() {
 
     if (isLoggedIn) {
         showProfileCard();
+        updateTravelBoard();
     }
 
     if (userName && userName !== 'Traveler') {
@@ -211,7 +214,7 @@ function showProfileCard() {
     profileHideTimer = setTimeout(() => {
         profileCard.classList.remove('active');
         profileCard.setAttribute('aria-hidden', 'true');
-    }, 4000);
+    }, 8000);
 }
 
 function hideProfileCard() {
@@ -235,7 +238,75 @@ function toggleUserProfile() {
         hideProfileCard();
     } else {
         showProfileCard();
+        updateTravelBoard();
     }
+}
+
+function setTravelStatus(message) {
+    if (travelStatus) {
+        travelStatus.textContent = message;
+    }
+}
+
+function updateTravelBoard(feature = 'saved') {
+    if (!travelBoardContent) return;
+
+    if (!isUserLoggedIn()) {
+        travelBoardContent.innerHTML = '<p class="empty-state">Please sign in to view your saved places and trips.</p>';
+        setTravelStatus('Sign in to start saving places and shaping your next trip.');
+        return;
+    }
+
+    fetch('../../PHP/travel.php?action=get', {
+        method: 'GET',
+        credentials: 'same-origin'
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                travelBoardContent.innerHTML = '<p class="empty-state">Unable to load your travel board right now.</p>';
+                return;
+            }
+
+            const saved = data.saved || [];
+            const trips = data.trips || [];
+            const notes = data.notes || [];
+
+            if (feature === 'saved') {
+                if (saved.length === 0) {
+                    travelBoardContent.innerHTML = '<p class="empty-state">No saved places yet.</p>';
+                } else {
+                    travelBoardContent.innerHTML = saved.map(item => {
+                        const place = places.find(p => p.id === item.place_id);
+                        return `<div class="travel-board-item">💾 ${place ? place.name : `Place ${item.place_id}`}</div>`;
+                    }).join('');
+                }
+                setTravelStatus('Your saved places are ready for the next trip.');
+            } else if (feature === 'future') {
+                if (trips.length === 0) {
+                    travelBoardContent.innerHTML = '<p class="empty-state">No future trips planned yet.</p>';
+                } else {
+                    travelBoardContent.innerHTML = trips.map(item => {
+                        const place = places.find(p => p.id === item.place_id);
+                        return `<div class="travel-board-item">🗓️ ${place ? place.name : `Place ${item.place_id}`}</div>`;
+                    }).join('');
+                }
+                setTravelStatus('Your future trips are ready to review.');
+            } else if (feature === 'notes') {
+                if (notes.length === 0) {
+                    travelBoardContent.innerHTML = '<p class="empty-state">No trip notes yet.</p>';
+                } else {
+                    travelBoardContent.innerHTML = notes.map(note => `<div class="travel-board-item">📝 ${note.note_text}</div>`).join('');
+                }
+                setTravelStatus('Your notes are stored here for later.');
+            } else {
+                travelBoardContent.innerHTML = '<div class="travel-board-item">✨ More travel tools will appear here soon.</div>';
+                setTravelStatus('More travel tools are on the way.');
+            }
+        })
+        .catch(() => {
+            travelBoardContent.innerHTML = '<p class="empty-state">Unable to load your travel board right now.</p>';
+        });
 }
 
 function handleTravelFeatureClick(event) {
@@ -246,21 +317,8 @@ function handleTravelFeatureClick(event) {
     }
 
     const feature = button.dataset.feature;
-    const user = localStorage.getItem('userName') || getCookie('userName') || 'default';
-
-    if (feature === 'saved') {
-        const saved = JSON.parse(localStorage.getItem(`collections_${user}`) || '[]');
-        const names = saved.map(item => `#${item.id}`).join(', ') || 'none yet';
-        alert(`Saved Places: ${names}`);
-    } else if (feature === 'future') {
-        const trips = JSON.parse(localStorage.getItem(`trips_${user}`) || '[]');
-        const names = trips.map(item => `#${item.placeId}`).join(', ') || 'none yet';
-        alert(`Future Trips: ${names}`);
-    } else if (feature === 'notes') {
-        alert('Trip Notes are ready for your ideas.');
-    } else {
-        alert('More travel tools will appear here soon.');
-    }
+    showProfileCard();
+    updateTravelBoard(feature);
 }
 
 function logoutUser() {
@@ -276,44 +334,72 @@ function logoutUser() {
 // Collections, notes, and trip planning stored locally per-user
 function savePlaceToCollection(placeId) {
     if (!isUserLoggedIn()) { window.location.href = 'login.html'; return; }
-    const user = localStorage.getItem('userName') || getCookie('userName') || 'default';
-    const key = `collections_${user}`;
-    const collections = JSON.parse(localStorage.getItem(key) || '[]');
-    const entry = { id: placeId, savedAt: new Date().toISOString() };
-    const exists = collections.some(item => item.id === placeId);
-    if (!exists) {
-        collections.push(entry);
-        localStorage.setItem(key, JSON.stringify(collections));
-        alert('Saved to your collections');
-    } else {
-        alert('Already in your collections');
-    }
+
+    const formData = new FormData();
+    formData.append('action', 'save_place');
+    formData.append('place_id', placeId);
+
+    fetch('../../PHP/travel.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    })
+        .then(response => response.json())
+        .then(() => {
+            showProfileCard();
+            setTravelStatus('Saved to your collection.');
+            updateTravelBoard('saved');
+        })
+        .catch(() => {
+            setTravelStatus('Unable to save right now.');
+        });
 }
 
 function addNoteToPlace(placeId, note) {
     if (!isUserLoggedIn()) { window.location.href = 'login.html'; return; }
-    const user = localStorage.getItem('userName') || getCookie('userName') || 'default';
-    const key = `notes_${user}`;
-    const notes = JSON.parse(localStorage.getItem(key) || '{}');
-    if (!notes[placeId]) notes[placeId] = [];
-    notes[placeId].push({ text: note, date: new Date().toISOString() });
-    localStorage.setItem(key, JSON.stringify(notes));
-    alert('Note saved');
+
+    const formData = new FormData();
+    formData.append('action', 'add_note');
+    formData.append('place_id', placeId);
+    formData.append('note_text', note);
+
+    fetch('../../PHP/travel.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    })
+        .then(response => response.json())
+        .then(() => {
+            showProfileCard();
+            setTravelStatus('Note saved to your travel board.');
+            updateTravelBoard('notes');
+        })
+        .catch(() => {
+            setTravelStatus('Unable to save note right now.');
+        });
 }
 
 function organizeTrip(placeId) {
     if (!isUserLoggedIn()) { window.location.href = 'login.html'; return; }
-    const user = localStorage.getItem('userName') || getCookie('userName') || 'default';
-    const key = `trips_${user}`;
-    const trips = JSON.parse(localStorage.getItem(key) || '[]');
-    const exists = trips.some(item => item.placeId === placeId);
-    if (!exists) {
-        trips.push({ placeId, plannedAt: new Date().toISOString() });
-        localStorage.setItem(key, JSON.stringify(trips));
-        alert('Added to your upcoming trips');
-    } else {
-        alert('Already in your future trips');
-    }
+
+    const formData = new FormData();
+    formData.append('action', 'plan_trip');
+    formData.append('place_id', placeId);
+
+    fetch('../../PHP/travel.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    })
+        .then(response => response.json())
+        .then(() => {
+            showProfileCard();
+            setTravelStatus('Added to your future trips.');
+            updateTravelBoard('future');
+        })
+        .catch(() => {
+            setTravelStatus('Unable to plan trip right now.');
+        });
 }
 
 // Mobile Menu
