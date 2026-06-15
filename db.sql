@@ -9,3 +9,17 @@ CREATE TABLE users (
     profile_image VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+INSERT INTO users (
+    username,
+    full_name,
+    email,
+    password,
+    role
+)
+VALUES (
+    'admin',
+    'Administrator',
+    'admin@gmail.com',
+    'admin123',
+    'admin'
+);
