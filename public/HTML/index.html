@@ -42,7 +42,7 @@
                             <line x1="5" y1="12" x2="19" y2="12"></line>
                         </svg>
                         <span>Add Place</span>
-                    </button>
+                      </button>
                     <div class="user-menu-wrapper">
                         <button class="user-btn" id="user-btn" type="button" aria-label="Open user menu">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -59,20 +59,24 @@
                                 </div>
                             </div>
 
-                            <div class="recommended-settings">
-                                <h4>Recommended Settings</h4>
-                                <div class="setting-item">
-                                    <span>Travel alerts</span>
-                                    <button class="setting-toggle active" type="button">On</button>
-                                </div>
-                                <div class="setting-item">
-                                    <span>Location tips</span>
-                                    <button class="setting-toggle active" type="button">On</button>
-                                </div>
-                                <div class="setting-item">
-                                    <span>Private mode</span>
-                                    <button class="setting-toggle" type="button">Off</button>
-                                </div>
+                            <div class="travel-features" id="travel-features">
+                                <h4>Travel Hub</h4>
+                                <button class="feature-item" type="button" data-feature="saved">
+                                    <span>💾 Saved Places</span>
+                                    <small>Keep your favorite spots</small>
+                                </button>
+                                <button class="feature-item" type="button" data-feature="future">
+                                    <span>🗓️ Future Trips</span>
+                                    <small>Plan your next adventure</small>
+                                </button>
+                                <button class="feature-item" type="button" data-feature="notes">
+                                    <span>📝 Trip Notes</span>
+                                    <small>Save ideas and reminders</small>
+                                </button>
+                                <button class="feature-item" type="button" data-feature="more">
+                                    <span>✨ More</span>
+                                    <small>Explore travel tools</small>
+                                </button>
                             </div>
 
                             <div class="user-profile-actions">
@@ -295,7 +299,10 @@
                                     </span>
                                 </div>
                             </div>
-                            <button class="btn-view-details" onclick="openPlaceDetail(1)">View Full Details</button>
+                            <div class="place-card-actions">
+                                <button class="btn-view-details" onclick="openPlaceDetail(1)">View Full Details</button>
+                                <button class="btn-save-place" type="button" onclick="event.stopPropagation(); savePlaceToCollection(1)">Save</button>
+                            </div>
                         </div>
                     </article>
                 </div>

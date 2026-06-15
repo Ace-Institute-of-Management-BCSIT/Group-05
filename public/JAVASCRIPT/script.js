@@ -113,6 +113,11 @@ function attachEventListeners() {
     if (userBtn) userBtn.addEventListener('click', toggleUserProfile);
     if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
     if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+    document.addEventListener('click', (event) => {
+        if (event.target.closest('#travel-features')) {
+            handleTravelFeatureClick(event);
+        }
+    });
 
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
@@ -216,10 +221,12 @@ function hideProfileCard() {
     if (profileHideTimer) clearTimeout(profileHideTimer);
 }
 
-function toggleUserProfile() {
-    const isLoggedIn = localStorage.getItem('isAdmin') === 'true' || localStorage.getItem('userRole') || getCookie('userRole');
+function isUserLoggedIn() {
+    return Boolean(localStorage.getItem('isAdmin') === 'true' || localStorage.getItem('userRole') || getCookie('userRole'));
+}
 
-    if (!isLoggedIn) {
+function toggleUserProfile() {
+    if (!isUserLoggedIn()) {
         window.location.href = 'login.html';
         return;
     }
@@ -231,6 +238,31 @@ function toggleUserProfile() {
     }
 }
 
+function handleTravelFeatureClick(event) {
+    const button = event.target.closest('.feature-item');
+    if (!button || !isUserLoggedIn()) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    const feature = button.dataset.feature;
+    const user = localStorage.getItem('userName') || getCookie('userName') || 'default';
+
+    if (feature === 'saved') {
+        const saved = JSON.parse(localStorage.getItem(`collections_${user}`) || '[]');
+        const names = saved.map(item => `#${item.id}`).join(', ') || 'none yet';
+        alert(`Saved Places: ${names}`);
+    } else if (feature === 'future') {
+        const trips = JSON.parse(localStorage.getItem(`trips_${user}`) || '[]');
+        const names = trips.map(item => `#${item.placeId}`).join(', ') || 'none yet';
+        alert(`Future Trips: ${names}`);
+    } else if (feature === 'notes') {
+        alert('Trip Notes are ready for your ideas.');
+    } else {
+        alert('More travel tools will appear here soon.');
+    }
+}
+
 function logoutUser() {
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('userRole');
@@ -239,6 +271,49 @@ function logoutUser() {
     document.cookie = 'userName=; path=/; max-age=0';
     hideProfileCard();
     window.location.href = 'login.html';
+}
+
+// Collections, notes, and trip planning stored locally per-user
+function savePlaceToCollection(placeId) {
+    if (!isUserLoggedIn()) { window.location.href = 'login.html'; return; }
+    const user = localStorage.getItem('userName') || getCookie('userName') || 'default';
+    const key = `collections_${user}`;
+    const collections = JSON.parse(localStorage.getItem(key) || '[]');
+    const entry = { id: placeId, savedAt: new Date().toISOString() };
+    const exists = collections.some(item => item.id === placeId);
+    if (!exists) {
+        collections.push(entry);
+        localStorage.setItem(key, JSON.stringify(collections));
+        alert('Saved to your collections');
+    } else {
+        alert('Already in your collections');
+    }
+}
+
+function addNoteToPlace(placeId, note) {
+    if (!isUserLoggedIn()) { window.location.href = 'login.html'; return; }
+    const user = localStorage.getItem('userName') || getCookie('userName') || 'default';
+    const key = `notes_${user}`;
+    const notes = JSON.parse(localStorage.getItem(key) || '{}');
+    if (!notes[placeId]) notes[placeId] = [];
+    notes[placeId].push({ text: note, date: new Date().toISOString() });
+    localStorage.setItem(key, JSON.stringify(notes));
+    alert('Note saved');
+}
+
+function organizeTrip(placeId) {
+    if (!isUserLoggedIn()) { window.location.href = 'login.html'; return; }
+    const user = localStorage.getItem('userName') || getCookie('userName') || 'default';
+    const key = `trips_${user}`;
+    const trips = JSON.parse(localStorage.getItem(key) || '[]');
+    const exists = trips.some(item => item.placeId === placeId);
+    if (!exists) {
+        trips.push({ placeId, plannedAt: new Date().toISOString() });
+        localStorage.setItem(key, JSON.stringify(trips));
+        alert('Added to your upcoming trips');
+    } else {
+        alert('Already in your future trips');
+    }
 }
 
 // Mobile Menu
@@ -349,6 +424,10 @@ function updateStats() {
 }
 
 function openAddPlaceModal() {
+    if (!isUserLoggedIn()) {
+        window.location.href = 'login.html';
+        return;
+    }
     addPlaceModal.classList.add('active');
     mobileMenu.classList.remove('active');
 }
@@ -408,6 +487,35 @@ function openPlaceDetail(id) {
     document.getElementById('feature-parking').style.display = selectedPlace.parking ? 'flex' : 'none';
     document.getElementById('feature-toilets').style.display = selectedPlace.toilets ? 'flex' : 'none';
 
+    // Add action buttons (save, note, plan)
+    const actionsContainerId = 'detail-actions';
+    let actions = document.getElementById(actionsContainerId);
+    if (!actions) {
+        actions = document.createElement('div');
+        actions.id = actionsContainerId;
+        actions.className = 'detail-actions';
+        const header = document.querySelector('.detail-card .detail-header');
+        if (header) header.appendChild(actions);
+    }
+    actions.innerHTML = `
+        <div class="detail-action-buttons" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-outline" id="save-collection-btn">Save to Collection</button>
+            <button class="btn btn-outline" id="add-note-btn">Add Note</button>
+            <button class="btn btn-primary" id="plan-trip-btn">Plan Trip</button>
+        </div>
+    `;
+
+    const saveBtn = document.getElementById('save-collection-btn');
+    const noteBtn = document.getElementById('add-note-btn');
+    const planBtn = document.getElementById('plan-trip-btn');
+
+    if (saveBtn) saveBtn.onclick = () => saveToCollection(selectedPlace.id);
+    if (noteBtn) noteBtn.onclick = () => {
+        const note = prompt('Add a private note for this place:');
+        if (note) addNoteToPlace(selectedPlace.id, note);
+    };
+    if (planBtn) planBtn.onclick = () => organizeTrip(selectedPlace.id);
+
     placeDetailModal.classList.add('active');
 }
 
@@ -462,6 +570,7 @@ function highlightStars(rating) {
 
 function handleReviewSubmit(e) {
     e.preventDefault();
+    if (!isUserLoggedIn()) { window.location.href = 'login.html'; return; }
     const reviewText = document.getElementById('review-text').value;
 
     if (userRating === 0) {
@@ -469,10 +578,24 @@ function handleReviewSubmit(e) {
         return;
     }
 
-    alert('Review submitted successfully!');
+    // Save review locally (fallback for demo)
+    const key = `reviews_${selectedPlace ? selectedPlace.id : 'global'}`;
+    const reviews = JSON.parse(localStorage.getItem(key) || '[]');
+    reviews.unshift({
+        id: Date.now(),
+        author: localStorage.getItem('userName') || getCookie('userName') || 'Anonymous',
+        rating: userRating,
+        date: new Date().toLocaleString(),
+        comment: reviewText,
+        helpful: 0
+    });
+    localStorage.setItem(key, JSON.stringify(reviews));
+
+    showToast('Review submitted successfully!', 'fa-check');
     userRating = 0;
     highlightStars(0);
     document.getElementById('review-text').value = '';
+    try { renderReviews(); } catch (err) { /* ignore if review list not present */ }
 }
 
 // ===== FORM FUNCTIONALITY =====
