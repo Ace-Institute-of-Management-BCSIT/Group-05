@@ -1,20 +1,49 @@
 <?php
+session_start();
 include 'db.php';
 
-$full_name = $_POST['full_name'];
-$email = $_POST['email'];
-$password = $_POST['password'];
+$full_name = trim($_POST['full_name'] ?? '');
+$email = trim($_POST['email'] ?? '');
+$password = trim($_POST['password'] ?? '');
 
-$username = explode('@', $email)[0];
-
-$sql = "INSERT INTO users (username, full_name, email, password)
-        VALUES ('$username', '$full_name', '$email', '$password')";
-
-if (mysqli_query($conn, $sql)) {
-    echo "Registration Successful!";
-    header("Location: ../index.php");
+if ($full_name === '' || $email === '' || $password === '') {
+    $_SESSION['register_error'] = 'Please fill in all fields.';
+    header('Location: ../public/HTML/login.html');
     exit();
-} else {
-    echo "Error: " . mysqli_error($conn);
 }
+
+$username = strtolower(str_replace(' ', '_', $full_name));
+if ($username === '') {
+    $username = 'user';
+}
+
+$baseUsername = $username;
+$counter = 1;
+
+while (true) {
+    $checkStmt = $conn->prepare('SELECT id FROM users WHERE username = ?');
+    $checkStmt->bind_param('s', $username);
+    $checkStmt->execute();
+    $checkResult = $checkStmt->get_result();
+
+    if ($checkResult->num_rows === 0) {
+        break;
+    }
+
+    $username = $baseUsername . $counter;
+    $counter++;
+}
+
+$hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+$stmt = $conn->prepare('INSERT INTO users (username, full_name, email, password, role) VALUES (?, ?, ?, ?, "user")');
+$stmt->bind_param('ssss', $username, $full_name, $email, $hashedPassword);
+
+if ($stmt->execute()) {
+    header('Location: ../public/HTML/login.html?registered=1');
+    exit();
+}
+
+$_SESSION['register_error'] = 'Registration failed. Please try again.';
+header('Location: ../public/HTML/login.html');
+exit();
 ?>

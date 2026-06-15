@@ -1,14 +1,14 @@
 <?php
-
-$host = "localhost";
-$user = "root";
-$password = "";
-$database = "nepal_travel";
+$host = 'localhost';
+$user = 'root';
+$password = '';
+$database = 'nepal_travel';
 
 $conn = mysqli_connect($host, $user, $password, $database);
 
 if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
+    die('Connection failed: ' . mysqli_connect_error());
 }
 
+mysqli_set_charset($conn, 'utf8');
 ?>

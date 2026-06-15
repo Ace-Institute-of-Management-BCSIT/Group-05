@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nepal Travel Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <script src="../JAVASCRIPT/admin.js" defer></script>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-crown"></i> Admin Panel</h2>
+                <button class="toggle-sidebar" id="toggleSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="#" data-section="dashboard" class="nav-link active">
+                        <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+                    </a></li>
+                    <li><a href="#" data-section="manage-places" class="nav-link">
+                        <i class="fas fa-map-location-dot"></i> <span>Manage Places</span>
+                    </a></li>
+                    <li><a href="#" data-section="manage-users" class="nav-link">
+                        <i class="fas fa-users"></i> <span>Manage Users</span>
+                    </a></li>
+                    <li><a href="#" data-section="manage-photos" class="nav-link">
+                        <i class="fas fa-images"></i> <span>Manage Photos</span>
+                    </a></li>
+                    <li><a href="#" data-section="verify-content" class="nav-link">
+                        <i class="fas fa-check-circle"></i> <span>Verify Content</span>
+                    </a></li>
+                    <li><a href="#" data-section="delete-reviews" class="nav-link">
+                        <i class="fas fa-trash"></i> <span>Delete Reviews</span>
+                    </a></li>
+                    <li><a href="#" data-section="community-activity" class="nav-link">
+                        <i class="fas fa-comments"></i> <span>Monitor Activity</span>
+                    </a></li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="logout-btn" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="top-bar-left">
+                    <h1 id="pageTitle">Dashboard</h1>
+                </div>
+                <div class="top-bar-right">
+                    <div class="admin-info">
+                        <img src="https://via.placeholder.com/40" alt="Admin" class="admin-avatar">
+                        <span id="adminName">Admin User</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Sections -->
+            <div class="content">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="section active">
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon places">
+                                <i class="fas fa-map-location-dot"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>Total Places</h3>
+                                <p class="stat-number">124</p>
+                                <span class="stat-label">Active locations</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon users">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>Total Users</h3>
+                                <p class="stat-number">856</p>
+                                <span class="stat-label">Registered users</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon photos">
+                                <i class="fas fa-images"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>Photos Uploaded</h3>
+                                <p class="stat-number">2,341</p>
+                                <span class="stat-label">Pending verification: 45</span>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon reviews">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>Reviews</h3>
+                                <p class="stat-number">592</p>
+                                <span class="stat-label">Flagged for review: 12</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-activity">
+                        <h2>Recent Activity</h2>
+                        <div class="activity-list">
+                            <div class="activity-item">
+                                <span class="activity-icon new-place"><i class="fas fa-plus-circle"></i></span>
+                                <div class="activity-content">
+                                    <p><strong>New Place Added</strong> - Pokhara Valley Hiking Trail</p>
+                                    <small>2 hours ago</small>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <span class="activity-icon new-user"><i class="fas fa-user-plus"></i></span>
+                                <div class="activity-content">
+                                    <p><strong>New User Registered</strong> - john_doe</p>
+                                    <small>4 hours ago</small>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <span class="activity-icon new-photo"><i class="fas fa-image"></i></span>
+                                <div class="activity-content">
+                                    <p><strong>Photo Uploaded</strong> - Kathmandu Temple Photos (3 files)</p>
+                                    <small>6 hours ago</small>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <span class="activity-icon review-flagged"><i class="fas fa-flag"></i></span>
+                                <div class="activity-content">
+                                    <p><strong>Review Flagged</strong> - Inappropriate content detected</p>
+                                    <small>8 hours ago</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Manage Places Section -->
+                <section id="manage-places" class="section">
+                    <div class="section-header">
+                        <h2>Manage Places</h2>
+                        <button class="btn-primary" id="addPlaceBtn">
+                            <i class="fas fa-plus"></i> Add New Place
+                        </button>
+                    </div>
+
+                    <div class="filter-bar">
+                        <input type="text" class="search-input" placeholder="Search places...">
+                        <select class="filter-select">
+                            <option>All Locations</option>
+                            <option>Kathmandu</option>
+                            <option>Pokhara</option>
+                            <option>Bhaktapur</option>
+                            <option>Chitwan</option>
+                        </select>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Place Name</th>
+                                    <th>Location</th>
+                                    <th>Added By</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Boudhanath Stupa</td>
+                                    <td>Kathmandu</td>
+                                    <td>user_123</td>
+                                    <td><span class="badge badge-active">Active</span></td>
+                                    <td>
+                                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="btn-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                                        <button class="btn-icon btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Phewa Lake</td>
+                                    <td>Pokhara</td>
+                                    <td>user_456</td>
+                                    <td><span class="badge badge-active">Active</span></td>
+                                    <td>
+                                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="btn-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                                        <button class="btn-icon btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Pashupatinath Temple</td>
+                                    <td>Kathmandu</td>
+                                    <td>user_789</td>
+                                    <td><span class="badge badge-active">Active</span></td>
+                                    <td>
+                                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="btn-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                                        <button class="btn-icon btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Manage Users Section -->
+                <section id="manage-users" class="section">
+                    <div class="section-header">
+                        <h2>Manage Users</h2>
+                    </div>
+
+                    <div class="filter-bar">
+                        <input type="text" class="search-input" placeholder="Search users by name or email...">
+                        <select class="filter-select">
+                            <option>All Users</option>
+                            <option>Active</option>
+                            <option>Inactive</option>
+                            <option>Banned</option>
+                        </select>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Join Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>john_doe</td>
+                                    <td>john@example.com</td>
+                                    <td>2024-01-15</td>
+                                    <td><span class="badge badge-active">Active</span></td>
+                                    <td>
+                                        <button class="btn-icon" title="View Profile"><i class="fas fa-user"></i></button>
+                                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="btn-icon btn-delete" title="Ban User"><i class="fas fa-ban"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>sarah_smith</td>
+                                    <td>sarah@example.com</td>
+                                    <td>2024-02-20</td>
+                                    <td><span class="badge badge-active">Active</span></td>
+                                    <td>
+                                        <button class="btn-icon" title="View Profile"><i class="fas fa-user"></i></button>
+                                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="btn-icon btn-delete" title="Ban User"><i class="fas fa-ban"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>raj_patel</td>
+                                    <td>raj@example.com</td>
+                                    <td>2024-01-05</td>
+                                    <td><span class="badge badge-inactive">Inactive</span></td>
+                                    <td>
+                                        <button class="btn-icon" title="View Profile"><i class="fas fa-user"></i></button>
+                                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="btn-icon btn-delete" title="Ban User"><i class="fas fa-ban"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Manage Photos Section -->
+                <section id="manage-photos" class="section">
+                    <div class="section-header">
+                        <h2>Manage Photos</h2>
+                    </div>
+
+                    <div class="filter-bar">
+                        <input type="text" class="search-input" placeholder="Search photos...">
+                        <select class="filter-select">
+                            <option>All Photos</option>
+                            <option>Pending Verification</option>
+                            <option>Approved</option>
+                            <option>Rejected</option>
+                        </select>
+                    </div>
+
+                    <div class="photos-grid">
+                        <div class="photo-card">
+                            <img src="https://via.placeholder.com/200" alt="Photo">
+                            <div class="photo-info">
+                                <h4>Kathmandu Skyline</h4>
+                                <p>Uploaded by: user_123</p>
+                                <p>Status: <span class="badge badge-pending">Pending</span></p>
+                                <div class="photo-actions">
+                                    <button class="btn-approve">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                    <button class="btn-reject">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="photo-card">
+                            <img src="https://via.placeholder.com/200" alt="Photo">
+                            <div class="photo-info">
+                                <h4>Temple Details</h4>
+                                <p>Uploaded by: user_456</p>
+                                <p>Status: <span class="badge badge-active">Approved</span></p>
+                                <div class="photo-actions">
+                                    <button class="btn-icon" title="View"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-icon btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="photo-card">
+                            <img src="https://via.placeholder.com/200" alt="Photo">
+                            <div class="photo-info">
+                                <h4>Lake Sunset</h4>
+                                <p>Uploaded by: user_789</p>
+                                <p>Status: <span class="badge badge-pending">Pending</span></p>
+                                <div class="photo-actions">
+                                    <button class="btn-approve">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                    <button class="btn-reject">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="photo-card">
+                            <img src="https://via.placeholder.com/200" alt="Photo">
+                            <div class="photo-info">
+                                <h4>Mountain View</h4>
+                                <p>Uploaded by: user_321</p>
+                                <p>Status: <span class="badge badge-active">Approved</span></p>
+                                <div class="photo-actions">
+                                    <button class="btn-icon" title="View"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-icon btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Verify Content Section -->
+                <section id="verify-content" class="section">
+                    <div class="section-header">
+                        <h2>Verify Uploaded Content & Update Travel Information</h2>
+                    </div>
+
+                    <div class="content-grid">
+                        <div class="content-card pending">
+                            <div class="card-header">
+                                <h3>Annapurna Circuit Trail</h3>
+                                <span class="badge badge-pending">Pending Verification</span>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Submitted by:</strong> trek_expert_01</p>
+                                <p><strong>Date:</strong> 2024-03-15</p>
+                                <p><strong>Content Type:</strong> Trail Information & Photos</p>
+                                <p><strong>Description:</strong> Updated trek information with new route and difficulty levels</p>
+                                <div class="verification-actions">
+                                    <button class="btn-approve" onclick="approveContent('annapurna')">
+                                        <i class="fas fa-check"></i> Approve & Publish
+                                    </button>
+                                    <button class="btn-reject" onclick="rejectContent('annapurna')">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                    <button class="btn-secondary" onclick="requestChanges('annapurna')">
+                                        <i class="fas fa-comment"></i> Request Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="content-card pending">
+                            <div class="card-header">
+                                <h3>Chitwan National Park Update</h3>
+                                <span class="badge badge-pending">Pending Verification</span>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Submitted by:</strong> wildlife_guide</p>
+                                <p><strong>Date:</strong> 2024-03-14</p>
+                                <p><strong>Content Type:</strong> Location Information</p>
+                                <p><strong>Description:</strong> Updated animal spotting information and best season guide</p>
+                                <div class="verification-actions">
+                                    <button class="btn-approve" onclick="approveContent('chitwan')">
+                                        <i class="fas fa-check"></i> Approve & Publish
+                                    </button>
+                                    <button class="btn-reject" onclick="rejectContent('chitwan')">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                    <button class="btn-secondary" onclick="requestChanges('chitwan')">
+                                        <i class="fas fa-comment"></i> Request Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="content-card approved">
+                            <div class="card-header">
+                                <h3>Pokhara City Guide</h3>
+                                <span class="badge badge-active">Verified & Published</span>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Submitted by:</strong> local_guide_02</p>
+                                <p><strong>Date:</strong> 2024-03-10</p>
+                                <p><strong>Content Type:</strong> Comprehensive City Guide</p>
+                                <p><strong>Verified By:</strong> admin</p>
+                                <button class="btn-secondary" onclick="viewContent('pokhara')">
+                                    <i class="fas fa-eye"></i> View Published Content
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Delete Reviews Section -->
+                <section id="delete-reviews" class="section">
+                    <div class="section-header">
+                        <h2>Delete Inappropriate Reviews</h2>
+                    </div>
+
+                    <div class="filter-bar">
+                        <input type="text" class="search-input" placeholder="Search reviews...">
+                        <select class="filter-select">
+                            <option>All Reviews</option>
+                            <option>Flagged</option>
+                            <option>Under Review</option>
+                            <option>Spam</option>
+                            <option>Offensive</option>
+                        </select>
+                    </div>
+
+                    <div class="reviews-list">
+                        <div class="review-card flagged">
+                            <div class="review-header">
+                                <div>
+                                    <h4>Boudhanath Stupa</h4>
+                                    <p>Reviewed by: <strong>user_123</strong></p>
+                                </div>
+                                <span class="badge badge-flagged">Flagged - Spam</span>
+                            </div>
+                            <div class="review-body">
+                                <p class="review-content">"BUY CHEAP PRODUCTS NOW!!! CLICK HERE FOR DISCOUNTS!!! Check out my website: www.spam.com"</p>
+                                <p class="review-reason"><strong>Reason:</strong> Promotional spam content</p>
+                            </div>
+                            <div class="review-actions">
+                                <button class="btn-delete" onclick="deleteReview('rev_001')">
+                                    <i class="fas fa-trash"></i> Delete Review
+                                </button>
+                                <button class="btn-secondary" onclick="warnUser('user_123')">
+                                    <i class="fas fa-warning"></i> Warn User
+                                </button>
+                                <button class="btn-secondary" onclick="banUser('user_123')">
+                                    <i class="fas fa-ban"></i> Ban User
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="review-card flagged">
+                            <div class="review-header">
+                                <div>
+                                    <h4>Pashupatinath Temple</h4>
+                                    <p>Reviewed by: <strong>user_456</strong></p>
+                                </div>
+                                <span class="badge badge-flagged">Flagged - Offensive</span>
+                            </div>
+                            <div class="review-body">
+                                <p class="review-content">"[Offensive content - Contains inappropriate language and disrespectful comments about the location]"</p>
+                                <p class="review-reason"><strong>Reason:</strong> Offensive language detected</p>
+                            </div>
+                            <div class="review-actions">
+                                <button class="btn-delete" onclick="deleteReview('rev_002')">
+                                    <i class="fas fa-trash"></i> Delete Review
+                                </button>
+                                <button class="btn-secondary" onclick="warnUser('user_456')">
+                                    <i class="fas fa-warning"></i> Warn User
+                                </button>
+                                <button class="btn-secondary" onclick="banUser('user_456')">
+                                    <i class="fas fa-ban"></i> Ban User
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="review-card approved">
+                            <div class="review-header">
+                                <div>
+                                    <h4>Phewa Lake</h4>
+                                    <p>Reviewed by: <strong>user_789</strong></p>
+                                </div>
+                                <span class="badge badge-active">Approved</span>
+                            </div>
+                            <div class="review-body">
+                                <p class="review-content">"Amazing location! The sunset view was breathtaking. Highly recommend visiting Phewa Lake. Great experience with friendly locals."</p>
+                                <p class="rating">⭐⭐⭐⭐⭐ (5/5)</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Monitor Community Activity Section -->
+                <section id="community-activity" class="section">
+                    <div class="section-header">
+                        <h2>Monitor Community Activity</h2>
+                    </div>
+
+                    <div class="activity-stats">
+                        <div class="activity-stat-card">
+                            <h4>Today's Activity</h4>
+                            <div class="stat-breakdown">
+                                <div class="stat-item">
+                                    <span class="stat-label">New Posts:</span>
+                                    <span class="stat-value">24</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">New Comments:</span>
+                                    <span class="stat-value">156</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">New Users:</span>
+                                    <span class="stat-value">12</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Flagged Content:</span>
+                                    <span class="stat-value">3</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="activity-stat-card">
+                            <h4>This Week's Activity</h4>
+                            <div class="stat-breakdown">
+                                <div class="stat-item">
+                                    <span class="stat-label">New Posts:</span>
+                                    <span class="stat-value">156</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">New Comments:</span>
+                                    <span class="stat-value">1,024</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">New Users:</span>
+                                    <span class="stat-value">87</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Flagged Content:</span>
+                                    <span class="stat-value">15</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recent-posts">
+                        <h3>Recent Community Posts</h3>
+                        <div class="posts-list">
+                            <div class="post-item">
+                                <div class="post-info">
+                                    <h4>Best time to visit Everest Base Camp</h4>
+                                    <p>Posted by: <strong>trek_guide_01</strong></p>
+                                    <small>Posted 2 hours ago • 24 comments • 156 likes</small>
+                                </div>
+                                <span class="badge badge-active">Active</span>
+                            </div>
+                            <div class="post-item">
+                                <div class="post-info">
+                                    <h4>Kathmandu restaurants recommendations</h4>
+                                    <p>Posted by: <strong>food_lover_23</strong></p>
+                                    <small>Posted 4 hours ago • 45 comments • 234 likes</small>
+                                </div>
+                                <span class="badge badge-active">Active</span>
+                            </div>
+                            <div class="post-item">
+                                <div class="post-info">
+                                    <h4>Budget travel tips for Nepal</h4>
+                                    <p>Posted by: <strong>budget_travel_99</strong></p>
+                                    <small>Posted 6 hours ago • 12 comments • 89 likes</small>
+                                </div>
+                                <span class="badge badge-active">Active</span>
+                            </div>
+                            <div class="post-item flagged">
+                                <div class="post-info">
+                                    <h4>Suspicious promotional post</h4>
+                                    <p>Posted by: <strong>spammer_account</strong></p>
+                                    <small>Posted 8 hours ago • 0 comments • 0 likes</small>
+                                </div>
+                                <span class="badge badge-flagged">Flagged</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for dialogs -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2 id="modalTitle">Modal Title</h2>
+            <p id="modalBody">Modal content goes here</p>
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeModal()">Close</button>
+                <button class="btn-primary" onclick="confirmAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
