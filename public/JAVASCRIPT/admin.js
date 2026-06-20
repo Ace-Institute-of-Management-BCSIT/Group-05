@@ -1,4 +1,6 @@
 // Admin Dashboard JavaScript
+const PLACE_STORAGE_KEY = 'nepalTravelPlaces';
+let adminLoadedPlaces = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeAdminDashboard();
@@ -37,6 +39,277 @@ function initializeAdminDashboard() {
     
     // Modal functionality
     setupModal();
+
+    renderSubmittedPlaces();
+}
+
+function getStoredPlaces() {
+    try {
+        return JSON.parse(localStorage.getItem(PLACE_STORAGE_KEY) || '[]');
+    } catch (error) {
+        return [];
+    }
+}
+
+function saveStoredPlaces(places) {
+    localStorage.setItem(PLACE_STORAGE_KEY, JSON.stringify(places));
+}
+
+async function fetchPlaces(action) {
+    const response = await fetch(`../../PHP/places.php?action=${action}`, {
+        method: 'GET',
+        credentials: 'same-origin'
+    });
+    const data = await response.json();
+
+    if (response.status === 401 || response.status === 403) {
+        window.location.href = '../HTML/login.html';
+        return [];
+    }
+
+    if (!data.success) {
+        throw new Error(data.message || 'Unable to load places.');
+    }
+
+    return data.places || [];
+}
+
+async function postPlaceAction(action, placeId) {
+    const formData = new FormData();
+    formData.append('action', action);
+    formData.append('place_id', placeId);
+
+    const response = await fetch('../../PHP/places.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    });
+    const data = await response.json();
+
+    if (response.status === 401 || response.status === 403) {
+        window.location.href = '../HTML/login.html';
+        return false;
+    }
+
+    if (!data.success) {
+        throw new Error(data.message || 'Action failed.');
+    }
+
+    return true;
+}
+
+function escapeHtml(value = '') {
+    return value.toString().replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    }[char]));
+}
+
+function formatDate(value) {
+    if (!value) return 'Unknown date';
+    return new Date(value).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
+function updateDashboardStats(pendingPlaces = [], allPlaces = []) {
+    const pendingCount = pendingPlaces.length;
+    const approvedCount = allPlaces.filter(place => place.status === 'approved').length;
+    const statNumbers = document.querySelectorAll('.stat-number');
+
+    if (statNumbers[0]) statNumbers[0].textContent = 1 + approvedCount;
+    const pendingLabel = document.querySelector('.stat-icon.photos')?.closest('.stat-card')?.querySelector('.stat-label');
+    if (pendingLabel) pendingLabel.textContent = `Pending verification: ${pendingCount}`;
+}
+
+async function renderSubmittedPlaces() {
+    try {
+        const [pendingPlaces, allPlaces] = await Promise.all([
+            fetchPlaces('pending'),
+            fetchPlaces('all')
+        ]);
+
+        adminLoadedPlaces = pendingPlaces.concat(allPlaces);
+        renderPendingSubmissions(pendingPlaces);
+        renderManagedPlaces(allPlaces);
+        updateDashboardStats(pendingPlaces, allPlaces);
+    } catch (error) {
+        const storedPlaces = getStoredPlaces();
+        const pendingPlaces = storedPlaces.filter(place => place.status === 'pending');
+        const allPlaces = storedPlaces.filter(place => place.status !== 'rejected');
+        adminLoadedPlaces = pendingPlaces.concat(allPlaces);
+        renderPendingSubmissions(pendingPlaces);
+        renderManagedPlaces(allPlaces);
+        updateDashboardStats(pendingPlaces, allPlaces);
+    }
+}
+
+function renderPendingSubmissions(pendingPlaces = []) {
+    const grid = document.querySelector('#verify-content .content-grid');
+    if (!grid) return;
+
+    if (pendingPlaces.length === 0) {
+        grid.innerHTML = `
+            <div class="content-card approved">
+                <div class="card-header">
+                    <h3>No Pending Places</h3>
+                    <span class="badge badge-active">All Clear</span>
+                </div>
+                <div class="card-body">
+                    <p>New places submitted by users will appear here for approval.</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    grid.innerHTML = pendingPlaces.map(place => `
+        <div class="content-card pending">
+            <div class="card-header">
+                <h3>${escapeHtml(place.name)}</h3>
+                <span class="badge badge-pending">Pending Verification</span>
+            </div>
+            <div class="card-body">
+                <p><strong>Submitted by:</strong> ${escapeHtml(place.submittedBy || 'Traveler')}</p>
+                <p><strong>Date:</strong> ${formatDate(place.submittedAt)}</p>
+                <p><strong>Category:</strong> ${escapeHtml(place.category || 'Place')}</p>
+                <p><strong>Location:</strong> ${escapeHtml([place.district, place.province].filter(Boolean).join(', ') || 'Nepal')}</p>
+                <p><strong>Description:</strong> ${escapeHtml(place.shortDesc || 'No description provided.')}</p>
+                <div class="verification-actions">
+                    <button class="btn-approve" onclick="approvePlace(${place.id})">
+                        <i class="fas fa-check"></i> Approve & Publish
+                    </button>
+                    <button class="btn-reject" onclick="rejectPlace(${place.id})">
+                        <i class="fas fa-times"></i> Reject
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderManagedPlaces(allPlaces = []) {
+    const tbody = document.querySelector('#manage-places .admin-table tbody');
+    if (!tbody) return;
+
+    const approvedPlaces = allPlaces.filter(place => place.status === 'approved');
+    const defaultRows = `
+        <tr>
+            <td>Khopra Danda</td>
+            <td>Myagdi, Gandaki</td>
+            <td>System</td>
+            <td><span class="badge badge-active">Active</span></td>
+            <td><button class="btn-icon" title="View Details"><i class="fas fa-eye"></i></button></td>
+        </tr>
+    `;
+
+    tbody.innerHTML = defaultRows + approvedPlaces.map(place => `
+        <tr>
+            <td>${escapeHtml(place.name)}</td>
+            <td>${escapeHtml([place.district, place.province].filter(Boolean).join(', ') || 'Nepal')}</td>
+            <td>${escapeHtml(place.submittedBy || 'Traveler')}</td>
+            <td><span class="badge badge-active">Active</span></td>
+            <td>
+                <button class="btn-icon" title="View Details" onclick="viewStoredPlace(${place.id})"><i class="fas fa-eye"></i></button>
+                <button class="btn-icon btn-delete" title="Delete" onclick="deletePlace(${place.id})"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function viewStoredPlace(placeId) {
+    const place = adminLoadedPlaces.find(item => Number(item.id) === Number(placeId)) ||
+        getStoredPlaces().find(item => Number(item.id) === Number(placeId));
+    if (!place) {
+        openModal('Place Not Found', 'This place could not be found.');
+        return;
+    }
+
+    openModal(place.name, place.shortDesc || 'No description provided.');
+}
+
+async function approvePlace(placeId) {
+    try {
+        const ok = await postPlaceAction('approve', placeId);
+        if (!ok) return;
+        await renderSubmittedPlaces();
+        openModal('Place Approved', 'The place is now published on the website.');
+        setTimeout(closeModal, 2000);
+        return;
+    } catch (error) {
+        // Fall back to local data when PHP/MySQL is unavailable.
+    }
+
+    const storedPlaces = getStoredPlaces();
+    const place = storedPlaces.find(item => item.id === placeId);
+
+    if (!place) {
+        openModal('Place Not Found', 'This submission could not be found.');
+        return;
+    }
+
+    place.status = 'approved';
+    place.approvedAt = new Date().toISOString();
+    saveStoredPlaces(storedPlaces);
+    renderSubmittedPlaces();
+    updateDashboardStats();
+    openModal('Place Approved', `"${place.name}" is now published on the website.`);
+    setTimeout(closeModal, 2000);
+}
+
+async function rejectPlace(placeId) {
+    try {
+        const ok = await postPlaceAction('reject', placeId);
+        if (!ok) return;
+        await renderSubmittedPlaces();
+        openModal('Place Rejected', 'The place has been rejected.');
+        setTimeout(closeModal, 2000);
+        return;
+    } catch (error) {
+        // Fall back to local data when PHP/MySQL is unavailable.
+    }
+
+    const storedPlaces = getStoredPlaces();
+    const place = storedPlaces.find(item => item.id === placeId);
+
+    if (!place) {
+        openModal('Place Not Found', 'This submission could not be found.');
+        return;
+    }
+
+    place.status = 'rejected';
+    place.rejectedAt = new Date().toISOString();
+    saveStoredPlaces(storedPlaces);
+    renderSubmittedPlaces();
+    updateDashboardStats();
+    openModal('Place Rejected', `"${place.name}" has been rejected.`);
+    setTimeout(closeModal, 2000);
+}
+
+async function deletePlace(placeId) {
+    if (!confirm('Delete this place from the website?')) return;
+    try {
+        const ok = await postPlaceAction('delete', placeId);
+        if (!ok) return;
+        await renderSubmittedPlaces();
+        openModal('Place Deleted', 'The place has been removed.');
+        setTimeout(closeModal, 2000);
+        return;
+    } catch (error) {
+        // Fall back to local data when PHP/MySQL is unavailable.
+    }
+
+    const nextPlaces = getStoredPlaces().filter(place => place.id !== placeId);
+    saveStoredPlaces(nextPlaces);
+    renderSubmittedPlaces();
+    updateDashboardStats();
+    openModal('Place Deleted', 'The place has been removed.');
+    setTimeout(closeModal, 2000);
 }
 
 function setupNavigation() {

@@ -1,5 +1,11 @@
 <?php
 session_start();
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: ../public/HTML/login.html');
+    exit();
+}
+
 include 'db.php';
 
 $full_name = trim($_POST['full_name'] ?? '');

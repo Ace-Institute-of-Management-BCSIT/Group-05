@@ -39,6 +39,7 @@ let currentFilter = 'All';
 let searchQuery = '';
 let selectedPlace = null;
 let userRating = 0;
+const PLACE_STORAGE_KEY = 'nepalTravelPlaces';
 
 // Sample reviews
 const sampleReviews = [
@@ -96,12 +97,157 @@ const travelStatus = document.getElementById('travel-status');
 const travelBoardContent = document.getElementById('travel-board-content');
 
 // Initialize
-function init() {
+async function init() {
+    places = await loadApprovedPlaces();
     renderCategories();
-    // renderPlaces(); // Disabled - using static card layout for now
+    renderPlaces();
     updateStats();
     initializeUserProfile();
     attachEventListeners();
+}
+
+function getStoredPlaces() {
+    try {
+        return JSON.parse(localStorage.getItem(PLACE_STORAGE_KEY) || '[]');
+    } catch (error) {
+        return [];
+    }
+}
+
+function saveStoredPlaces(nextPlaces) {
+    localStorage.setItem(PLACE_STORAGE_KEY, JSON.stringify(nextPlaces));
+}
+
+function normalizePlace(place) {
+    return {
+        rating: 4.8,
+        reviews: 0,
+        category: 'Other',
+        budget: 0,
+        transport: 0,
+        stay: 0,
+        food: 0,
+        fee: 0,
+        localName: '',
+        tagline: '',
+        province: '',
+        district: '',
+        municipality: '',
+        shortDesc: '',
+        bestTime: '',
+        duration: '',
+        difficulty: 'Easy',
+        things: '',
+        tips: '',
+        startPoint: '',
+        routeDesc: '',
+        destination: '',
+        accomDesc: '',
+        hotels: '',
+        restaurants: '',
+        homestay: false,
+        parking: false,
+        toilets: false,
+        ...place,
+        location: place.location || [place.district, place.province].filter(Boolean).join(', ') || place.destination || 'Nepal',
+        status: place.status || 'approved'
+    };
+}
+
+function getApprovedPlacesFallback() {
+    const storedApproved = getStoredPlaces()
+        .filter(place => place.status === 'approved')
+        .map(normalizePlace);
+
+    return places.map(normalizePlace).concat(storedApproved);
+}
+
+async function loadApprovedPlaces() {
+    try {
+        const response = await fetch('../../PHP/places.php?action=approved', {
+            method: 'GET',
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            return places.map(normalizePlace).concat((data.places || []).map(normalizePlace));
+        }
+    } catch (error) {
+        // Fall back to local data when the PHP server/database is not reachable.
+    }
+
+    return getApprovedPlacesFallback();
+}
+
+function buildPlaceFromForm(formElement) {
+    const data = new FormData(formElement);
+    const field = name => (data.get(name) || '').toString().trim();
+    const numberField = name => Number(field(name)) || 0;
+
+    return normalizePlace({
+        id: Date.now(),
+        name: field('name'),
+        localName: field('localName'),
+        tagline: field('tagline'),
+        province: field('province'),
+        district: field('district'),
+        municipality: field('municipality'),
+        category: field('category'),
+        shortDesc: field('shortDesc'),
+        bestTime: field('bestTime'),
+        duration: field('duration'),
+        things: field('things'),
+        tips: field('tips'),
+        difficulty: field('difficulty') || 'Easy',
+        budget: numberField('budget'),
+        transport: numberField('transport'),
+        stay: numberField('stay'),
+        food: numberField('food'),
+        fee: numberField('fee'),
+        accomDesc: field('accomDesc'),
+        hotels: field('hotels'),
+        restaurants: field('restaurants'),
+        homestay: data.has('homestay'),
+        parking: data.has('parking'),
+        toilets: data.has('toilets'),
+        coverImage: coverFile ? coverFile.name : 'Submitted destination',
+        startPoint: field('start'),
+        routeDesc: field('routeDesc'),
+        destination: field('dest'),
+        submittedBy: localStorage.getItem('userName') || getCookie('userName') || 'Traveler',
+        submittedAt: new Date().toISOString(),
+        status: 'pending'
+    });
+}
+
+async function submitPlaceForApproval(formElement) {
+    const submittedPlace = buildPlaceFromForm(formElement);
+    const formData = new FormData(formElement);
+    formData.append('action', 'submit');
+    formData.append('coverImage', submittedPlace.coverImage);
+
+    try {
+        const response = await fetch('../../PHP/places.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+
+        if (response.status === 401) {
+            window.location.href = 'login.html';
+            return null;
+        }
+
+        if (!data.success) {
+            throw new Error(data.message || 'Unable to submit place.');
+        }
+
+        return { ...submittedPlace, id: data.id };
+    } catch (error) {
+        throw new Error(error.message || 'Unable to submit place. Please check Apache, MySQL, and login status.');
+    }
 }
 
 // Event Listeners
@@ -135,14 +281,16 @@ function attachEventListeners() {
     backBtn.addEventListener('click', closePlaceDetail);
     if (closeFormBtn) closeFormBtn.addEventListener('click', closeAddPlaceModal);
     clearFiltersBtn.addEventListener('click', clearFilters);
-    reviewForm.addEventListener('submit', handleReviewSubmit);
+    if (reviewForm) reviewForm.addEventListener('submit', handleReviewSubmit);
 
-    const starBtns = starRating.querySelectorAll('.star-btn');
-    starBtns.forEach(btn => {
-        btn.addEventListener('click', () => setRating(parseInt(btn.dataset.rating)));
-        btn.addEventListener('mouseenter', () => highlightStars(parseInt(btn.dataset.rating)));
-    });
-    starRating.addEventListener('mouseleave', () => highlightStars(userRating));
+    if (starRating) {
+        const starBtns = starRating.querySelectorAll('.star-btn');
+        starBtns.forEach(btn => {
+            btn.addEventListener('click', () => setRating(parseInt(btn.dataset.rating)));
+            btn.addEventListener('mouseenter', () => highlightStars(parseInt(btn.dataset.rating)));
+        });
+        starRating.addEventListener('mouseleave', () => highlightStars(userRating));
+    }
 
     addPlaceModal.addEventListener('click', (e) => {
         if (e.target === addPlaceModal) closeAddPlaceModal();
@@ -478,8 +626,10 @@ function getFilteredPlaces() {
     return places
         .filter(place => {
             const matchesCategory = currentFilter === 'All' || place.category === currentFilter;
+            const searchableLocation = place.location || [place.district, place.province].filter(Boolean).join(', ');
             const matchesSearch = place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                place.location.toLowerCase().includes(searchQuery.toLowerCase());
+                searchableLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                place.category.toLowerCase().includes(searchQuery.toLowerCase());
             return matchesCategory && matchesSearch;
         })
         .sort((a, b) => b.rating - a.rating);
@@ -595,7 +745,7 @@ function openPlaceDetail(id) {
     const noteBtn = document.getElementById('add-note-btn');
     const planBtn = document.getElementById('plan-trip-btn');
 
-    if (saveBtn) saveBtn.onclick = () => saveToCollection(selectedPlace.id);
+    if (saveBtn) saveBtn.onclick = () => savePlaceToCollection(selectedPlace.id);
     if (noteBtn) noteBtn.onclick = () => {
         const note = prompt('Add a private note for this place:');
         if (note) addNoteToPlace(selectedPlace.id, note);
@@ -835,7 +985,7 @@ if (form) {
     }
 
     // Submit
-    form.addEventListener('submit', e => {
+    form.addEventListener('submit', async e => {
         e.preventDefault();
         let all = true;
         for (let i = 1; i <= total; i++) {
@@ -846,7 +996,14 @@ if (form) {
             }
         }
         if (!all) return;
-        showToast('Destination published!', 'fa-check');
+        let submittedPlace = null;
+        try {
+            submittedPlace = await submitPlaceForApproval(form);
+        } catch (error) {
+            showToast(error.message || 'Unable to submit place.', 'fa-triangle-exclamation');
+        }
+        if (!submittedPlace) return;
+        showToast('Submitted for admin approval!', 'fa-check');
         form.reset();
         coverFile = null;
         galleryFiles = [];
