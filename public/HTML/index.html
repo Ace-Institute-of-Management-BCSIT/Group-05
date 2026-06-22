@@ -272,52 +272,11 @@
                 </div>
 
                 <div id="places-grid" class="places-grid">
-                    <!-- Place Card -->
-                    <article class="place-card">
-                        <!-- Cover Image -->
-                        <div class="place-image">
-                            <svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M3 20h18"></path>
-                                <path d="M5 20l4-9 3 5 3-4 4 8"></path>
-                                <circle cx="17" cy="6" r="2"></circle>
-                            </svg>
-                            <!-- Category Badge -->
-                            <span class="place-category">Viewpoint</span>
-                        </div>
-
-                        <!-- Card Bottom Info -->
-                        <div class="place-info">
-                            <div class="place-info-top">
-                                <h3 class="place-name">Khopra Danda</h3>
-                                <p class="place-location-info">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                        <circle cx="12" cy="10" r="3"></circle>
-                                    </svg>
-                                    Myagdi, Gandaki
-                                </p>
-                            </div>
-                            <div class="place-info-middle">
-                                <div class="place-footer-meta">
-                                    <span class="rating-badge">4.8 / 5</span>
-                                    <span class="reviews-count">
-                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                            <circle cx="9" cy="7" r="4"></circle>
-                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                                        </svg>
-                                        164 reviews
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="place-card-actions">
-                                <button class="btn-view-details" onclick="openPlaceDetail(1)">View Full Details</button>
-                                <button class="btn-save-place" type="button" onclick="event.stopPropagation(); savePlaceToCollection(1)">Save</button>
-                                <button class="btn-plan-place" type="button" onclick="event.stopPropagation(); organizeTrip(1)">Plan</button>
-                            </div>
-                        </div>
-                    </article>
+                    <!-- Places will be loaded dynamically from the database -->
+                    <div class="loading-placeholder" style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--color-primary);"></i>
+                        <p style="font-size: 1.1rem; font-weight: 500;">Loading adventure destinations...</p>
+                    </div>
                 </div>
 
                 <div id="no-results" class="no-results" style="display: none;">
@@ -566,6 +525,40 @@
                                 <span>Public Toilets Available</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Reviews Section -->
+                <div class="detail-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 8px;">
+                        <h2 style="margin:0;">Reviews <span id="review-count">(0)</span></h2>
+                        <span id="detail-average-rating" class="rating-badge">0.0 / 5</span>
+                    </div>
+
+                    <!-- Add Review Form -->
+                    <div id="add-review-container">
+                        <form id="review-form" class="review-form" style="margin-top: 1rem; border-top: 1px solid rgba(33, 79, 66, 0.1); padding-top: 1.5rem;">
+                            <h3>Leave a Review</h3>
+                            <div class="field" style="margin-bottom:12px;">
+                                <label style="margin-bottom:6px; display:block; font-weight: 500;">Your Rating</label>
+                                <div class="star-rating" id="star-rating" style="display:flex; gap:6px;">
+                                    <button type="button" class="star-btn" data-rating="1" style="background:none; border:none; font-size:2rem; cursor:pointer; color:var(--text-muted);">★</button>
+                                    <button type="button" class="star-btn" data-rating="2" style="background:none; border:none; font-size:2rem; cursor:pointer; color:var(--text-muted);">★</button>
+                                    <button type="button" class="star-btn" data-rating="3" style="background:none; border:none; font-size:2rem; cursor:pointer; color:var(--text-muted);">★</button>
+                                    <button type="button" class="star-btn" data-rating="4" style="background:none; border:none; font-size:2rem; cursor:pointer; color:var(--text-muted);">★</button>
+                                    <button type="button" class="star-btn" data-rating="5" style="background:none; border:none; font-size:2rem; cursor:pointer; color:var(--text-muted);">★</button>
+                                </div>
+                            </div>
+                            <div class="field" style="margin-bottom:12px;">
+                                <label for="review-text" style="margin-bottom:6px; display:block; font-weight: 500;">Comment</label>
+                                <textarea id="review-text" class="textarea" placeholder="Share your experience..." required style="min-height:80px; width:100%; border:1px solid rgba(33, 79, 66, 0.1); border-radius:8px; padding:12px; font-family:inherit; box-sizing:border-box; background:#fff; color:var(--text-primary);"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="margin-top:8px;">Submit Review</button>
+                        </form>
+                    </div>
+
+                    <div id="reviews-list" style="margin-top: 1.5rem;">
+                        <!-- Review items will be loaded dynamically -->
                     </div>
                 </div>
             </div>

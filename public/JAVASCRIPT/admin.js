@@ -198,17 +198,7 @@ function renderManagedPlaces(allPlaces = []) {
     if (!tbody) return;
 
     const approvedPlaces = allPlaces.filter(place => place.status === 'approved');
-    const defaultRows = `
-        <tr>
-            <td>Khopra Danda</td>
-            <td>Myagdi, Gandaki</td>
-            <td>System</td>
-            <td><span class="badge badge-active">Active</span></td>
-            <td><button class="btn-icon" title="View Details"><i class="fas fa-eye"></i></button></td>
-        </tr>
-    `;
-
-    tbody.innerHTML = defaultRows + approvedPlaces.map(place => `
+    tbody.innerHTML = approvedPlaces.map(place => `
         <tr>
             <td>${escapeHtml(place.name)}</td>
             <td>${escapeHtml([place.district, place.province].filter(Boolean).join(', ') || 'Nepal')}</td>
@@ -338,6 +328,10 @@ function setupNavigation() {
                 // Update page title
                 document.getElementById('pageTitle').textContent = 
                     link.querySelector('span').textContent;
+
+                if (sectionId === 'delete-reviews') {
+                    renderReviewsForAdmin();
+                }
             }
         });
     });
@@ -427,11 +421,29 @@ function viewContent(contentId) {
     setTimeout(closeModal, 2000);
 }
 
-// Review Management Functions
-function deleteReview(reviewId) {
-    if (confirm('Are you sure you want to delete this review? This action cannot be undone.')) {
-        openModal('Review Deleted', `Review "${reviewId}" has been permanently deleted.`);
-        setTimeout(closeModal, 2000);
+async function deleteReview(reviewId) {
+    if (!confirm('Are you sure you want to delete this review? This action cannot be undone.')) return;
+    try {
+        const formData = new FormData();
+        formData.append('action', 'delete_review');
+        formData.append('review_id', reviewId);
+
+        const response = await fetch('../../PHP/places.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            openModal('Review Deleted', 'The review has been permanently deleted.');
+            renderReviewsForAdmin();
+            setTimeout(closeModal, 2000);
+        } else {
+            alert(data.message || 'Unable to delete review.');
+        }
+    } catch (error) {
+        alert('Error deleting review: ' + error.message);
     }
 }
 
@@ -521,6 +533,53 @@ document.addEventListener('DOMContentLoaded', () => {
 // Confirm action function (used by modal)
 function confirmAction() {
     closeModal();
+}
+
+async function renderReviewsForAdmin() {
+    const list = document.querySelector('#delete-reviews .reviews-list');
+    if (!list) return;
+
+    try {
+        const response = await fetch('../../PHP/places.php?action=all_reviews', {
+            method: 'GET',
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            if (data.reviews.length === 0) {
+                list.innerHTML = `
+                    <div class="review-card approved" style="padding: 1.5rem; text-align: center; color: var(--text-muted);">
+                        <p style="margin: 0; font-size: 1.1rem; font-weight: 500;">No reviews available in the system.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = data.reviews.map(review => `
+                <div class="review-card flagged" style="margin-bottom: 1.5rem; padding: 1.5rem; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; background: #fff;">
+                    <div class="review-header" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 1rem;">
+                        <div>
+                            <h4 style="margin: 0 0 4px 0; font-size: 1.2rem; color: #111;">${escapeHtml(review.placeName)}</h4>
+                            <p style="margin: 0; font-size: 0.9rem; color: #666;">Reviewed by: <strong>${escapeHtml(review.fullName)}</strong> <small>(@${escapeHtml(review.username)})</small></p>
+                        </div>
+                        <span class="badge badge-flagged" style="background: rgba(45, 95, 77, 0.1); color: var(--color-primary); font-weight: 600; padding: 4px 10px; border-radius: 8px;">${review.rating} / 5 Stars</span>
+                    </div>
+                    <div class="review-body" style="margin-bottom: 1rem;">
+                        <p class="review-content" style="margin: 0 0 8px 0; color: #333; line-height: 1.5; font-style: italic;">"${escapeHtml(review.comment)}"</p>
+                        <p class="review-reason" style="margin: 0; font-size: 0.85rem; color: #888;"><strong>Submitted At:</strong> ${formatDate(review.createdAt)}</p>
+                    </div>
+                    <div class="review-actions">
+                        <button class="btn-delete" onclick="deleteReview(${review.id})" style="background: var(--form-danger, #c0392b); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-trash"></i> Delete Review
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        list.innerHTML = `<p style="color: var(--form-danger);">Error loading reviews: ${escapeHtml(error.message)}</p>`;
+    }
 }
 
 // Export admin functions for testing

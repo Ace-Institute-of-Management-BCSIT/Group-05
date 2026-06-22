@@ -1,39 +1,19 @@
-// Initial Data - Updated structure to match form fields
-let places = [
-    {
-        id: 1,
-        name: 'Khopra Danda',
-        localName: 'खोप्रा डाँडा',
-        tagline: 'Alpine meadow with panoramic mountain views above the clouds',
-        province: 'Gandaki',
-        district: 'Myagdi',
-        municipality: 'Annapurna RM',
-        category: 'Viewpoint',
-        shortDesc: 'A stunning high-altitude meadow offering breathtaking 360-degree views of the Annapurna, Dhaulagiri, and Nilgiri ranges. The experience of being above the clouds at sunrise is truly magical.',
-        bestTime: 'October - November, March - May',
-        duration: '3 days / 2 nights',
-        things: 'Sunrise hike, sunset watching, local tea houses, photography',
-        tips: 'Carry warm clothing, sunscreen, water. No mobile signal above 3000m. Respect the local community.',
-        difficulty: 'Moderate',
-        budget: 12000,
-        transport: 3000,
-        stay: 4000,
-        food: 3500,
-        fee: 500,
-        accomDesc: 'Community homestays and basic teahouses available along the route',
-        hotels: 'Pokhara (2 hotels)',
-        restaurants: 'Local teahouses and small eateries',
-        homestay: true,
-        parking: false,
-        toilets: true,
-        coverImage: 'Khopra Danda panoramic mountain view',
-        startPoint: 'Pokhara',
-        routeDesc: 'From Pokhara, take local bus to Baglung (3 hours), then jeep to Ghar (2 hours). Trek begins from Ghar - Day 1: Ghar to Poon Hill (4 hours). Day 2: Poon Hill to Khopra Danda (5 hours through rhododendron forest). Return via same route.',
-        destination: 'Khopra Danda viewpoint'
-    }
-];
+function escapeHtml(value = '') {
+    if (value === null || value === undefined) return '';
+    return value.toString().replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    }[char]));
+}
 
-const categories = ['All', 'Nature', 'Beach', 'Historical', 'Urban', 'Adventure', 'Cultural'];
+let places = [];
+
+const BASE_CATEGORIES = ['All', 'Hidden Village', 'Viewpoint', 'Waterfall', 'Trekking Route',
+    'Lake', 'Cultural Site', 'Monastery', 'Cave', 'Forest', 'Camping Spot', 'Homestay',
+    'Adventure', 'Nature', 'Beach', 'Historical', 'Urban', 'Cultural', 'Other'];
 
 let currentFilter = 'All';
 let searchQuery = '';
@@ -155,11 +135,9 @@ function normalizePlace(place) {
 }
 
 function getApprovedPlacesFallback() {
-    const storedApproved = getStoredPlaces()
+    return getStoredPlaces()
         .filter(place => place.status === 'approved')
         .map(normalizePlace);
-
-    return places.map(normalizePlace).concat(storedApproved);
 }
 
 async function loadApprovedPlaces() {
@@ -171,7 +149,7 @@ async function loadApprovedPlaces() {
         const data = await response.json();
 
         if (data.success) {
-            return places.map(normalizePlace).concat((data.places || []).map(normalizePlace));
+            return (data.places || []).map(normalizePlace);
         }
     } catch (error) {
         // Fall back to local data when the PHP server/database is not reachable.
@@ -557,7 +535,15 @@ function toggleMobileMenu() {
 
 // Categories
 function renderCategories() {
-    categoriesContainer.innerHTML = categories.map(cat => `
+    // Build category list from loaded places + base categories
+    const placeCategories = [...new Set(places.map(p => p.category).filter(Boolean))];
+    const allCategories = ['All', ...placeCategories.filter(c => !BASE_CATEGORIES.includes(c)),
+        ...BASE_CATEGORIES.filter(c => c !== 'All' && placeCategories.includes(c))];
+    // Deduplicate while preserving order
+    const seen = new Set();
+    const displayCategories = allCategories.filter(c => !seen.has(c) && seen.add(c));
+
+    categoriesContainer.innerHTML = displayCategories.map(cat => `
         <button class="category-btn ${cat === currentFilter ? 'active' : ''}"
                 onclick="setCategory('${cat}')">
             ${cat}
@@ -589,16 +575,16 @@ function renderPlaces() {
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                         <circle cx="12" cy="10" r="3"></circle>
                     </svg>
-                    <div class="place-category">${place.category}</div>
+                    <div class="place-category">${escapeHtml(place.category)}</div>
                 </div>
                 <div class="place-info">
-                    <h3 class="place-name">${place.name}</h3>
+                    <h3 class="place-name">${escapeHtml(place.name)}</h3>
                     <div class="place-location">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                             <circle cx="12" cy="10" r="3"></circle>
                         </svg>
-                        <span>${place.location}</span>
+                        <span>${escapeHtml(place.location)}</span>
                     </div>
                     <div class="place-meta">
                         <div class="place-rating">
@@ -753,6 +739,7 @@ function openPlaceDetail(id) {
     if (planBtn) planBtn.onclick = () => organizeTrip(selectedPlace.id);
 
     placeDetailModal.classList.add('active');
+    loadAndRenderReviews(selectedPlace.id);
 }
 
 function closePlaceDetail() {
@@ -760,36 +747,62 @@ function closePlaceDetail() {
     selectedPlace = null;
 }
 
-function renderReviews() {
-    document.getElementById('review-count').textContent = `(${sampleReviews.length})`;
-    document.getElementById('reviews-list').innerHTML = sampleReviews.map(review => `
-        <div class="review-item">
-            <div class="review-header">
-                <div class="review-avatar">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                </div>
-                <div class="review-info">
-                    <div class="review-top">
-                        <div>
-                            <h4 class="review-author">${review.author}</h4>
-                            <div class="review-date">${review.date}</div>
+async function loadAndRenderReviews(placeId) {
+    const addReviewContainer = document.getElementById('add-review-container');
+    if (addReviewContainer) {
+        addReviewContainer.style.display = isUserLoggedIn() ? 'block' : 'none';
+    }
+
+    try {
+        const response = await fetch(`../../PHP/places.php?action=get_reviews&place_id=${placeId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const list = document.getElementById('reviews-list');
+            const countEl = document.getElementById('review-count');
+            const avgEl = document.getElementById('detail-average-rating');
+            
+            if (countEl) countEl.textContent = `(${data.reviews.length})`;
+            
+            let avgRating = 0;
+            if (data.reviews.length > 0) {
+                const totalRating = data.reviews.reduce((sum, r) => sum + r.rating, 0);
+                avgRating = totalRating / data.reviews.length;
+            }
+            if (avgEl) avgEl.textContent = `${avgRating.toFixed(1)} / 5`;
+            
+            if (!list) return;
+            if (data.reviews.length === 0) {
+                list.innerHTML = `<p class="empty-state" style="color: var(--text-muted); text-align: center; padding: 1.5rem 0;">No reviews yet. Be the first to review this place!</p>`;
+                return;
+            }
+            
+            list.innerHTML = data.reviews.map(review => `
+                <div class="review-item">
+                    <div class="review-header">
+                        <div class="review-avatar">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
                         </div>
-                        <span class="rating-badge rating-badge-sm">${review.rating}/5</span>
+                        <div class="review-info">
+                            <div class="review-top">
+                                <div>
+                                    <h4 class="review-author" style="margin:0; font-size:1rem; color:var(--text-primary);">${escapeHtml(review.author)} <small style="color:var(--text-muted); font-weight:normal;">(@${escapeHtml(review.username)})</small></h4>
+                                    <div class="review-date" style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">${escapeHtml(new Date(review.date).toLocaleDateString())}</div>
+                                </div>
+                                <span class="rating-badge rating-badge-sm" style="font-size:0.85rem; padding:4px 8px; font-weight:600;">${review.rating} / 5</span>
+                            </div>
+                            <p class="review-text" style="margin:8px 0 0; color:var(--text-secondary); line-height:1.5;">${escapeHtml(review.comment)}</p>
+                        </div>
                     </div>
-                    <p class="review-text">${review.comment}</p>
-                    <button class="review-helpful">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                        </svg>
-                        <span>Helpful (${review.helpful})</span>
-                    </button>
                 </div>
-            </div>
-        </div>
-    `).join('');
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Error loading reviews:', error);
+    }
 }
 
 function setRating(rating) {
@@ -804,34 +817,45 @@ function highlightStars(rating) {
     });
 }
 
-function handleReviewSubmit(e) {
+async function handleReviewSubmit(e) {
     e.preventDefault();
     if (!isUserLoggedIn()) { window.location.href = 'login.html'; return; }
-    const reviewText = document.getElementById('review-text').value;
+    const reviewText = document.getElementById('review-text').value.trim();
 
     if (userRating === 0) {
         alert('Please select a rating');
         return;
     }
 
-    // Save review locally (fallback for demo)
-    const key = `reviews_${selectedPlace ? selectedPlace.id : 'global'}`;
-    const reviews = JSON.parse(localStorage.getItem(key) || '[]');
-    reviews.unshift({
-        id: Date.now(),
-        author: localStorage.getItem('userName') || getCookie('userName') || 'Anonymous',
-        rating: userRating,
-        date: new Date().toLocaleString(),
-        comment: reviewText,
-        helpful: 0
-    });
-    localStorage.setItem(key, JSON.stringify(reviews));
+    const formData = new FormData();
+    formData.append('action', 'submit_review');
+    formData.append('place_id', selectedPlace.id);
+    formData.append('rating', userRating);
+    formData.append('comment', reviewText);
 
-    showToast('Review submitted successfully!', 'fa-check');
-    userRating = 0;
-    highlightStars(0);
-    document.getElementById('review-text').value = '';
-    try { renderReviews(); } catch (err) { /* ignore if review list not present */ }
+    try {
+        const response = await fetch('../../PHP/places.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            showToastGlobal('Review submitted successfully!', 'fa-check');
+            userRating = 0;
+            highlightStars(0);
+            document.getElementById('review-text').value = '';
+            
+            await loadAndRenderReviews(selectedPlace.id);
+            places = await loadApprovedPlaces();
+            renderPlaces();
+        } else {
+            showToastGlobal(data.message || 'Unable to submit review.', 'fa-triangle-exclamation');
+        }
+    } catch (error) {
+        showToastGlobal('Error submitting review.', 'fa-triangle-exclamation');
+    }
 }
 
 // ===== FORM FUNCTIONALITY =====
@@ -1016,12 +1040,7 @@ if (form) {
     });
 
     function showToast(msg, icon) {
-        const t = document.getElementById('toast');
-        if (!t) return;
-        t.querySelector('div strong').textContent = msg;
-        t.querySelector('i').className = `fa-solid ${icon || 'fa-check'}`;
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2800);
+        showToastGlobal(msg, icon);
     }
 
     // Clear errors on input
@@ -1032,6 +1051,15 @@ if (form) {
             if (err) err.classList.remove('show');
         }
     });
+}
+
+function showToastGlobal(msg, icon) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.querySelector('div strong').textContent = msg;
+    t.querySelector('i').className = `fa-solid ${icon || 'fa-check'}`;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
 }
 
 // Start the app

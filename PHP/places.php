@@ -59,8 +59,8 @@ function row_to_place($row) {
         'status' => $row['status'],
         'submittedAt' => $row['submitted_at'],
         'approvedAt' => $row['approved_at'],
-        'rating' => 4.8,
-        'reviews' => 0
+        'rating' => (float) ($row['avg_rating'] ?? 0.0),
+        'reviews' => (int) ($row['review_count'] ?? 0)
     ];
 }
 
@@ -80,11 +80,15 @@ $action = $_POST['action'] ?? $_GET['action'] ?? 'approved';
 
 if ($action === 'approved') {
     $sql = "
-        SELECT places.*, users.full_name AS submitted_by_name
+        SELECT places.*, users.full_name AS submitted_by_name,
+               COALESCE(AVG(pr.rating), 0.0) AS avg_rating,
+               COUNT(pr.id) AS review_count
         FROM places
         LEFT JOIN users ON users.id = places.submitted_by
+        LEFT JOIN place_reviews pr ON pr.place_id = places.id
         WHERE places.status = 'approved'
-        ORDER BY places.approved_at DESC, places.submitted_at DESC
+        GROUP BY places.id
+        ORDER BY avg_rating DESC, places.approved_at DESC, places.submitted_at DESC
     ";
     $result = $conn->query($sql);
     $places = [];
@@ -99,7 +103,9 @@ if ($action === 'approved') {
 if ($action === 'pending') {
     require_admin();
     $sql = "
-        SELECT places.*, users.full_name AS submitted_by_name
+        SELECT places.*, users.full_name AS submitted_by_name,
+               0.0 AS avg_rating,
+               0 AS review_count
         FROM places
         LEFT JOIN users ON users.id = places.submitted_by
         WHERE places.status = 'pending'
@@ -118,10 +124,14 @@ if ($action === 'pending') {
 if ($action === 'all') {
     require_admin();
     $sql = "
-        SELECT places.*, users.full_name AS submitted_by_name
+        SELECT places.*, users.full_name AS submitted_by_name,
+               COALESCE(AVG(pr.rating), 0.0) AS avg_rating,
+               COUNT(pr.id) AS review_count
         FROM places
         LEFT JOIN users ON users.id = places.submitted_by
+        LEFT JOIN place_reviews pr ON pr.place_id = places.id
         WHERE places.status != 'rejected'
+        GROUP BY places.id
         ORDER BY places.submitted_at DESC
     ";
     $result = $conn->query($sql);
@@ -251,6 +261,103 @@ if ($action === 'approve' || $action === 'reject' || $action === 'delete') {
     $stmt->execute();
 
     respond(['success' => true, 'message' => $status === 'approved' ? 'Place approved.' : 'Place rejected.']);
+}
+
+if ($action === 'get_reviews') {
+    $placeId = (int) ($_POST['place_id'] ?? $_GET['place_id'] ?? 0);
+    if ($placeId <= 0) {
+        respond(['success' => false, 'message' => 'Invalid place.'], 400);
+    }
+    
+    $stmt = $conn->prepare("
+        SELECT r.*, u.username, u.full_name 
+        FROM place_reviews r
+        JOIN users u ON u.id = r.user_id
+        WHERE r.place_id = ?
+        ORDER BY r.created_at DESC
+    ");
+    $stmt->bind_param('i', $placeId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $reviews = [];
+    while ($row = $result->fetch_assoc()) {
+        $reviews[] = [
+            'id' => (int) $row['id'],
+            'username' => $row['username'],
+            'author' => $row['full_name'],
+            'rating' => (int) $row['rating'],
+            'comment' => $row['comment'],
+            'date' => $row['created_at'],
+            'helpful' => 0
+        ];
+    }
+    respond(['success' => true, 'reviews' => $reviews]);
+}
+
+if ($action === 'submit_review') {
+    require_login();
+    $placeId = (int) ($_POST['place_id'] ?? 0);
+    $rating = (int) ($_POST['rating'] ?? 0);
+    $comment = trim($_POST['comment'] ?? '');
+    $userId = (int) $_SESSION['id'];
+
+    if ($placeId <= 0 || $rating < 1 || $rating > 5 || $comment === '') {
+        respond(['success' => false, 'message' => 'Invalid rating or comment.'], 400);
+    }
+
+    $stmt = $conn->prepare("
+        INSERT INTO place_reviews (place_id, user_id, rating, comment) 
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE rating = VALUES(rating), comment = VALUES(comment)
+    ");
+    $stmt->bind_param('iiis', $placeId, $userId, $rating, $comment);
+    
+    if ($stmt->execute()) {
+        respond(['success' => true, 'message' => 'Review submitted successfully.']);
+    } else {
+        respond(['success' => false, 'message' => 'Unable to save review.'], 500);
+    }
+}
+
+if ($action === 'all_reviews') {
+    require_admin();
+    $result = $conn->query("
+        SELECT r.*, u.username, u.full_name, p.name AS place_name
+        FROM place_reviews r
+        JOIN users u ON u.id = r.user_id
+        JOIN places p ON p.id = r.place_id
+        ORDER BY r.created_at DESC
+    ");
+    $reviews = [];
+    while ($row = $result->fetch_assoc()) {
+        $reviews[] = [
+            'id' => (int) $row['id'],
+            'placeId' => (int) $row['place_id'],
+            'placeName' => $row['place_name'],
+            'username' => $row['username'],
+            'fullName' => $row['full_name'],
+            'rating' => (int) $row['rating'],
+            'comment' => $row['comment'],
+            'createdAt' => $row['created_at']
+        ];
+    }
+    respond(['success' => true, 'reviews' => $reviews]);
+}
+
+if ($action === 'delete_review') {
+    require_admin();
+    $reviewId = (int) ($_POST['review_id'] ?? 0);
+    if ($reviewId <= 0) {
+        respond(['success' => false, 'message' => 'Invalid review.'], 400);
+    }
+    
+    $stmt = $conn->prepare("DELETE FROM place_reviews WHERE id = ?");
+    $stmt->bind_param('i', $reviewId);
+    if ($stmt->execute()) {
+        respond(['success' => true, 'message' => 'Review deleted successfully.']);
+    } else {
+        respond(['success' => false, 'message' => 'Unable to delete review.'], 500);
+    }
 }
 
 respond(['success' => false, 'message' => 'Invalid action.'], 400);
