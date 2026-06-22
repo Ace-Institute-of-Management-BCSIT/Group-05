@@ -26,13 +26,22 @@ if ($result && $result->num_rows === 1) {
     $user = $result->fetch_assoc();
     $storedPassword = $user['password'];
 
-    if (password_verify($password, $storedPassword) || $password === $storedPassword) {
+    if (password_verify($password, $storedPassword)) {
+        session_regenerate_id(true);
         $_SESSION['id'] = $user['id'];
         $_SESSION['name'] = $user['full_name'];
         $_SESSION['role'] = $user['role'];
 
-        setcookie('userRole', $user['role'], time() + 3600, '/');
-        setcookie('userName', $user['full_name'], time() + 3600, '/');
+        $cookieOptions = [
+            'expires' => time() + 3600,
+            'path' => '/',
+            'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly' => false,
+            'samesite' => 'Lax'
+        ];
+
+        setcookie('userRole', $user['role'], $cookieOptions);
+        setcookie('userName', $user['full_name'], $cookieOptions);
 
         if ($user['role'] === 'admin') {
             header('Location: ../public/HTML/admin.html');

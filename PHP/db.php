@@ -104,6 +104,24 @@ $conn->query("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
+$conn->query("
+    CREATE TABLE IF NOT EXISTS place_reviews (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        place_id INT NOT NULL,
+        user_id INT NOT NULL,
+        rating TINYINT NOT NULL,
+        comment TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_reviews_place FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE,
+        CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        CONSTRAINT chk_reviews_rating CHECK (rating BETWEEN 1 AND 5),
+        UNIQUE KEY uniq_place_user (place_id, user_id),
+        INDEX idx_reviews_place (place_id),
+        INDEX idx_reviews_created (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+");
+
 $adminEmail = 'admin@example.com';
 $adminCheck = $conn->prepare("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
 $adminCheck->execute();

@@ -1,37 +1,4 @@
-// Initial Data - Updated structure to match form fields
-let places = [
-    {
-        id: 1,
-        name: 'Khopra Danda',
-        localName: 'खोप्रा डाँडा',
-        tagline: 'Alpine meadow with panoramic mountain views above the clouds',
-        province: 'Gandaki',
-        district: 'Myagdi',
-        municipality: 'Annapurna RM',
-        category: 'Viewpoint',
-        shortDesc: 'A stunning high-altitude meadow offering breathtaking 360-degree views of the Annapurna, Dhaulagiri, and Nilgiri ranges. The experience of being above the clouds at sunrise is truly magical.',
-        bestTime: 'October - November, March - May',
-        duration: '3 days / 2 nights',
-        things: 'Sunrise hike, sunset watching, local tea houses, photography',
-        tips: 'Carry warm clothing, sunscreen, water. No mobile signal above 3000m. Respect the local community.',
-        difficulty: 'Moderate',
-        budget: 12000,
-        transport: 3000,
-        stay: 4000,
-        food: 3500,
-        fee: 500,
-        accomDesc: 'Community homestays and basic teahouses available along the route',
-        hotels: 'Pokhara (2 hotels)',
-        restaurants: 'Local teahouses and small eateries',
-        homestay: true,
-        parking: false,
-        toilets: true,
-        coverImage: 'Khopra Danda panoramic mountain view',
-        startPoint: 'Pokhara',
-        routeDesc: 'From Pokhara, take local bus to Baglung (3 hours), then jeep to Ghar (2 hours). Trek begins from Ghar - Day 1: Ghar to Poon Hill (4 hours). Day 2: Poon Hill to Khopra Danda (5 hours through rhododendron forest). Return via same route.',
-        destination: 'Khopra Danda viewpoint'
-    }
-];
+let places = [];
 
 const categories = ['All', 'Nature', 'Beach', 'Historical', 'Urban', 'Adventure', 'Cultural'];
 
@@ -39,35 +6,8 @@ let currentFilter = 'All';
 let searchQuery = '';
 let selectedPlace = null;
 let userRating = 0;
-const PLACE_STORAGE_KEY = 'nepalTravelPlaces';
 
-// Sample reviews
-const sampleReviews = [
-    {
-        id: 1,
-        author: 'Sarah Johnson',
-        rating: 5,
-        date: '2 weeks ago',
-        comment: 'Absolutely stunning! The scenery was breathtaking and the local culture was so welcoming. A must-visit destination for any traveler.',
-        helpful: 24
-    },
-    {
-        id: 2,
-        author: 'Michael Chen',
-        rating: 4,
-        date: '1 month ago',
-        comment: 'Great place with amazing views. The hiking trails are well-maintained and offer spectacular vistas. Would definitely recommend!',
-        helpful: 15
-    },
-    {
-        id: 3,
-        author: 'Emma Williams',
-        rating: 5,
-        date: '2 months ago',
-        comment: 'One of the best experiences of my life! The natural beauty combined with rich history makes this place truly special.',
-        helpful: 31
-    }
-];
+let currentPlaceReviews = [];
 
 // DOM Elements
 const loginPage = document.getElementById('login-page');
@@ -98,7 +38,12 @@ const travelBoardContent = document.getElementById('travel-board-content');
 
 // Initialize
 async function init() {
-    places = await loadApprovedPlaces();
+    try {
+        places = await loadApprovedPlaces();
+    } catch (error) {
+        places = [];
+    }
+    refreshCategories();
     renderCategories();
     renderPlaces();
     updateStats();
@@ -106,21 +51,40 @@ async function init() {
     attachEventListeners();
 }
 
-function getStoredPlaces() {
-    try {
-        return JSON.parse(localStorage.getItem(PLACE_STORAGE_KEY) || '[]');
-    } catch (error) {
-        return [];
-    }
+function escapeHtml(value = '') {
+    return value.toString().replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    }[char]));
 }
 
-function saveStoredPlaces(nextPlaces) {
-    localStorage.setItem(PLACE_STORAGE_KEY, JSON.stringify(nextPlaces));
+function formatDate(value) {
+    if (!value) return 'Unknown';
+    return new Date(value).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
+function refreshCategories() {
+    const dynamicCategories = Array.from(
+        new Set(
+            places
+                .map(place => place.category)
+                .filter(Boolean)
+        )
+    ).sort((a, b) => a.localeCompare(b));
+
+    categories.splice(0, categories.length, 'All', ...dynamicCategories);
 }
 
 function normalizePlace(place) {
     return {
-        rating: 4.8,
+        rating: 0,
         reviews: 0,
         category: 'Other',
         budget: 0,
@@ -154,30 +118,18 @@ function normalizePlace(place) {
     };
 }
 
-function getApprovedPlacesFallback() {
-    const storedApproved = getStoredPlaces()
-        .filter(place => place.status === 'approved')
-        .map(normalizePlace);
-
-    return places.map(normalizePlace).concat(storedApproved);
-}
-
 async function loadApprovedPlaces() {
-    try {
-        const response = await fetch('../../PHP/places.php?action=approved', {
-            method: 'GET',
-            credentials: 'same-origin'
-        });
-        const data = await response.json();
+    const response = await fetch('../../PHP/places.php?action=approved', {
+        method: 'GET',
+        credentials: 'same-origin'
+    });
+    const data = await response.json();
 
-        if (data.success) {
-            return places.map(normalizePlace).concat((data.places || []).map(normalizePlace));
-        }
-    } catch (error) {
-        // Fall back to local data when the PHP server/database is not reachable.
+    if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Unable to load approved places.');
     }
 
-    return getApprovedPlacesFallback();
+    return (data.places || []).map(normalizePlace);
 }
 
 function buildPlaceFromForm(formElement) {
@@ -278,9 +230,9 @@ function attachEventListeners() {
         btn.addEventListener('click', openAddPlaceModal);
     });
 
-    backBtn.addEventListener('click', closePlaceDetail);
+    if (backBtn) backBtn.addEventListener('click', closePlaceDetail);
     if (closeFormBtn) closeFormBtn.addEventListener('click', closeAddPlaceModal);
-    clearFiltersBtn.addEventListener('click', clearFilters);
+    if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearFilters);
     if (reviewForm) reviewForm.addEventListener('submit', handleReviewSubmit);
 
     if (starRating) {
@@ -292,12 +244,16 @@ function attachEventListeners() {
         starRating.addEventListener('mouseleave', () => highlightStars(userRating));
     }
 
-    addPlaceModal.addEventListener('click', (e) => {
-        if (e.target === addPlaceModal) closeAddPlaceModal();
-    });
-    placeDetailModal.addEventListener('click', (e) => {
-        if (e.target === placeDetailModal) closePlaceDetail();
-    });
+    if (addPlaceModal) {
+        addPlaceModal.addEventListener('click', (e) => {
+            if (e.target === addPlaceModal) closeAddPlaceModal();
+        });
+    }
+    if (placeDetailModal) {
+        placeDetailModal.addEventListener('click', (e) => {
+            if (e.target === placeDetailModal) closePlaceDetail();
+        });
+    }
 }
 
 // Auth Functions
@@ -426,7 +382,7 @@ function updateTravelBoard(feature = 'saved') {
                 } else {
                     travelBoardContent.innerHTML = saved.map(item => {
                         const place = places.find(p => p.id === item.place_id);
-                        return `<div class="travel-board-item">💾 ${place ? place.name : `Place ${item.place_id}`}</div>`;
+                        return `<div class="travel-board-item">💾 ${escapeHtml(place ? place.name : `Place ${item.place_id}`)}</div>`;
                     }).join('');
                 }
                 setTravelStatus('Your saved places are ready for the next trip.');
@@ -436,7 +392,7 @@ function updateTravelBoard(feature = 'saved') {
                 } else {
                     travelBoardContent.innerHTML = trips.map(item => {
                         const place = places.find(p => p.id === item.place_id);
-                        return `<div class="travel-board-item">🗓️ ${place ? place.name : `Place ${item.place_id}`}</div>`;
+                        return `<div class="travel-board-item">🗓️ ${escapeHtml(place ? place.name : `Place ${item.place_id}`)}</div>`;
                     }).join('');
                 }
                 setTravelStatus('Your future trips are ready to review.');
@@ -444,7 +400,7 @@ function updateTravelBoard(feature = 'saved') {
                 if (notes.length === 0) {
                     travelBoardContent.innerHTML = '<p class="empty-state">No trip notes yet.</p>';
                 } else {
-                    travelBoardContent.innerHTML = notes.map(note => `<div class="travel-board-item">📝 ${note.note_text}</div>`).join('');
+                    travelBoardContent.innerHTML = notes.map(note => `<div class="travel-board-item">📝 ${escapeHtml(note.note_text)}</div>`).join('');
                 }
                 setTravelStatus('Your notes are stored here for later.');
             } else {
@@ -559,8 +515,8 @@ function toggleMobileMenu() {
 function renderCategories() {
     categoriesContainer.innerHTML = categories.map(cat => `
         <button class="category-btn ${cat === currentFilter ? 'active' : ''}"
-                onclick="setCategory('${cat}')">
-            ${cat}
+                onclick="setCategory(${JSON.stringify(cat)})">
+            ${escapeHtml(cat)}
         </button>
     `).join('');
 }
@@ -589,20 +545,20 @@ function renderPlaces() {
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                         <circle cx="12" cy="10" r="3"></circle>
                     </svg>
-                    <div class="place-category">${place.category}</div>
+                    <div class="place-category">${escapeHtml(place.category)}</div>
                 </div>
                 <div class="place-info">
-                    <h3 class="place-name">${place.name}</h3>
+                    <h3 class="place-name">${escapeHtml(place.name)}</h3>
                     <div class="place-location">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                             <circle cx="12" cy="10" r="3"></circle>
                         </svg>
-                        <span>${place.location}</span>
+                        <span>${escapeHtml(place.location)}</span>
                     </div>
                     <div class="place-meta">
                         <div class="place-rating">
-                            <span class="rating-badge">${place.rating.toFixed(1)} / 5</span>
+                            <span class="rating-badge">${Number(place.rating || 0).toFixed(1)} / 5</span>
                         </div>
                         <div class="place-reviews">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -611,7 +567,7 @@ function renderPlaces() {
                                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                             </svg>
-                            <span>${place.reviews} reviews</span>
+                            <span>${Number(place.reviews || 0)} reviews</span>
                         </div>
                     </div>
                 </div>
@@ -632,7 +588,7 @@ function getFilteredPlaces() {
                 place.category.toLowerCase().includes(searchQuery.toLowerCase());
             return matchesCategory && matchesSearch;
         })
-        .sort((a, b) => b.rating - a.rating);
+        .sort((a, b) => (Number(b.rating || 0) - Number(a.rating || 0)) || (Number(b.reviews || 0) - Number(a.reviews || 0)));
 }
 
 function filterPlaces() {
@@ -656,7 +612,18 @@ function updateSectionHeader(count) {
 }
 
 function updateStats() {
-    document.getElementById('stat-places').textContent = `${places.length}+`;
+    const totalPlaces = places.length;
+    const totalReviews = places.reduce((sum, place) => sum + Number(place.reviews || 0), 0);
+    const totalWeighted = places.reduce((sum, place) => sum + (Number(place.rating || 0) * Number(place.reviews || 0)), 0);
+    const averageRating = totalReviews > 0 ? (totalWeighted / totalReviews) : 0;
+
+    const placesEl = document.getElementById('stat-places');
+    const reviewsEl = document.getElementById('stat-reviews');
+    const avgEl = document.getElementById('stat-avg-rating');
+
+    if (placesEl) placesEl.textContent = `${totalPlaces}`;
+    if (reviewsEl) reviewsEl.textContent = `${totalReviews}`;
+    if (avgEl) avgEl.textContent = averageRating.toFixed(1);
 }
 
 function openAddPlaceModal() {
@@ -664,11 +631,13 @@ function openAddPlaceModal() {
         window.location.href = 'login.html';
         return;
     }
+    if (!addPlaceModal) return;
     addPlaceModal.classList.add('active');
-    mobileMenu.classList.remove('active');
+    if (mobileMenu) mobileMenu.classList.remove('active');
 }
 
 function closeAddPlaceModal() {
+    if (!addPlaceModal) return;
     addPlaceModal.classList.remove('active');
 }
 
@@ -678,33 +647,39 @@ function openPlaceDetail(id) {
     if (!selectedPlace) return;
 
     // Header info
-    document.getElementById('detail-name').textContent = selectedPlace.name;
-    document.getElementById('detail-local-name').textContent = selectedPlace.localName;
-    document.getElementById('detail-tagline').textContent = selectedPlace.tagline;
+    document.getElementById('detail-name').textContent = selectedPlace.name || 'Selected Place';
+    document.getElementById('detail-local-name').textContent = selectedPlace.localName || '';
+    document.getElementById('detail-tagline').textContent = selectedPlace.tagline || '';
+
+    const detailRating = document.getElementById('detail-rating-value');
+    const detailReviewCount = document.getElementById('detail-review-count');
+    if (detailRating) detailRating.textContent = Number(selectedPlace.rating || 0).toFixed(1);
+    if (detailReviewCount) detailReviewCount.textContent = `${Number(selectedPlace.reviews || 0)}`;
 
     // Location info
-    document.getElementById('detail-location').textContent = `${selectedPlace.district}, ${selectedPlace.province}`;
-    document.getElementById('detail-location-full').textContent = `${selectedPlace.municipality}, ${selectedPlace.province} Province`;
+    const districtProvince = [selectedPlace.district, selectedPlace.province].filter(Boolean).join(', ');
+    document.getElementById('detail-location').textContent = districtProvince || 'Nepal';
+    document.getElementById('detail-location-full').textContent = [selectedPlace.municipality, selectedPlace.province].filter(Boolean).join(', ');
 
     // About
-    document.getElementById('detail-desc').textContent = selectedPlace.shortDesc;
+    document.getElementById('detail-desc').textContent = selectedPlace.shortDesc || '-';
 
     // Trip Information
-    document.getElementById('detail-best-time').textContent = selectedPlace.bestTime;
-    document.getElementById('detail-duration').textContent = selectedPlace.duration;
-    document.getElementById('detail-difficulty').textContent = selectedPlace.difficulty;
-    document.getElementById('detail-category').textContent = selectedPlace.category;
+    document.getElementById('detail-best-time').textContent = selectedPlace.bestTime || '-';
+    document.getElementById('detail-duration').textContent = selectedPlace.duration || '-';
+    document.getElementById('detail-difficulty').textContent = selectedPlace.difficulty || '-';
+    document.getElementById('detail-category').textContent = selectedPlace.category || '-';
 
     // Things to Do
-    document.getElementById('detail-things').textContent = selectedPlace.things;
+    document.getElementById('detail-things').textContent = selectedPlace.things || '-';
 
     // Tips
-    document.getElementById('detail-tips').textContent = selectedPlace.tips;
+    document.getElementById('detail-tips').textContent = selectedPlace.tips || '-';
 
     // Route
-    document.getElementById('detail-start').textContent = selectedPlace.startPoint;
-    document.getElementById('detail-route').textContent = selectedPlace.routeDesc;
-    document.getElementById('detail-dest').textContent = selectedPlace.destination;
+    document.getElementById('detail-start').textContent = selectedPlace.startPoint || '-';
+    document.getElementById('detail-route').textContent = selectedPlace.routeDesc || '-';
+    document.getElementById('detail-dest').textContent = selectedPlace.destination || '-';
 
     // Budget
     document.getElementById('detail-budget').textContent = `NPR ${selectedPlace.budget.toLocaleString()}`;
@@ -714,9 +689,9 @@ function openPlaceDetail(id) {
     document.getElementById('detail-fee').textContent = `NPR ${selectedPlace.fee.toLocaleString()}`;
 
     // Facilities
-    document.getElementById('detail-accom').textContent = selectedPlace.accomDesc;
-    document.getElementById('detail-hotels').textContent = selectedPlace.hotels;
-    document.getElementById('detail-restaurants').textContent = selectedPlace.restaurants;
+    document.getElementById('detail-accom').textContent = selectedPlace.accomDesc || '-';
+    document.getElementById('detail-hotels').textContent = selectedPlace.hotels || '-';
+    document.getElementById('detail-restaurants').textContent = selectedPlace.restaurants || '-';
 
     // Features
     document.getElementById('feature-homestay').style.display = selectedPlace.homestay ? 'flex' : 'none';
@@ -752,17 +727,52 @@ function openPlaceDetail(id) {
     };
     if (planBtn) planBtn.onclick = () => organizeTrip(selectedPlace.id);
 
+    loadPlaceReviews(selectedPlace.id);
+    userRating = 0;
+    highlightStars(0);
+    const reviewText = document.getElementById('review-text');
+    if (reviewText) reviewText.value = '';
+
     placeDetailModal.classList.add('active');
 }
 
 function closePlaceDetail() {
     placeDetailModal.classList.remove('active');
     selectedPlace = null;
+    currentPlaceReviews = [];
+}
+
+async function loadPlaceReviews(placeId) {
+    try {
+        const response = await fetch(`../../PHP/places.php?action=reviews&place_id=${encodeURIComponent(placeId)}`, {
+            method: 'GET',
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Unable to load reviews.');
+        }
+        currentPlaceReviews = data.reviews || [];
+    } catch (error) {
+        currentPlaceReviews = [];
+    }
+
+    renderReviews();
 }
 
 function renderReviews() {
-    document.getElementById('review-count').textContent = `(${sampleReviews.length})`;
-    document.getElementById('reviews-list').innerHTML = sampleReviews.map(review => `
+    const reviewCount = document.getElementById('review-count');
+    const reviewsList = document.getElementById('reviews-list');
+    if (!reviewCount || !reviewsList) return;
+
+    reviewCount.textContent = `(${currentPlaceReviews.length})`;
+
+    if (currentPlaceReviews.length === 0) {
+        reviewsList.innerHTML = '<p class="empty-state">No reviews yet. Be the first to review this place.</p>';
+        return;
+    }
+
+    reviewsList.innerHTML = currentPlaceReviews.map(review => `
         <div class="review-item">
             <div class="review-header">
                 <div class="review-avatar">
@@ -774,18 +784,12 @@ function renderReviews() {
                 <div class="review-info">
                     <div class="review-top">
                         <div>
-                            <h4 class="review-author">${review.author}</h4>
-                            <div class="review-date">${review.date}</div>
+                            <h4 class="review-author">${escapeHtml(review.author || 'Traveler')}</h4>
+                            <div class="review-date">${formatDate(review.createdAt)}</div>
                         </div>
-                        <span class="rating-badge rating-badge-sm">${review.rating}/5</span>
+                        <span class="rating-badge rating-badge-sm">${Number(review.rating || 0)}/5</span>
                     </div>
-                    <p class="review-text">${review.comment}</p>
-                    <button class="review-helpful">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                        </svg>
-                        <span>Helpful (${review.helpful})</span>
-                    </button>
+                    <p class="review-text">${escapeHtml(review.comment || '')}</p>
                 </div>
             </div>
         </div>
@@ -798,15 +802,17 @@ function setRating(rating) {
 }
 
 function highlightStars(rating) {
+    if (!starRating) return;
     const starBtns = starRating.querySelectorAll('.star-btn');
     starBtns.forEach((btn, index) => {
         btn.classList.toggle('active', index < rating);
     });
 }
 
-function handleReviewSubmit(e) {
+async function handleReviewSubmit(e) {
     e.preventDefault();
     if (!isUserLoggedIn()) { window.location.href = 'login.html'; return; }
+    if (!selectedPlace) return;
     const reviewText = document.getElementById('review-text').value;
 
     if (userRating === 0) {
@@ -814,24 +820,41 @@ function handleReviewSubmit(e) {
         return;
     }
 
-    // Save review locally (fallback for demo)
-    const key = `reviews_${selectedPlace ? selectedPlace.id : 'global'}`;
-    const reviews = JSON.parse(localStorage.getItem(key) || '[]');
-    reviews.unshift({
-        id: Date.now(),
-        author: localStorage.getItem('userName') || getCookie('userName') || 'Anonymous',
-        rating: userRating,
-        date: new Date().toLocaleString(),
-        comment: reviewText,
-        helpful: 0
-    });
-    localStorage.setItem(key, JSON.stringify(reviews));
+    const formData = new FormData();
+    formData.append('action', 'add_review');
+    formData.append('place_id', selectedPlace.id);
+    formData.append('rating', userRating);
+    formData.append('comment', reviewText.trim());
 
-    showToast('Review submitted successfully!', 'fa-check');
+    const response = await fetch('../../PHP/places.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    });
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+        alert(data.message || 'Unable to submit review.');
+        return;
+    }
+
+    try {
+        places = await loadApprovedPlaces();
+        refreshCategories();
+        renderCategories();
+        renderPlaces();
+        selectedPlace = places.find(place => Number(place.id) === Number(selectedPlace.id)) || selectedPlace;
+    } catch (error) {
+        // Keep current UI state if place reload fails.
+    }
+    await loadPlaceReviews(selectedPlace.id);
+    updateStats();
+    if (typeof showToast === 'function') {
+        showToast('Review submitted successfully!', 'fa-check');
+    }
     userRating = 0;
     highlightStars(0);
     document.getElementById('review-text').value = '';
-    try { renderReviews(); } catch (err) { /* ignore if review list not present */ }
 }
 
 // ===== FORM FUNCTIONALITY =====

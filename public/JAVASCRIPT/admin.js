@@ -1,31 +1,29 @@
 // Admin Dashboard JavaScript
-const PLACE_STORAGE_KEY = 'nepalTravelPlaces';
 let adminLoadedPlaces = [];
 
 document.addEventListener('DOMContentLoaded', function() {
-    initializeAdminDashboard();
+    initializeAdminDashboard().catch((error) => {
+        if (error?.message === 'Admin access required.') {
+            alert('Access Denied! Admin access required.');
+            window.location.href = '../HTML/login.html';
+            return;
+        }
+        alert('Unable to load admin data right now.');
+    });
 });
 
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) {
-        return decodeURIComponent(parts.pop().split(';').shift());
-    }
-    return '';
-}
+async function initializeAdminDashboard() {
+    const response = await fetch('../../PHP/places.php?action=session', {
+        method: 'GET',
+        credentials: 'same-origin'
+    });
+    const data = await response.json();
 
-function initializeAdminDashboard() {
-    const userRole = localStorage.getItem('userRole') || getCookie('userRole');
-    const isAdmin = localStorage.getItem('isAdmin') === 'true' || userRole === 'admin' || getCookie('userRole') === 'admin';
-    
-    if (!isAdmin) {
-        alert('Access Denied! Admin access required.');
-        window.location.href = '../HTML/login.html';
-        return;
+    if (!response.ok || !data.success || data.user?.role !== 'admin') {
+        throw new Error('Admin access required.');
     }
 
-    const adminName = localStorage.getItem('adminName') || getCookie('userName') || 'Admin User';
+    const adminName = data.user?.name || 'Admin User';
     document.getElementById('adminName').textContent = adminName;
 
     // Navigation
@@ -40,19 +38,7 @@ function initializeAdminDashboard() {
     // Modal functionality
     setupModal();
 
-    renderSubmittedPlaces();
-}
-
-function getStoredPlaces() {
-    try {
-        return JSON.parse(localStorage.getItem(PLACE_STORAGE_KEY) || '[]');
-    } catch (error) {
-        return [];
-    }
-}
-
-function saveStoredPlaces(places) {
-    localStorage.setItem(PLACE_STORAGE_KEY, JSON.stringify(places));
+    await renderSubmittedPlaces();
 }
 
 async function fetchPlaces(action) {
@@ -72,6 +58,49 @@ async function fetchPlaces(action) {
     }
 
     return data.places || [];
+}
+
+async function fetchReviews() {
+    const response = await fetch('../../PHP/places.php?action=all_reviews', {
+        method: 'GET',
+        credentials: 'same-origin'
+    });
+    const data = await response.json();
+
+    if (response.status === 401 || response.status === 403) {
+        window.location.href = '../HTML/login.html';
+        return [];
+    }
+
+    if (!data.success) {
+        throw new Error(data.message || 'Unable to load reviews.');
+    }
+
+    return data.reviews || [];
+}
+
+async function postReviewDelete(reviewId) {
+    const formData = new FormData();
+    formData.append('action', 'delete_review');
+    formData.append('review_id', reviewId);
+
+    const response = await fetch('../../PHP/places.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    });
+    const data = await response.json();
+
+    if (response.status === 401 || response.status === 403) {
+        window.location.href = '../HTML/login.html';
+        return false;
+    }
+
+    if (!data.success) {
+        throw new Error(data.message || 'Unable to delete review.');
+    }
+
+    return true;
 }
 
 async function postPlaceAction(action, placeId) {
@@ -117,36 +146,29 @@ function formatDate(value) {
     });
 }
 
-function updateDashboardStats(pendingPlaces = [], allPlaces = []) {
+function updateDashboardStats(pendingPlaces = [], allPlaces = [], reviews = []) {
     const pendingCount = pendingPlaces.length;
     const approvedCount = allPlaces.filter(place => place.status === 'approved').length;
     const statNumbers = document.querySelectorAll('.stat-number');
 
-    if (statNumbers[0]) statNumbers[0].textContent = 1 + approvedCount;
+    if (statNumbers[0]) statNumbers[0].textContent = `${approvedCount}`;
+    if (statNumbers[3]) statNumbers[3].textContent = `${reviews.length}`;
     const pendingLabel = document.querySelector('.stat-icon.photos')?.closest('.stat-card')?.querySelector('.stat-label');
     if (pendingLabel) pendingLabel.textContent = `Pending verification: ${pendingCount}`;
 }
 
 async function renderSubmittedPlaces() {
-    try {
-        const [pendingPlaces, allPlaces] = await Promise.all([
-            fetchPlaces('pending'),
-            fetchPlaces('all')
-        ]);
+    const [pendingPlaces, allPlaces, reviews] = await Promise.all([
+        fetchPlaces('pending'),
+        fetchPlaces('all'),
+        fetchReviews()
+    ]);
 
-        adminLoadedPlaces = pendingPlaces.concat(allPlaces);
-        renderPendingSubmissions(pendingPlaces);
-        renderManagedPlaces(allPlaces);
-        updateDashboardStats(pendingPlaces, allPlaces);
-    } catch (error) {
-        const storedPlaces = getStoredPlaces();
-        const pendingPlaces = storedPlaces.filter(place => place.status === 'pending');
-        const allPlaces = storedPlaces.filter(place => place.status !== 'rejected');
-        adminLoadedPlaces = pendingPlaces.concat(allPlaces);
-        renderPendingSubmissions(pendingPlaces);
-        renderManagedPlaces(allPlaces);
-        updateDashboardStats(pendingPlaces, allPlaces);
-    }
+    adminLoadedPlaces = pendingPlaces.concat(allPlaces);
+    renderPendingSubmissions(pendingPlaces);
+    renderManagedPlaces(allPlaces);
+    renderAdminReviews(reviews);
+    updateDashboardStats(pendingPlaces, allPlaces, reviews);
 }
 
 function renderPendingSubmissions(pendingPlaces = []) {
@@ -198,17 +220,16 @@ function renderManagedPlaces(allPlaces = []) {
     if (!tbody) return;
 
     const approvedPlaces = allPlaces.filter(place => place.status === 'approved');
-    const defaultRows = `
-        <tr>
-            <td>Khopra Danda</td>
-            <td>Myagdi, Gandaki</td>
-            <td>System</td>
-            <td><span class="badge badge-active">Active</span></td>
-            <td><button class="btn-icon" title="View Details"><i class="fas fa-eye"></i></button></td>
-        </tr>
-    `;
+    if (approvedPlaces.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5">No approved places yet.</td>
+            </tr>
+        `;
+        return;
+    }
 
-    tbody.innerHTML = defaultRows + approvedPlaces.map(place => `
+    tbody.innerHTML = approvedPlaces.map(place => `
         <tr>
             <td>${escapeHtml(place.name)}</td>
             <td>${escapeHtml([place.district, place.province].filter(Boolean).join(', ') || 'Nepal')}</td>
@@ -223,14 +244,54 @@ function renderManagedPlaces(allPlaces = []) {
 }
 
 function viewStoredPlace(placeId) {
-    const place = adminLoadedPlaces.find(item => Number(item.id) === Number(placeId)) ||
-        getStoredPlaces().find(item => Number(item.id) === Number(placeId));
+    const place = adminLoadedPlaces.find(item => Number(item.id) === Number(placeId));
     if (!place) {
         openModal('Place Not Found', 'This place could not be found.');
         return;
     }
 
     openModal(place.name, place.shortDesc || 'No description provided.');
+}
+
+function renderAdminReviews(reviews = []) {
+    const reviewList = document.querySelector('#delete-reviews .reviews-list');
+    if (!reviewList) return;
+
+    if (reviews.length === 0) {
+        reviewList.innerHTML = `
+            <div class="review-card approved">
+                <div class="review-header">
+                    <div>
+                        <h4>No Reviews Yet</h4>
+                        <p>Reviews posted by users will appear here.</p>
+                    </div>
+                    <span class="badge badge-active">All Clear</span>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    reviewList.innerHTML = reviews.map(review => `
+        <div class="review-card approved">
+            <div class="review-header">
+                <div>
+                    <h4>${escapeHtml(review.placeName || 'Place')}</h4>
+                    <p>Reviewed by: <strong>${escapeHtml(review.author || 'Traveler')}</strong></p>
+                </div>
+                <span class="badge badge-active">${Number(review.rating || 0)}/5</span>
+            </div>
+            <div class="review-body">
+                <p class="review-content">${escapeHtml(review.comment || '')}</p>
+                <p class="review-reason"><strong>Date:</strong> ${formatDate(review.createdAt)}</p>
+            </div>
+            <div class="review-actions">
+                <button class="btn-delete" onclick="deleteReview(${review.id})">
+                    <i class="fas fa-trash"></i> Delete Review
+                </button>
+            </div>
+        </div>
+    `).join('');
 }
 
 async function approvePlace(placeId) {
@@ -240,26 +301,9 @@ async function approvePlace(placeId) {
         await renderSubmittedPlaces();
         openModal('Place Approved', 'The place is now published on the website.');
         setTimeout(closeModal, 2000);
-        return;
     } catch (error) {
-        // Fall back to local data when PHP/MySQL is unavailable.
+        openModal('Action Failed', 'Unable to approve place right now.');
     }
-
-    const storedPlaces = getStoredPlaces();
-    const place = storedPlaces.find(item => item.id === placeId);
-
-    if (!place) {
-        openModal('Place Not Found', 'This submission could not be found.');
-        return;
-    }
-
-    place.status = 'approved';
-    place.approvedAt = new Date().toISOString();
-    saveStoredPlaces(storedPlaces);
-    renderSubmittedPlaces();
-    updateDashboardStats();
-    openModal('Place Approved', `"${place.name}" is now published on the website.`);
-    setTimeout(closeModal, 2000);
 }
 
 async function rejectPlace(placeId) {
@@ -269,26 +313,9 @@ async function rejectPlace(placeId) {
         await renderSubmittedPlaces();
         openModal('Place Rejected', 'The place has been rejected.');
         setTimeout(closeModal, 2000);
-        return;
     } catch (error) {
-        // Fall back to local data when PHP/MySQL is unavailable.
+        openModal('Action Failed', 'Unable to reject place right now.');
     }
-
-    const storedPlaces = getStoredPlaces();
-    const place = storedPlaces.find(item => item.id === placeId);
-
-    if (!place) {
-        openModal('Place Not Found', 'This submission could not be found.');
-        return;
-    }
-
-    place.status = 'rejected';
-    place.rejectedAt = new Date().toISOString();
-    saveStoredPlaces(storedPlaces);
-    renderSubmittedPlaces();
-    updateDashboardStats();
-    openModal('Place Rejected', `"${place.name}" has been rejected.`);
-    setTimeout(closeModal, 2000);
 }
 
 async function deletePlace(placeId) {
@@ -299,17 +326,9 @@ async function deletePlace(placeId) {
         await renderSubmittedPlaces();
         openModal('Place Deleted', 'The place has been removed.');
         setTimeout(closeModal, 2000);
-        return;
     } catch (error) {
-        // Fall back to local data when PHP/MySQL is unavailable.
+        openModal('Action Failed', 'Unable to delete place right now.');
     }
-
-    const nextPlaces = getStoredPlaces().filter(place => place.id !== placeId);
-    saveStoredPlaces(nextPlaces);
-    renderSubmittedPlaces();
-    updateDashboardStats();
-    openModal('Place Deleted', 'The place has been removed.');
-    setTimeout(closeModal, 2000);
 }
 
 function setupNavigation() {
@@ -428,10 +447,16 @@ function viewContent(contentId) {
 }
 
 // Review Management Functions
-function deleteReview(reviewId) {
-    if (confirm('Are you sure you want to delete this review? This action cannot be undone.')) {
-        openModal('Review Deleted', `Review "${reviewId}" has been permanently deleted.`);
+async function deleteReview(reviewId) {
+    if (!confirm('Are you sure you want to delete this review? This action cannot be undone.')) return;
+    try {
+        const ok = await postReviewDelete(reviewId);
+        if (!ok) return;
+        await renderSubmittedPlaces();
+        openModal('Review Deleted', 'The review has been permanently deleted.');
         setTimeout(closeModal, 2000);
+    } catch (error) {
+        openModal('Action Failed', 'Unable to delete review right now.');
     }
 }
 
@@ -475,12 +500,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Photo management
 function setupPhotoManagement() {
-    const approveButtons = document.querySelectorAll('.btn-approve');
-    const rejectButtons = document.querySelectorAll('.btn-reject');
+    const approveButtons = document.querySelectorAll('#manage-photos .photo-card .btn-approve');
+    const rejectButtons = document.querySelectorAll('#manage-photos .photo-card .btn-reject');
 
     approveButtons.forEach(btn => {
         btn.addEventListener('click', function() {
             const photoCard = this.closest('.photo-card');
+            if (!photoCard) return;
             const photoName = photoCard.querySelector('h4').textContent;
             openModal('Photo Approved', `Photo "${photoName}" has been approved and published.`);
             setTimeout(() => {
@@ -493,6 +519,7 @@ function setupPhotoManagement() {
     rejectButtons.forEach(btn => {
         btn.addEventListener('click', function() {
             const photoCard = this.closest('.photo-card');
+            if (!photoCard) return;
             const photoName = photoCard.querySelector('h4').textContent;
             openModal('Photo Rejected', `Photo "${photoName}" has been rejected.`);
             setTimeout(() => {

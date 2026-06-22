@@ -169,11 +169,11 @@
                         <div class="stat-label">Destinations</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value">2.5K+</div>
+                        <div class="stat-value" id="stat-reviews">0</div>
                         <div class="stat-label">Reviews</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value">4.8</div>
+                        <div class="stat-value" id="stat-avg-rating">0.0</div>
                         <div class="stat-label">
                             Avg Rating
                         </div>
@@ -192,7 +192,7 @@
                 <div class="section-header spotlight-header">
                     <div>
                         <h2 class="section-title">Spotlight Picks</h2>
-                        <p class="section-subtitle">Editorial routes and quick-hit itineraries curated for you</p>
+                        <p class="section-subtitle">Top approved places with the highest ratings appear first below.</p>
                     </div>
                     <button class="btn-secondary" id="featured-add-btn" type="button">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -203,61 +203,7 @@
                     </button>
                 </div>
 
-                <div class="spotlight-grid">
-                    <article class="spotlight-card">
-                        <div class="spotlight-media">
-                            <div class="spotlight-badge">Editors Choice</div>
-                            <svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M3 20h18"></path>
-                                <path d="M5 20l4-9 3 5 3-4 4 8"></path>
-                                <circle cx="17" cy="6" r="2"></circle>
-                            </svg>
-                        </div>
-                        <div class="spotlight-body">
-                            <h3>Himalayan Dawn Loop</h3>
-                            <p>A two-day arc across ridgelines, lakes, and old town stops with the best light for photos.</p>
-                            <div class="spotlight-meta">
-                                <span class="spotlight-pill">2 Days</span>
-                                <span class="spotlight-pill">3 Stops</span>
-                                <span class="spotlight-pill">Photo Ready</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <div class="spotlight-stack">
-                        <article class="mini-card">
-                            <div class="mini-icon">
-                                <svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M4 21v-7"></path>
-                                    <path d="M4 14h16"></path>
-                                    <path d="M7 14V7h10v7"></path>
-                                    <path d="M10 7V4"></path>
-                                    <path d="M14 7V4"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <h4>Old City Walk</h4>
-                                <p>Markets, courtyards, and local craft studios in one relaxed loop.</p>
-                                <div class="mini-meta">4.9 rating · Cultural</div>
-                            </div>
-                        </article>
-
-                        <article class="mini-card">
-                            <div class="mini-icon">
-                                <svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M4 19h16"></path>
-                                    <path d="M6 19V9l6-4 6 4v10"></path>
-                                    <path d="M10 19v-5h4v5"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <h4>Weekend Escape</h4>
-                                <p>Forest cabins, warm tea stops, and a short sunrise ridge hike.</p>
-                                <div class="mini-meta">Adventure · 1 Night</div>
-                            </div>
-                        </article>
-                    </div>
-                </div>
+                <div class="spotlight-grid"></div>
             </div>
         </section>
 
@@ -267,58 +213,11 @@
                 <div class="section-header">
                     <div>
                         <h2 class="section-title" id="section-title">All Destinations</h2>
-                        <p class="section-subtitle" id="section-subtitle">Sorted by rating • 1 place</p>
+                        <p class="section-subtitle" id="section-subtitle">Sorted by rating • 0 places</p>
                     </div>
                 </div>
 
-                <div id="places-grid" class="places-grid">
-                    <!-- Place Card -->
-                    <article class="place-card">
-                        <!-- Cover Image -->
-                        <div class="place-image">
-                            <svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M3 20h18"></path>
-                                <path d="M5 20l4-9 3 5 3-4 4 8"></path>
-                                <circle cx="17" cy="6" r="2"></circle>
-                            </svg>
-                            <!-- Category Badge -->
-                            <span class="place-category">Viewpoint</span>
-                        </div>
-
-                        <!-- Card Bottom Info -->
-                        <div class="place-info">
-                            <div class="place-info-top">
-                                <h3 class="place-name">Khopra Danda</h3>
-                                <p class="place-location-info">
-                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                        <circle cx="12" cy="10" r="3"></circle>
-                                    </svg>
-                                    Myagdi, Gandaki
-                                </p>
-                            </div>
-                            <div class="place-info-middle">
-                                <div class="place-footer-meta">
-                                    <span class="rating-badge">4.8 / 5</span>
-                                    <span class="reviews-count">
-                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                            <circle cx="9" cy="7" r="4"></circle>
-                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                                        </svg>
-                                        164 reviews
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="place-card-actions">
-                                <button class="btn-view-details" onclick="openPlaceDetail(1)">View Full Details</button>
-                                <button class="btn-save-place" type="button" onclick="event.stopPropagation(); savePlaceToCollection(1)">Save</button>
-                                <button class="btn-plan-place" type="button" onclick="event.stopPropagation(); organizeTrip(1)">Plan</button>
-                            </div>
-                        </div>
-                    </article>
-                </div>
+                <div id="places-grid" class="places-grid"></div>
 
                 <div id="no-results" class="no-results" style="display: none;">
                     <svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -417,9 +316,9 @@
                 <!-- Header Section -->
                 <div class="detail-card">
                     <div class="detail-header">
-                        <h1 id="detail-name">Khopra Danda</h1>
-                        <p id="detail-local-name" class="detail-local">खोप्रा डाँडा</p>
-                        <p id="detail-tagline" class="detail-tagline">Alpine meadow with panoramic mountain views above the clouds</p>
+                        <h1 id="detail-name">Selected Place</h1>
+                        <p id="detail-local-name" class="detail-local"></p>
+                        <p id="detail-tagline" class="detail-tagline"></p>
                     </div>
                     <div class="detail-location-section">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -427,8 +326,8 @@
                             <circle cx="12" cy="10" r="3"></circle>
                         </svg>
                         <div>
-                            <p class="detail-location" id="detail-location">Myagdi, Gandaki</p>
-                            <p class="detail-location-full" id="detail-location-full">Annapurna Municipality, Gandaki Province</p>
+                            <p class="detail-location" id="detail-location">-</p>
+                            <p class="detail-location-full" id="detail-location-full">-</p>
                         </div>
                     </div>
                 </div>
@@ -436,7 +335,7 @@
                 <!-- About Section -->
                 <div class="detail-card">
                     <h2>About This Place</h2>
-                    <p id="detail-desc" class="detail-description">A stunning high-altitude meadow offering breathtaking 360-degree views of the Annapurna, Dhaulagiri, and Nilgiri ranges. The experience of being above the clouds at sunrise is truly magical.</p>
+                    <p id="detail-desc" class="detail-description">-</p>
                 </div>
 
                 <!-- Trip Information -->
@@ -445,19 +344,19 @@
                     <div class="detail-grid">
                         <div class="detail-col">
                             <label class="detail-label">Best Time to Visit</label>
-                            <p id="detail-best-time">October - May</p>
+                            <p id="detail-best-time">-</p>
                         </div>
                         <div class="detail-col">
                             <label class="detail-label">Duration</label>
-                            <p id="detail-duration">3 days / 2 nights</p>
+                            <p id="detail-duration">-</p>
                         </div>
                         <div class="detail-col">
                             <label class="detail-label">Difficulty Level</label>
-                            <p id="detail-difficulty" class="difficulty-badge">Moderate</p>
+                            <p id="detail-difficulty" class="difficulty-badge">-</p>
                         </div>
                         <div class="detail-col">
                             <label class="detail-label">Category</label>
-                            <p id="detail-category" class="category-badge">Viewpoint</p>
+                            <p id="detail-category" class="category-badge">-</p>
                         </div>
                     </div>
                 </div>
@@ -465,13 +364,13 @@
                 <!-- Things to Do -->
                 <div class="detail-card">
                     <h2>Things to Do</h2>
-                    <p id="detail-things">Sunrise hike, sunset watching, local tea houses, photography</p>
+                    <p id="detail-things">-</p>
                 </div>
 
                 <!-- Travel Tips -->
                 <div class="detail-card">
                     <h2>Travel Tips</h2>
-                    <p id="detail-tips">Carry warm clothing, sunscreen, water. No mobile signal above 3000m. Respect the local community.</p>
+                    <p id="detail-tips">-</p>
                 </div>
 
                 <!-- Route Information -->
@@ -480,17 +379,17 @@
                     <div class="detail-route">
                         <div class="route-item">
                             <div class="route-label">Starting Point</div>
-                            <p id="detail-start">Pokhara</p>
+                            <p id="detail-start">-</p>
                         </div>
                         <div class="route-divider"></div>
                         <div class="route-item">
                             <div class="route-label">Route Description</div>
-                            <p id="detail-route">From Pokhara, take local bus to Baglung (3 hours), then jeep to Ghar (2 hours). Trek begins from Ghar...</p>
+                            <p id="detail-route">-</p>
                         </div>
                         <div class="route-divider"></div>
                         <div class="route-item">
                             <div class="route-label">Destination</div>
-                            <p id="detail-dest">Khopra Danda viewpoint</p>
+                            <p id="detail-dest">-</p>
                         </div>
                     </div>
                 </div>
@@ -501,23 +400,23 @@
                     <div class="detail-budget-grid">
                         <div class="budget-item">
                             <label class="detail-label">Total Budget</label>
-                            <p class="budget-value" id="detail-budget">NPR 12,000</p>
+                            <p class="budget-value" id="detail-budget">NPR 0</p>
                         </div>
                         <div class="budget-item">
                             <label class="detail-label">Transportation</label>
-                            <p id="detail-transport">NPR 3,000</p>
+                            <p id="detail-transport">NPR 0</p>
                         </div>
                         <div class="budget-item">
                             <label class="detail-label">Accommodation</label>
-                            <p id="detail-stay">NPR 4,000</p>
+                            <p id="detail-stay">NPR 0</p>
                         </div>
                         <div class="budget-item">
                             <label class="detail-label">Food</label>
-                            <p id="detail-food">NPR 3,500</p>
+                            <p id="detail-food">NPR 0</p>
                         </div>
                         <div class="budget-item">
                             <label class="detail-label">Entry Fee</label>
-                            <p id="detail-fee">NPR 500</p>
+                            <p id="detail-fee">NPR 0</p>
                         </div>
                     </div>
                 </div>
@@ -528,16 +427,16 @@
                     <div class="facility-list">
                         <div class="facility-desc">
                             <label class="detail-label">Accommodation Available</label>
-                            <p id="detail-accom">Community homestays and basic teahouses available along the route</p>
+                            <p id="detail-accom">-</p>
                         </div>
                         <div class="facility-grid">
                             <div class="facility-info">
                                 <label class="detail-label">Hotels Nearby</label>
-                                <p id="detail-hotels">Pokhara (2 hotels)</p>
+                                <p id="detail-hotels">-</p>
                             </div>
                             <div class="facility-info">
                                 <label class="detail-label">Restaurants Nearby</label>
-                                <p id="detail-restaurants">Local teahouses and small eateries</p>
+                                <p id="detail-restaurants">-</p>
                             </div>
                         </div>
                         <div class="facility-features">
@@ -565,6 +464,34 @@
                                 </svg>
                                 <span>Public Toilets Available</span>
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="review-top">
+                            <h2>Ratings & Reviews <span id="review-count">(0)</span></h2>
+                            <div class="detail-rating">
+                                <span class="detail-rating-value" id="detail-rating-value">0.0</span>
+                                <span class="detail-reviews"><span id="detail-review-count">0</span> reviews</span>
+                            </div>
+                        </div>
+
+                        <form id="review-form" class="review-form">
+                            <label class="detail-label">Your Rating</label>
+                            <div class="star-rating" id="star-rating">
+                                <button type="button" class="star-btn" data-rating="1">&#9733;</button>
+                                <button type="button" class="star-btn" data-rating="2">&#9733;</button>
+                                <button type="button" class="star-btn" data-rating="3">&#9733;</button>
+                                <button type="button" class="star-btn" data-rating="4">&#9733;</button>
+                                <button type="button" class="star-btn" data-rating="5">&#9733;</button>
+                            </div>
+                            <label class="detail-label" for="review-text">Your Review</label>
+                            <textarea id="review-text" class="textarea" rows="4" maxlength="1000" placeholder="Share your travel experience..."></textarea>
+                            <button type="submit" class="btn-primary">Submit Review</button>
+                        </form>
+
+                        <div id="reviews-list" class="reviews-list">
+                            <p class="empty-state">No reviews yet. Be the first to review this place.</p>
                         </div>
                     </div>
                 </div>

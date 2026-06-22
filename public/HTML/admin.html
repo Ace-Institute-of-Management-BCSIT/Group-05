@@ -78,7 +78,7 @@
                             </div>
                             <div class="stat-content">
                                 <h3>Total Places</h3>
-                                <p class="stat-number">124</p>
+                                <p class="stat-number">0</p>
                                 <span class="stat-label">Active locations</span>
                             </div>
                         </div>
@@ -100,8 +100,8 @@
                             </div>
                             <div class="stat-content">
                                 <h3>Photos Uploaded</h3>
-                                <p class="stat-number">2,341</p>
-                                <span class="stat-label">Pending verification: 45</span>
+                                <p class="stat-number">0</p>
+                                <span class="stat-label">Pending verification: 0</span>
                             </div>
                         </div>
 
@@ -111,8 +111,8 @@
                             </div>
                             <div class="stat-content">
                                 <h3>Reviews</h3>
-                                <p class="stat-number">592</p>
-                                <span class="stat-label">Flagged for review: 12</span>
+                                <p class="stat-number">0</p>
+                                <span class="stat-label">User reviews</span>
                             </div>
                         </div>
                     </div>
@@ -185,37 +185,7 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>Boudhanath Stupa</td>
-                                    <td>Kathmandu</td>
-                                    <td>user_123</td>
-                                    <td><span class="badge badge-active">Active</span></td>
-                                    <td>
-                                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
-                                        <button class="btn-icon" title="View Details"><i class="fas fa-eye"></i></button>
-                                        <button class="btn-icon btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Phewa Lake</td>
-                                    <td>Pokhara</td>
-                                    <td>user_456</td>
-                                    <td><span class="badge badge-active">Active</span></td>
-                                    <td>
-                                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
-                                        <button class="btn-icon" title="View Details"><i class="fas fa-eye"></i></button>
-                                        <button class="btn-icon btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Pashupatinath Temple</td>
-                                    <td>Kathmandu</td>
-                                    <td>user_789</td>
-                                    <td><span class="badge badge-active">Active</span></td>
-                                    <td>
-                                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
-                                        <button class="btn-icon" title="View Details"><i class="fas fa-eye"></i></button>
-                                        <button class="btn-icon btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
-                                    </td>
+                                    <td colspan="5">No approved places yet.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -373,71 +343,7 @@
                         <h2>Verify Uploaded Content & Update Travel Information</h2>
                     </div>
 
-                    <div class="content-grid">
-                        <div class="content-card pending">
-                            <div class="card-header">
-                                <h3>Annapurna Circuit Trail</h3>
-                                <span class="badge badge-pending">Pending Verification</span>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Submitted by:</strong> trek_expert_01</p>
-                                <p><strong>Date:</strong> 2024-03-15</p>
-                                <p><strong>Content Type:</strong> Trail Information & Photos</p>
-                                <p><strong>Description:</strong> Updated trek information with new route and difficulty levels</p>
-                                <div class="verification-actions">
-                                    <button class="btn-approve" onclick="approveContent('annapurna')">
-                                        <i class="fas fa-check"></i> Approve & Publish
-                                    </button>
-                                    <button class="btn-reject" onclick="rejectContent('annapurna')">
-                                        <i class="fas fa-times"></i> Reject
-                                    </button>
-                                    <button class="btn-secondary" onclick="requestChanges('annapurna')">
-                                        <i class="fas fa-comment"></i> Request Changes
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="content-card pending">
-                            <div class="card-header">
-                                <h3>Chitwan National Park Update</h3>
-                                <span class="badge badge-pending">Pending Verification</span>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Submitted by:</strong> wildlife_guide</p>
-                                <p><strong>Date:</strong> 2024-03-14</p>
-                                <p><strong>Content Type:</strong> Location Information</p>
-                                <p><strong>Description:</strong> Updated animal spotting information and best season guide</p>
-                                <div class="verification-actions">
-                                    <button class="btn-approve" onclick="approveContent('chitwan')">
-                                        <i class="fas fa-check"></i> Approve & Publish
-                                    </button>
-                                    <button class="btn-reject" onclick="rejectContent('chitwan')">
-                                        <i class="fas fa-times"></i> Reject
-                                    </button>
-                                    <button class="btn-secondary" onclick="requestChanges('chitwan')">
-                                        <i class="fas fa-comment"></i> Request Changes
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="content-card approved">
-                            <div class="card-header">
-                                <h3>Pokhara City Guide</h3>
-                                <span class="badge badge-active">Verified & Published</span>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Submitted by:</strong> local_guide_02</p>
-                                <p><strong>Date:</strong> 2024-03-10</p>
-                                <p><strong>Content Type:</strong> Comprehensive City Guide</p>
-                                <p><strong>Verified By:</strong> admin</p>
-                                <button class="btn-secondary" onclick="viewContent('pokhara')">
-                                    <i class="fas fa-eye"></i> View Published Content
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="content-grid"></div>
                 </section>
 
                 <!-- Delete Reviews Section -->
@@ -457,71 +363,7 @@
                         </select>
                     </div>
 
-                    <div class="reviews-list">
-                        <div class="review-card flagged">
-                            <div class="review-header">
-                                <div>
-                                    <h4>Boudhanath Stupa</h4>
-                                    <p>Reviewed by: <strong>user_123</strong></p>
-                                </div>
-                                <span class="badge badge-flagged">Flagged - Spam</span>
-                            </div>
-                            <div class="review-body">
-                                <p class="review-content">"BUY CHEAP PRODUCTS NOW!!! CLICK HERE FOR DISCOUNTS!!! Check out my website: www.spam.com"</p>
-                                <p class="review-reason"><strong>Reason:</strong> Promotional spam content</p>
-                            </div>
-                            <div class="review-actions">
-                                <button class="btn-delete" onclick="deleteReview('rev_001')">
-                                    <i class="fas fa-trash"></i> Delete Review
-                                </button>
-                                <button class="btn-secondary" onclick="warnUser('user_123')">
-                                    <i class="fas fa-warning"></i> Warn User
-                                </button>
-                                <button class="btn-secondary" onclick="banUser('user_123')">
-                                    <i class="fas fa-ban"></i> Ban User
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="review-card flagged">
-                            <div class="review-header">
-                                <div>
-                                    <h4>Pashupatinath Temple</h4>
-                                    <p>Reviewed by: <strong>user_456</strong></p>
-                                </div>
-                                <span class="badge badge-flagged">Flagged - Offensive</span>
-                            </div>
-                            <div class="review-body">
-                                <p class="review-content">"[Offensive content - Contains inappropriate language and disrespectful comments about the location]"</p>
-                                <p class="review-reason"><strong>Reason:</strong> Offensive language detected</p>
-                            </div>
-                            <div class="review-actions">
-                                <button class="btn-delete" onclick="deleteReview('rev_002')">
-                                    <i class="fas fa-trash"></i> Delete Review
-                                </button>
-                                <button class="btn-secondary" onclick="warnUser('user_456')">
-                                    <i class="fas fa-warning"></i> Warn User
-                                </button>
-                                <button class="btn-secondary" onclick="banUser('user_456')">
-                                    <i class="fas fa-ban"></i> Ban User
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="review-card approved">
-                            <div class="review-header">
-                                <div>
-                                    <h4>Phewa Lake</h4>
-                                    <p>Reviewed by: <strong>user_789</strong></p>
-                                </div>
-                                <span class="badge badge-active">Approved</span>
-                            </div>
-                            <div class="review-body">
-                                <p class="review-content">"Amazing location! The sunset view was breathtaking. Highly recommend visiting Phewa Lake. Great experience with friendly locals."</p>
-                                <p class="rating">⭐⭐⭐⭐⭐ (5/5)</p>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="reviews-list"></div>
                 </section>
 
                 <!-- Monitor Community Activity Section -->
