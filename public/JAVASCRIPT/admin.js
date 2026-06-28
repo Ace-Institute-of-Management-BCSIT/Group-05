@@ -168,13 +168,19 @@ function renderPendingSubmissions(pendingPlaces = []) {
         return;
     }
 
-    grid.innerHTML = pendingPlaces.map(place => `
+    grid.innerHTML = pendingPlaces.map(place => {
+        const imgUrl = getPlaceImgUrl(place);
+        const photoHtml = imgUrl
+            ? `<div style="margin-bottom:12px;"><img src="${imgUrl}" alt="${escapeHtml(place.name)}" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;" onerror="this.parentElement.style.display='none'"></div>`
+            : '';
+        return `
         <div class="content-card pending">
             <div class="card-header">
                 <h3>${escapeHtml(place.name)}</h3>
                 <span class="badge badge-pending">Pending Verification</span>
             </div>
             <div class="card-body">
+                ${photoHtml}
                 <p><strong>Submitted by:</strong> ${escapeHtml(place.submittedBy || 'Traveler')}</p>
                 <p><strong>Date:</strong> ${formatDate(place.submittedAt)}</p>
                 <p><strong>Category:</strong> ${escapeHtml(place.category || 'Place')}</p>
@@ -190,7 +196,13 @@ function renderPendingSubmissions(pendingPlaces = []) {
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
+}
+
+function getPlaceImgUrl(place) {
+    if (!place.coverImage) return '';
+    return `../../PHP/serve_image.php?path=${encodeURIComponent(place.coverImage)}`;
 }
 
 function renderManagedPlaces(allPlaces = []) {
@@ -198,9 +210,14 @@ function renderManagedPlaces(allPlaces = []) {
     if (!tbody) return;
 
     const approvedPlaces = allPlaces.filter(place => place.status === 'approved');
-    tbody.innerHTML = approvedPlaces.map(place => `
+    tbody.innerHTML = approvedPlaces.map(place => {
+        const imgUrl = getPlaceImgUrl(place);
+        const thumb = imgUrl
+            ? `<img src="${imgUrl}" alt="${escapeHtml(place.name)}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;display:block;" onerror="this.style.display='none'">`
+            : `<div style="width:48px;height:48px;border-radius:8px;background:#e8f4ec;display:flex;align-items:center;justify-content:center;color:#2d5f4d;"><i class="fas fa-mountain"></i></div>`;
+        return `
         <tr>
-            <td>${escapeHtml(place.name)}</td>
+            <td style="display:flex;align-items:center;gap:10px;">${thumb}<span>${escapeHtml(place.name)}</span></td>
             <td>${escapeHtml([place.district, place.province].filter(Boolean).join(', ') || 'Nepal')}</td>
             <td>${escapeHtml(place.submittedBy || 'Traveler')}</td>
             <td><span class="badge badge-active">Active</span></td>
@@ -209,7 +226,8 @@ function renderManagedPlaces(allPlaces = []) {
                 <button class="btn-icon btn-delete" title="Delete" onclick="deletePlace(${place.id})"><i class="fas fa-trash"></i></button>
             </td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function viewStoredPlace(placeId) {

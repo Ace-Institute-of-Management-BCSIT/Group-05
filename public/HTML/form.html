@@ -606,6 +606,7 @@ function setupDrop(dropId, inputId, isMulti, onFiles){
   const drop = document.getElementById(dropId);
   const input = document.getElementById(inputId);
   drop.addEventListener('click',()=>input.click());
+  input.addEventListener('click', e => e.stopPropagation());
   drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag')});
   drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));
   drop.addEventListener('drop',e=>{
@@ -712,7 +713,7 @@ async function submitPlaceForApproval(){
     homestay: data.has('homestay'),
     parking: data.has('parking'),
     toilets: data.has('toilets'),
-    coverImage: coverFile ? coverFile.name : 'Submitted destination',
+    coverImage: coverFile ? coverFile.name : '',
     startPoint: field('start'),
     routeDesc: field('routeDesc'),
     destination: field('dest'),
@@ -723,7 +724,10 @@ async function submitPlaceForApproval(){
     status: 'pending'
   };
   data.append('action','submit');
-  data.append('coverImage',submittedPlace.coverImage);
+  // Attach the actual file for server-side upload (replaces text-only filename)
+  if (coverFile) {
+    data.set('coverImage', coverFile, coverFile.name);
+  }
 
   try{
     const response = await fetch('../../PHP/places.php',{

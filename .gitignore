@@ -1,1 +1,3 @@
 .db.sql
+# Ignore uploaded files
+uploads/

@@ -203,7 +203,9 @@ async function submitPlaceForApproval(formElement) {
     const submittedPlace = buildPlaceFromForm(formElement);
     const formData = new FormData(formElement);
     formData.append('action', 'submit');
-    formData.append('coverImage', submittedPlace.coverImage);
+    if (coverFile) {
+        formData.set('coverImage', coverFile, coverFile.name);
+    }
 
     try {
         const response = await fetch('../../PHP/places.php', {
@@ -568,13 +570,26 @@ function renderPlaces() {
         placesGrid.style.display = 'grid';
         noResults.style.display = 'none';
 
-        placesGrid.innerHTML = filteredPlaces.map(place => `
+        placesGrid.innerHTML = filteredPlaces.map(place => {
+            const imgUrl = place.coverImage
+                ? `../../PHP/serve_image.php?path=${encodeURIComponent(place.coverImage)}`
+                : '';
+            const imgHtml = imgUrl
+                ? `<img src="${imgUrl}" alt="${escapeHtml(place.name)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                   <div class="place-img-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">
+                     <svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                       <circle cx="12" cy="10" r="3"></circle>
+                     </svg>
+                   </div>`
+                : `<svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                     <circle cx="12" cy="10" r="3"></circle>
+                   </svg>`;
+            return `
             <div class="place-card" onclick="openPlaceDetail(${place.id})">
                 <div class="place-image">
-                    <svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
+                    ${imgHtml}
                     <div class="place-category">${escapeHtml(place.category)}</div>
                 </div>
                 <div class="place-info">
@@ -602,7 +617,9 @@ function renderPlaces() {
                     </div>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
+
     }
 
     updateSectionHeader(filteredPlaces.length);
@@ -667,6 +684,27 @@ function openPlaceDetail(id) {
     document.getElementById('detail-name').textContent = selectedPlace.name;
     document.getElementById('detail-local-name').textContent = selectedPlace.localName;
     document.getElementById('detail-tagline').textContent = selectedPlace.tagline;
+
+    // Hero cover image
+    const heroImg = document.getElementById('detail-hero-img');
+    const heroSvg = document.getElementById('detail-hero-svg');
+    if (heroImg && heroSvg) {
+        if (selectedPlace.coverImage) {
+            const imgUrl = `../../PHP/serve_image.php?path=${encodeURIComponent(selectedPlace.coverImage)}`;
+            heroImg.src = imgUrl;
+            heroImg.alt = selectedPlace.name;
+            heroImg.style.display = 'block';
+            heroSvg.style.display = 'none';
+            heroImg.onerror = () => {
+                heroImg.style.display = 'none';
+                heroSvg.style.display = '';
+            };
+        } else {
+            heroImg.style.display = 'none';
+            heroSvg.style.display = '';
+        }
+    }
+
 
     // Location info
     document.getElementById('detail-location').textContent = `${selectedPlace.district}, ${selectedPlace.province}`;
@@ -935,6 +973,7 @@ if (form) {
         const input = document.getElementById(inputId);
         if (!drop || !input) return;
         drop.addEventListener('click', () => input.click());
+        input.addEventListener('click', e => e.stopPropagation());
         drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
         drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
         drop.addEventListener('drop', e => {

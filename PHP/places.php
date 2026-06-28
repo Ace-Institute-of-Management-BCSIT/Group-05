@@ -158,6 +158,34 @@ if ($action === 'submit') {
         respond(['success' => false, 'message' => 'Please complete all required fields.'], 400);
     }
 
+    // Handle cover image upload
+    $coverImage = '';
+    if (isset($_FILES['coverImage']) && $_FILES['coverImage']['error'] === UPLOAD_ERR_OK) {
+        $file = $_FILES['coverImage'];
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $maxSize = 5 * 1024 * 1024; // 5 MB
+
+        if (!in_array($file['type'], $allowedTypes)) {
+            respond(['success' => false, 'message' => 'Invalid image type. Use JPG, PNG, GIF or WebP.'], 400);
+        }
+        if ($file['size'] > $maxSize) {
+            respond(['success' => false, 'message' => 'Image must be smaller than 5 MB.'], 400);
+        }
+
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $uploadDir = dirname(__DIR__) . '/Public/uploads/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        $fileName = uniqid('place_', true) . '.' . strtolower($ext);
+        $destPath = $uploadDir . $fileName;
+
+        if (!move_uploaded_file($file['tmp_name'], $destPath)) {
+            respond(['success' => false, 'message' => 'Failed to save the uploaded image.'], 500);
+        }
+        $coverImage = 'uploads/' . $fileName;
+    }
+
     $stmt = $conn->prepare("
         INSERT INTO places (
             name, local_name, tagline, province, district, municipality, category,
@@ -189,7 +217,6 @@ if ($action === 'submit') {
     $homestay = bool_field('homestay') ? 1 : 0;
     $parking = bool_field('parking') ? 1 : 0;
     $toilets = bool_field('toilets') ? 1 : 0;
-    $coverImage = text_field('coverImage');
     $userId = (int) $_SESSION['id'];
 
     $stmt->bind_param(
