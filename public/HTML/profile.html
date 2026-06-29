@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traveler Profile - Nepal Travel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../css/styles.css">
+    <script src="../JAVASCRIPT/profile.js" defer></script>
+</head>
+<body class="profile-page">
+    <nav class="navbar">
+        <div class="nav-container">
+            <a class="logo-container profile-logo-link" href="index.html">
+                <svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span class="logo-text">Nepal Travel</span>
+            </a>
+
+            <div class="nav-links profile-nav-actions">
+                <a class="nav-link" href="index.html">
+                    <i class="fa-solid fa-compass"></i>
+                    <span>Explore</span>
+                </a>
+                <a class="btn-primary" href="index.html#add-place">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add Place</span>
+                </a>
+                <button class="user-btn active" id="profile-logout-btn" type="button" aria-label="Logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="profile-shell">
+        <section class="profile-hero-panel">
+            <div class="profile-hero-main">
+                <div class="profile-page-avatar" id="profile-avatar">T</div>
+                <div>
+                    <span class="profile-kicker">Traveler Profile</span>
+                    <h1 id="profile-name">Traveler</h1>
+                    <p id="profile-role">User</p>
+                    <div class="profile-hero-actions">
+                        <a class="btn btn-outline" href="index.html">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                            Explore Places
+                        </a>
+                        <button class="btn btn-primary" id="refresh-profile-btn" type="button">
+                            <i class="fa-solid fa-rotate-right"></i>
+                            Refresh Board
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-score-grid">
+                <div class="profile-score-card">
+                    <i class="fa-solid fa-bookmark"></i>
+                    <strong id="saved-count">0</strong>
+                    <span>Saved Places</span>
+                </div>
+                <div class="profile-score-card">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <strong id="trip-count">0</strong>
+                    <span>Future Trips</span>
+                </div>
+                <div class="profile-score-card">
+                    <i class="fa-solid fa-note-sticky"></i>
+                    <strong id="note-count">0</strong>
+                    <span>Trip Notes</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="profile-workspace">
+            <aside class="profile-sidebar">
+                <div class="profile-panel">
+                    <h2>Travel Hub</h2>
+                    <div class="profile-tabs" id="profile-tabs">
+                        <button class="profile-tab active" type="button" data-feature="saved">
+                            <i class="fa-solid fa-bookmark"></i>
+                            Saved Places
+                        </button>
+                        <button class="profile-tab" type="button" data-feature="trips">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            Future Trips
+                        </button>
+                        <button class="profile-tab" type="button" data-feature="notes">
+                            <i class="fa-solid fa-note-sticky"></i>
+                            Trip Notes
+                        </button>
+                        <button class="profile-tab" type="button" data-feature="tools">
+                            <i class="fa-solid fa-screwdriver-wrench"></i>
+                            Tools
+                        </button>
+                    </div>
+                </div>
+
+                <div class="profile-panel">
+                    <h2>Quick Add</h2>
+                    <label class="profile-field">
+                        <span>Destination</span>
+                        <select id="quick-place-select">
+                            <option value="">Loading places...</option>
+                        </select>
+                    </label>
+                    <div class="profile-quick-actions">
+                        <button class="btn btn-outline" id="quick-save-btn" type="button">
+                            <i class="fa-solid fa-bookmark"></i>
+                            Save
+                        </button>
+                        <button class="btn btn-outline" id="quick-plan-btn" type="button">
+                            <i class="fa-solid fa-calendar-plus"></i>
+                            Plan
+                        </button>
+                    </div>
+                    <label class="profile-field">
+                        <span>Note</span>
+                        <textarea id="quick-note-text" placeholder="Add a private trip note"></textarea>
+                    </label>
+                    <button class="btn btn-primary profile-wide-btn" id="quick-note-btn" type="button">
+                        <i class="fa-solid fa-note-sticky"></i>
+                        Add Note
+                    </button>
+                </div>
+            </aside>
+
+            <section class="profile-board-panel">
+                <div class="profile-board-toolbar">
+                    <div>
+                        <h2 id="board-title">Saved Places</h2>
+                        <p id="board-subtitle">Places you want to revisit later.</p>
+                    </div>
+                    <label class="profile-board-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="search" id="profile-search" placeholder="Search your profile board">
+                    </label>
+                </div>
+
+                <div class="profile-status" id="profile-status" role="status">Loading your travel board...</div>
+                <div class="profile-board-grid" id="profile-board-grid"></div>
+            </section>
+        </section>
+    </main>
+
+    <div class="toast" id="profile-toast">
+        <i class="fa-solid fa-check"></i>
+        <div><strong>Updated</strong><div style="font-size:12px;opacity:.85">Profile board synced</div></div>
+    </div>
+</body>
+</html>

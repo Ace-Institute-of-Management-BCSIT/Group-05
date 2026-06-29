@@ -45,38 +45,57 @@
                         <span>Add Place</span>
                       </button>
                     <div class="user-menu-wrapper">
-                        <button class="user-btn" id="user-btn" type="button" aria-label="Open user menu">
+                        <a class="user-btn" id="user-btn" href="profile.html" aria-label="Open user profile">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="12" cy="7" r="4"></circle>
                             </svg>
-                        </button>
-                        <div class="user-profile-card" id="user-profile-card" aria-hidden="true">
+                        </a>
+                        <div class="user-profile-card" id="user-profile-card" aria-hidden="true" role="dialog" aria-label="User profile">
                             <div class="user-profile-header">
-                                <div class="user-avatar" id="user-avatar">U</div>
-                                <div>
+                                <div class="user-avatar-wrap">
+                                    <div class="user-avatar" id="user-avatar">U</div>
+                                    <span class="profile-online-dot" aria-label="Online"></span>
+                                </div>
+                                <div class="profile-heading">
+                                    <span class="profile-kicker">Traveler Profile</span>
                                     <h3 id="profile-name">User</h3>
                                     <p id="profile-role">Traveler</p>
+                                    <small id="profile-member">Ready for your next Nepal route</small>
+                                </div>
+                            </div>
+
+                            <div class="profile-stats" aria-label="Travel board totals">
+                                <div class="profile-stat">
+                                    <strong id="profile-saved-count">0</strong>
+                                    <span>Saved</span>
+                                </div>
+                                <div class="profile-stat">
+                                    <strong id="profile-trip-count">0</strong>
+                                    <span>Trips</span>
+                                </div>
+                                <div class="profile-stat">
+                                    <strong id="profile-note-count">0</strong>
+                                    <span>Notes</span>
                                 </div>
                             </div>
 
                             <div class="travel-features" id="travel-features">
-                                <h4>Travel Hub</h4>
-                                <button class="feature-item" type="button" data-feature="saved">
-                                    <span>💾 Saved Places</span>
-                                    <small>Keep your favorite spots</small>
+                                <button class="feature-item active" type="button" data-feature="saved">
+                                    <i class="fa-solid fa-bookmark"></i>
+                                    <span>Saved</span>
                                 </button>
                                 <button class="feature-item" type="button" data-feature="future">
-                                    <span>🗓️ Future Trips</span>
-                                    <small>Plan your next adventure</small>
+                                    <i class="fa-solid fa-calendar-days"></i>
+                                    <span>Trips</span>
                                 </button>
                                 <button class="feature-item" type="button" data-feature="notes">
-                                    <span>📝 Trip Notes</span>
-                                    <small>Save ideas and reminders</small>
+                                    <i class="fa-solid fa-note-sticky"></i>
+                                    <span>Notes</span>
                                 </button>
                                 <button class="feature-item" type="button" data-feature="more">
-                                    <span>✨ More</span>
-                                    <small>Explore travel tools</small>
+                                    <i class="fa-solid fa-compass"></i>
+                                    <span>Tools</span>
                                 </button>
                             </div>
 
@@ -85,14 +104,30 @@
                             </div>
 
                             <div class="travel-board" id="travel-board">
-                                <h5>Your Travel Board</h5>
+                                <div class="travel-board-head">
+                                    <h5>Your Travel Board</h5>
+                                    <button class="profile-icon-btn" id="refresh-travel-board" type="button" aria-label="Refresh travel board">
+                                        <i class="fa-solid fa-rotate-right"></i>
+                                    </button>
+                                </div>
+                                <label class="profile-search" for="profile-board-search">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    <input type="search" id="profile-board-search" placeholder="Search your board">
+                                </label>
                                 <div class="travel-board-content" id="travel-board-content">
                                     <p class="empty-state">Nothing saved yet. Save a place or plan a trip to get started.</p>
                                 </div>
                             </div>
 
                             <div class="user-profile-actions">
-                                <button class="profile-action-btn" id="logout-btn" type="button">Logout</button>
+                                <button class="profile-action-btn ghost" id="profile-explore-btn" type="button">
+                                    <i class="fa-solid fa-map-location-dot"></i>
+                                    Explore Places
+                                </button>
+                                <button class="profile-action-btn" id="logout-btn" type="button">
+                                    <i class="fa-solid fa-right-from-bracket"></i>
+                                    Logout
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -129,6 +164,13 @@
                     </svg>
                     <span>Add Place</span>
                 </button>
+                <a class="nav-link" id="mobile-user-btn" href="profile.html">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>Profile</span>
+                </a>
             </div>
         </nav>
 

@@ -75,6 +75,12 @@ const reviewForm = document.getElementById('review-form');
 const starRating = document.getElementById('star-rating');
 const travelStatus = document.getElementById('travel-status');
 const travelBoardContent = document.getElementById('travel-board-content');
+const mobileUserBtn = document.getElementById('mobile-user-btn');
+const profileExploreBtn = document.getElementById('profile-explore-btn');
+const refreshTravelBoardBtn = document.getElementById('refresh-travel-board');
+const profileBoardSearch = document.getElementById('profile-board-search');
+let currentProfileFeature = 'saved';
+let latestTravelData = { saved: [], trips: [], notes: [] };
 
 // Initialize
 async function init() {
@@ -238,8 +244,26 @@ function attachEventListeners() {
 
     if (loginForm) loginForm.addEventListener('submit', handleLogin);
     if (signupForm) signupForm.addEventListener('submit', handleLogin);
-    if (userBtn) userBtn.addEventListener('click', toggleUserProfile);
+    if (userBtn) userBtn.addEventListener('click', openProfilePage);
+    if (mobileUserBtn) {
+        mobileUserBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            mobileMenu?.classList.remove('active');
+            openProfilePage(event);
+        });
+    }
     if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
+    if (refreshTravelBoardBtn) refreshTravelBoardBtn.addEventListener('click', () => updateTravelBoard(currentProfileFeature, true));
+    if (profileBoardSearch) {
+        profileBoardSearch.addEventListener('input', () => renderTravelBoard(currentProfileFeature));
+    }
+    if (profileExploreBtn) {
+        profileExploreBtn.addEventListener('click', () => {
+            hideProfileCard();
+            mobileMenu?.classList.remove('active');
+            document.querySelector('.places-section')?.scrollIntoView({ behavior: 'smooth' });
+        });
+    }
     if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
     document.addEventListener('click', (event) => {
         if (event.target.closest('#travel-features')) {
@@ -311,19 +335,21 @@ function getCookie(name) {
 }
 
 function initializeUserProfile() {
+    normalizeProfileFeatureButtons();
     const userName = localStorage.getItem('userName') || getCookie('userName') || 'Traveler';
     const userRole = localStorage.getItem('userRole') || getCookie('userRole') || 'User';
     const profileName = document.getElementById('profile-name');
     const profileRole = document.getElementById('profile-role');
     const userAvatar = document.getElementById('user-avatar');
+    const profileMember = document.getElementById('profile-member');
     const isLoggedIn = Boolean(localStorage.getItem('userRole') || getCookie('userRole'));
 
     if (profileName) profileName.textContent = userName;
     if (profileRole) profileRole.textContent = userRole.charAt(0).toUpperCase() + userRole.slice(1);
     if (userAvatar) userAvatar.textContent = userName.charAt(0).toUpperCase();
+    if (profileMember) profileMember.textContent = isLoggedIn ? 'Your personal travel board is ready.' : 'Sign in to start your travel board.';
 
     if (isLoggedIn) {
-        showProfileCard();
         updateTravelBoard();
     }
 
@@ -332,17 +358,27 @@ function initializeUserProfile() {
     }
 }
 
+function normalizeProfileFeatureButtons() {
+    const config = {
+        saved: ['fa-bookmark', 'Saved'],
+        future: ['fa-calendar-days', 'Trips'],
+        notes: ['fa-note-sticky', 'Notes'],
+        more: ['fa-compass', 'Tools']
+    };
+
+    document.querySelectorAll('#travel-features .feature-item').forEach(button => {
+        const [icon, label] = config[button.dataset.feature] || ['fa-compass', 'Tools'];
+        button.innerHTML = `<i class="fa-solid ${icon}"></i><span>${label}</span>`;
+        button.classList.toggle('active', button.dataset.feature === currentProfileFeature);
+    });
+}
+
 function showProfileCard() {
     if (!profileCard) return;
 
     profileCard.classList.add('active');
     profileCard.setAttribute('aria-hidden', 'false');
-
     if (profileHideTimer) clearTimeout(profileHideTimer);
-    profileHideTimer = setTimeout(() => {
-        profileCard.classList.remove('active');
-        profileCard.setAttribute('aria-hidden', 'true');
-    }, 8000);
 }
 
 function hideProfileCard() {
@@ -368,6 +404,11 @@ function toggleUserProfile() {
         showProfileCard();
         updateTravelBoard();
     }
+}
+
+function openProfilePage(event) {
+    event?.preventDefault();
+    window.location.href = isUserLoggedIn() ? 'profile.html' : 'login.html';
 }
 
 function setTravelStatus(message) {
@@ -437,6 +478,158 @@ function updateTravelBoard(feature = 'saved') {
         });
 }
 
+function setProfileFeature(feature) {
+    currentProfileFeature = feature || 'saved';
+    document.querySelectorAll('#travel-features .feature-item').forEach(button => {
+        button.classList.toggle('active', button.dataset.feature === currentProfileFeature);
+    });
+}
+
+function updateProfileCounts(data = latestTravelData) {
+    const counts = {
+        'profile-saved-count': data.saved?.length || 0,
+        'profile-trip-count': data.trips?.length || 0,
+        'profile-note-count': data.notes?.length || 0
+    };
+
+    Object.entries(counts).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    });
+}
+
+function getPlaceName(placeId) {
+    const numericPlaceId = Number(placeId);
+    const place = places.find(p => Number(p.id) === numericPlaceId);
+    return place ? place.name : `Place ${placeId}`;
+}
+
+function formatBoardDate(value) {
+    if (!value) return 'Recently updated';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Recently updated';
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function buildBoardItem(icon, title, meta) {
+    return `
+        <div class="travel-board-item">
+            <div class="travel-board-icon"><i class="fa-solid ${icon}"></i></div>
+            <div>
+                <p class="travel-board-title">${escapeHtml(title)}</p>
+                <p class="travel-board-meta">${escapeHtml(meta)}</p>
+            </div>
+        </div>
+    `;
+}
+
+function renderTravelBoard(feature = currentProfileFeature) {
+    if (!travelBoardContent) return;
+    setProfileFeature(feature);
+
+    if (!isUserLoggedIn()) {
+        travelBoardContent.innerHTML = '<p class="empty-state">Please sign in to view your saved places and trips.</p>';
+        setTravelStatus('Sign in to start saving places and shaping your next trip.');
+        return;
+    }
+
+    const query = (profileBoardSearch?.value || '').trim().toLowerCase();
+    let items = [];
+    let emptyMessage = '';
+    let status = '';
+
+    if (currentProfileFeature === 'saved') {
+        items = (latestTravelData.saved || []).map(item => ({
+            title: getPlaceName(item.place_id),
+            meta: `Saved ${formatBoardDate(item.saved_at)}`,
+            icon: 'fa-bookmark'
+        }));
+        emptyMessage = 'No saved places yet. Open a destination and save it here.';
+        status = 'Your saved places are ready for the next trip.';
+    } else if (currentProfileFeature === 'future') {
+        items = (latestTravelData.trips || []).map(item => ({
+            title: getPlaceName(item.place_id),
+            meta: `Planned ${formatBoardDate(item.planned_at)}`,
+            icon: 'fa-calendar-days'
+        }));
+        emptyMessage = 'No future trips planned yet.';
+        status = 'Your future trips are ready to review.';
+    } else if (currentProfileFeature === 'notes') {
+        items = (latestTravelData.notes || []).map(note => ({
+            title: note.note_text || 'Trip note',
+            meta: `${getPlaceName(note.place_id)} - ${formatBoardDate(note.created_at)}`,
+            icon: 'fa-note-sticky'
+        }));
+        emptyMessage = 'No trip notes yet.';
+        status = 'Your notes are stored here for later.';
+    } else {
+        travelBoardContent.innerHTML = [
+            buildBoardItem('fa-route', 'Build a route', 'Save places first, then plan the order.'),
+            buildBoardItem('fa-cloud-sun', 'Check best seasons', 'Use place details to compare timing.'),
+            buildBoardItem('fa-wallet', 'Estimate budget', 'Review cost cards before you go.')
+        ].join('');
+        setTravelStatus('Quick tools for planning are ready.');
+        return;
+    }
+
+    const filteredItems = query
+        ? items.filter(item => `${item.title} ${item.meta}`.toLowerCase().includes(query))
+        : items;
+
+    if (filteredItems.length === 0) {
+        travelBoardContent.innerHTML = `<p class="empty-state">${query ? 'No matching board items found.' : emptyMessage}</p>`;
+    } else {
+        travelBoardContent.innerHTML = filteredItems
+            .map(item => buildBoardItem(item.icon, item.title, item.meta))
+            .join('');
+    }
+
+    setTravelStatus(status);
+}
+
+function updateTravelBoard(feature = 'saved', forceRefresh = false) {
+    if (!travelBoardContent) return;
+    setProfileFeature(feature);
+
+    if (!isUserLoggedIn()) {
+        latestTravelData = { saved: [], trips: [], notes: [] };
+        updateProfileCounts();
+        renderTravelBoard(feature);
+        return;
+    }
+
+    if (!forceRefresh && latestTravelData.loaded) {
+        renderTravelBoard(feature);
+        return;
+    }
+
+    travelBoardContent.innerHTML = '<p class="empty-state">Loading your travel board...</p>';
+
+    fetch('../../PHP/travel.php?action=get', {
+        method: 'GET',
+        credentials: 'same-origin'
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                travelBoardContent.innerHTML = '<p class="empty-state">Unable to load your travel board right now.</p>';
+                return;
+            }
+
+            latestTravelData = {
+                saved: data.saved || [],
+                trips: data.trips || [],
+                notes: data.notes || [],
+                loaded: true
+            };
+            updateProfileCounts(latestTravelData);
+            renderTravelBoard(feature);
+        })
+        .catch(() => {
+            travelBoardContent.innerHTML = '<p class="empty-state">Unable to load your travel board right now.</p>';
+        });
+}
+
 function handleTravelFeatureClick(event) {
     const button = event.target.closest('.feature-item');
     if (!button || !isUserLoggedIn()) {
@@ -476,7 +669,7 @@ function savePlaceToCollection(placeId) {
         .then(() => {
             showProfileCard();
             setTravelStatus('Saved to your collection.');
-            updateTravelBoard('saved');
+            updateTravelBoard('saved', true);
         })
         .catch(() => {
             setTravelStatus('Unable to save right now.');
@@ -500,7 +693,7 @@ function addNoteToPlace(placeId, note) {
         .then(() => {
             showProfileCard();
             setTravelStatus('Note saved to your travel board.');
-            updateTravelBoard('notes');
+            updateTravelBoard('notes', true);
         })
         .catch(() => {
             setTravelStatus('Unable to save note right now.');
@@ -523,7 +716,7 @@ function organizeTrip(placeId) {
         .then(() => {
             showProfileCard();
             setTravelStatus('Added to your future trips.');
-            updateTravelBoard('future');
+            updateTravelBoard('future', true);
         })
         .catch(() => {
             setTravelStatus('Unable to plan trip right now.');

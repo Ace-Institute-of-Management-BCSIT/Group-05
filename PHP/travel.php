@@ -34,7 +34,7 @@ if ($action === 'get') {
         $trips[] = $row;
     }
 
-    $noteStmt = $conn->prepare('SELECT place_id, note_text, created_at FROM trip_notes WHERE user_id = ? ORDER BY created_at DESC');
+    $noteStmt = $conn->prepare('SELECT id, place_id, note_text, created_at FROM trip_notes WHERE user_id = ? ORDER BY created_at DESC');
     $noteStmt->bind_param('i', $userId);
     $noteStmt->execute();
     $noteResult = $noteStmt->get_result();
@@ -62,6 +62,22 @@ if ($action === 'save_place') {
     exit();
 }
 
+if ($action === 'remove_saved') {
+    $placeId = (int) ($_POST['place_id'] ?? 0);
+    if ($placeId <= 0) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid place.']);
+        exit();
+    }
+
+    $stmt = $conn->prepare('DELETE FROM saved_places WHERE user_id = ? AND place_id = ?');
+    $stmt->bind_param('ii', $userId, $placeId);
+    $stmt->execute();
+
+    echo json_encode(['success' => true, 'message' => 'Saved place removed.']);
+    exit();
+}
+
 if ($action === 'plan_trip') {
     $placeId = (int) ($_POST['place_id'] ?? 0);
     if ($placeId <= 0) {
@@ -75,6 +91,22 @@ if ($action === 'plan_trip') {
     $stmt->execute();
 
     echo json_encode(['success' => true, 'message' => 'Trip planned.']);
+    exit();
+}
+
+if ($action === 'remove_trip') {
+    $placeId = (int) ($_POST['place_id'] ?? 0);
+    if ($placeId <= 0) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid place.']);
+        exit();
+    }
+
+    $stmt = $conn->prepare('DELETE FROM planned_trips WHERE user_id = ? AND place_id = ?');
+    $stmt->bind_param('ii', $userId, $placeId);
+    $stmt->execute();
+
+    echo json_encode(['success' => true, 'message' => 'Planned trip removed.']);
     exit();
 }
 
@@ -93,6 +125,22 @@ if ($action === 'add_note') {
     $stmt->execute();
 
     echo json_encode(['success' => true, 'message' => 'Note saved.']);
+    exit();
+}
+
+if ($action === 'delete_note') {
+    $noteId = (int) ($_POST['note_id'] ?? 0);
+    if ($noteId <= 0) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid note.']);
+        exit();
+    }
+
+    $stmt = $conn->prepare('DELETE FROM trip_notes WHERE user_id = ? AND id = ?');
+    $stmt->bind_param('ii', $userId, $noteId);
+    $stmt->execute();
+
+    echo json_encode(['success' => true, 'message' => 'Note deleted.']);
     exit();
 }
 
