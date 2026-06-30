@@ -19,6 +19,8 @@ let currentFilter = 'All';
 let searchQuery = '';
 let selectedPlace = null;
 let userRating = 0;
+const STAR_FILLED = '#fbbc04';
+const STAR_EMPTY = '#dadce0';
 const PLACE_STORAGE_KEY = 'nepalTravelPlaces';
 
 // Sample reviews
@@ -282,26 +284,45 @@ function attachEventListeners() {
         btn.addEventListener('click', openAddPlaceModal);
     });
 
-    backBtn.addEventListener('click', closePlaceDetail);
+    if (backBtn) backBtn.addEventListener('click', closePlaceDetail);
     if (closeFormBtn) closeFormBtn.addEventListener('click', closeAddPlaceModal);
-    clearFiltersBtn.addEventListener('click', clearFilters);
+    if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearFilters);
     if (reviewForm) reviewForm.addEventListener('submit', handleReviewSubmit);
 
-    if (starRating) {
-        const starBtns = starRating.querySelectorAll('.star-btn');
-        starBtns.forEach(btn => {
-            btn.addEventListener('click', () => setRating(parseInt(btn.dataset.rating)));
-            btn.addEventListener('mouseenter', () => highlightStars(parseInt(btn.dataset.rating)));
-        });
-        starRating.addEventListener('mouseleave', () => highlightStars(userRating));
-    }
+    initStarRating();
 
-    addPlaceModal.addEventListener('click', (e) => {
-        if (e.target === addPlaceModal) closeAddPlaceModal();
+    if (addPlaceModal) {
+        addPlaceModal.addEventListener('click', (e) => {
+            if (e.target === addPlaceModal) closeAddPlaceModal();
+        });
+    }
+    if (placeDetailModal) {
+        placeDetailModal.addEventListener('click', (e) => {
+            if (e.target === placeDetailModal) closePlaceDetail();
+        });
+    }
+}
+
+function initStarRating() {
+    highlightStars(userRating);
+
+    const container = document.getElementById('star-rating');
+    if (!container || container.dataset.bound === 'true') return;
+    container.dataset.bound = 'true';
+
+    container.addEventListener('click', (e) => {
+        const btn = e.target.closest('.star-btn');
+        if (!btn) return;
+        e.preventDefault();
+        setRating(parseInt(btn.dataset.rating, 10));
     });
-    placeDetailModal.addEventListener('click', (e) => {
-        if (e.target === placeDetailModal) closePlaceDetail();
+
+    container.addEventListener('mouseover', (e) => {
+        const btn = e.target.closest('.star-btn');
+        if (btn) highlightStars(parseInt(btn.dataset.rating, 10));
     });
+
+    container.addEventListener('mouseleave', () => highlightStars(userRating));
 }
 
 // Auth Functions
@@ -970,6 +991,8 @@ function openPlaceDetail(id) {
     if (planBtn) planBtn.onclick = () => organizeTrip(selectedPlace.id);
 
     placeDetailModal.classList.add('active');
+    userRating = 0;
+    initStarRating();
     loadAndRenderReviews(selectedPlace.id);
 }
 
@@ -981,7 +1004,7 @@ function closePlaceDetail() {
 async function loadAndRenderReviews(placeId) {
     const addReviewContainer = document.getElementById('add-review-container');
     if (addReviewContainer) {
-        addReviewContainer.style.display = isUserLoggedIn() ? 'block' : 'none';
+        addReviewContainer.style.display = 'block';
     }
 
     try {
@@ -1042,9 +1065,14 @@ function setRating(rating) {
 }
 
 function highlightStars(rating) {
-    const starBtns = starRating.querySelectorAll('.star-btn');
-    starBtns.forEach((btn, index) => {
-        btn.classList.toggle('active', index < rating);
+    const container = document.getElementById('star-rating');
+    if (!container) return;
+
+    container.querySelectorAll('.star-btn').forEach((btn, index) => {
+        const filled = index < rating;
+        btn.classList.toggle('active', filled);
+        btn.textContent = filled ? '★' : '☆';
+        btn.style.color = filled ? STAR_FILLED : STAR_EMPTY;
     });
 }
 

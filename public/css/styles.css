@@ -21,6 +21,9 @@
     --text-secondary: #5b4b3c;
     --text-muted: #6f6f6a;
 
+    --star-empty: #dadce0;
+    --star-filled: #fbbc04;
+
     --border-color: rgba(33, 79, 66, 0.12);
     --border-radius: 0.625rem;
 
@@ -1648,20 +1651,23 @@ textarea:focus {
 
 .star-btn {
     background: transparent;
+    border: none;
     font-size: 2rem;
-    color: var(--text-muted);
+    line-height: 1;
+    color: var(--star-empty);
     padding: 0;
     width: 40px;
     height: 40px;
-    transition: transform 0.2s;
+    cursor: pointer;
+    transition: transform 0.15s ease, color 0.15s ease;
 }
 
 .star-btn:hover {
-    transform: scale(1.1);
+    transform: scale(1.15);
 }
 
 .star-btn.active {
-    color: var(--color-secondary);
+    color: var(--star-filled);
 }
 
 .review-item {
