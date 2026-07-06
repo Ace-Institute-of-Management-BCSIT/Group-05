@@ -61,6 +61,9 @@ CREATE TABLE `places` (
   `province` varchar(100) DEFAULT '',
   `district` varchar(100) DEFAULT '',
   `municipality` varchar(150) DEFAULT '',
+  `map_latitude` decimal(10,7) DEFAULT NULL,
+  `map_longitude` decimal(10,7) DEFAULT NULL,
+  `map_url` varchar(500) DEFAULT '',
   `category` varchar(100) DEFAULT 'Other',
   `short_desc` text DEFAULT NULL,
   `best_time` varchar(190) DEFAULT '',
@@ -140,3 +143,9 @@ ALTER TABLE `place_reviews`
   ADD CONSTRAINT `fk_reviews_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 COMMIT;
 
+
+
+ALTER TABLE places
+  ADD COLUMN map_latitude DECIMAL(10,7) NULL AFTER municipality,
+  ADD COLUMN map_longitude DECIMAL(10,7) NULL AFTER map_latitude,
+  ADD COLUMN map_url VARCHAR(500) NOT NULL DEFAULT '' AFTER map_longitude;

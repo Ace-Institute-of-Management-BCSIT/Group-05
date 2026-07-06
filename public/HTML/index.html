@@ -432,6 +432,9 @@
                             <p class="detail-location" id="detail-location">Myagdi, Gandaki</p>
                             <p class="detail-location-full" id="detail-location-full">Annapurna Municipality, Gandaki Province</p>
                         </div>
+                        <button type="button" class="detail-map-btn" id="detail-map-btn" aria-label="Open location in Google Maps">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -677,6 +680,28 @@
                                 <label>Municipality / VDC</label>
                                 <div class="input-wrap"><i class="fa-solid fa-house-flag"></i>
                                     <input class="input" name="municipality" placeholder="e.g. Annapurna RM"/></div>
+                            </div>
+
+                            <div class="field col-12">
+                                <label>Google Map Location</label>
+                                <div class="map-pick">
+                                    <button type="button" class="map-pick-btn" id="openMapPickerBtn">
+                                        <i class="fa-solid fa-map-location-dot"></i>
+                                        Select on Google Maps
+                                    </button>
+                                    <p class="helper">Open Google Maps, drop a pin, then paste the coordinates below.</p>
+                                </div>
+                            </div>
+
+                            <div class="field col-6">
+                                <label>Map Latitude</label>
+                                <div class="input-wrap"><i class="fa-solid fa-location-dot"></i>
+                                    <input class="input" name="mapLatitude" placeholder="e.g. 28.3754000"/></div>
+                            </div>
+                            <div class="field col-6">
+                                <label>Map Longitude</label>
+                                <div class="input-wrap"><i class="fa-solid fa-location-crosshairs"></i>
+                                    <input class="input" name="mapLongitude" placeholder="e.g. 83.6861000"/></div>
                             </div>
 
                             <div class="field col-12">

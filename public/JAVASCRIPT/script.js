@@ -23,6 +23,28 @@ const STAR_FILLED = '#fbbc04';
 const STAR_EMPTY = '#dadce0';
 const PLACE_STORAGE_KEY = 'nepalTravelPlaces';
 
+function buildGoogleMapsUrl(place = {}) {
+    const latitude = (place.mapLatitude ?? '').toString().trim();
+    const longitude = (place.mapLongitude ?? '').toString().trim();
+
+    if (latitude && longitude) {
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`;
+    }
+
+    const query = [
+        place.name,
+        place.destination,
+        place.municipality,
+        place.district,
+        place.province
+    ]
+        .map(value => (value ?? '').toString().trim())
+        .filter(Boolean)
+        .join(', ');
+
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || 'Nepal')}`;
+}
+
 // Sample reviews
 const sampleReviews = [
     {
@@ -138,6 +160,9 @@ function normalizePlace(place) {
         toilets: false,
         ...place,
         location: place.location || [place.district, place.province].filter(Boolean).join(', ') || place.destination || 'Nepal',
+        mapLatitude: place.mapLatitude || '',
+        mapLongitude: place.mapLongitude || '',
+        mapUrl: place.mapUrl || buildGoogleMapsUrl(place),
         status: place.status || 'approved'
     };
 }
@@ -201,6 +226,17 @@ function buildPlaceFromForm(formElement) {
         startPoint: field('start'),
         routeDesc: field('routeDesc'),
         destination: field('dest'),
+        mapLatitude: field('mapLatitude'),
+        mapLongitude: field('mapLongitude'),
+        mapUrl: field('mapUrl') || buildGoogleMapsUrl({
+            name: field('name'),
+            destination: field('dest'),
+            municipality: field('municipality'),
+            district: field('district'),
+            province: field('province'),
+            mapLatitude: field('mapLatitude'),
+            mapLongitude: field('mapLongitude')
+        }),
         submittedBy: localStorage.getItem('userName') || getCookie('userName') || 'Traveler',
         submittedAt: new Date().toISOString(),
         status: 'pending'
@@ -211,6 +247,7 @@ async function submitPlaceForApproval(formElement) {
     const submittedPlace = buildPlaceFromForm(formElement);
     const formData = new FormData(formElement);
     formData.append('action', 'submit');
+    formData.set('mapUrl', submittedPlace.mapUrl || buildGoogleMapsUrl(submittedPlace));
     if (coverFile) {
         formData.set('coverImage', coverFile, coverFile.name);
     }
@@ -267,6 +304,21 @@ function attachEventListeners() {
         });
     }
     if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+    const openMapPickerBtn = document.getElementById('openMapPickerBtn');
+    if (openMapPickerBtn) {
+        openMapPickerBtn.addEventListener('click', () => {
+            const pickerUrl = buildGoogleMapsUrl({
+                name: document.querySelector('input[name="name"]')?.value,
+                destination: document.querySelector('input[name="dest"]')?.value,
+                municipality: document.querySelector('input[name="municipality"]')?.value,
+                district: document.querySelector('input[name="district"]')?.value,
+                province: document.querySelector('select[name="province"]')?.value,
+                mapLatitude: document.querySelector('input[name="mapLatitude"]')?.value,
+                mapLongitude: document.querySelector('input[name="mapLongitude"]')?.value
+            });
+            window.open(pickerUrl, '_blank', 'noopener,noreferrer');
+        });
+    }
     document.addEventListener('click', (event) => {
         if (event.target.closest('#travel-features')) {
             handleTravelFeatureClick(event);
@@ -923,6 +975,10 @@ function openPlaceDetail(id) {
     // Location info
     document.getElementById('detail-location').textContent = `${selectedPlace.district}, ${selectedPlace.province}`;
     document.getElementById('detail-location-full').textContent = `${selectedPlace.municipality}, ${selectedPlace.province} Province`;
+    const detailMapBtn = document.getElementById('detail-map-btn');
+    if (detailMapBtn) {
+        detailMapBtn.onclick = () => window.open(selectedPlace.mapUrl || buildGoogleMapsUrl(selectedPlace), '_blank', 'noopener,noreferrer');
+    }
 
     // About
     document.getElementById('detail-desc').textContent = selectedPlace.shortDesc;

@@ -33,6 +33,9 @@ function row_to_place($row) {
         'district' => $row['district'],
         'municipality' => $row['municipality'],
         'location' => trim(implode(', ', array_filter([$row['district'], $row['province']]))),
+        'mapLatitude' => $row['map_latitude'] !== null ? (string) $row['map_latitude'] : '',
+        'mapLongitude' => $row['map_longitude'] !== null ? (string) $row['map_longitude'] : '',
+        'mapUrl' => $row['map_url'] ?: '',
         'category' => $row['category'],
         'shortDesc' => $row['short_desc'],
         'bestTime' => $row['best_time'],
@@ -153,6 +156,9 @@ if ($action === 'submit') {
     $startPoint = text_field('start');
     $routeDesc = text_field('routeDesc');
     $destination = text_field('dest');
+    $mapLatitude = text_field('mapLatitude');
+    $mapLongitude = text_field('mapLongitude');
+    $mapUrl = text_field('mapUrl');
 
     if ($name === '' || $category === '' || $shortDesc === '' || $startPoint === '' || $routeDesc === '' || $destination === '') {
         respond(['success' => false, 'message' => 'Please complete all required fields.'], 400);
@@ -188,12 +194,12 @@ if ($action === 'submit') {
 
     $stmt = $conn->prepare("
         INSERT INTO places (
-            name, local_name, tagline, province, district, municipality, category,
+            name, local_name, tagline, province, district, municipality, map_latitude, map_longitude, map_url, category,
             short_desc, best_time, duration, things, tips, difficulty,
             budget, transport, stay, food, fee, accom_desc, hotels, restaurants,
             homestay, parking, toilets, cover_image, start_point, route_desc,
             destination, submitted_by, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+        ) VALUES (?, ?, ?, ?, ?, ?, NULLIF(?, ''), NULLIF(?, ''), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
     ");
 
     $localName = text_field('localName');
@@ -201,6 +207,9 @@ if ($action === 'submit') {
     $province = text_field('province');
     $district = text_field('district');
     $municipality = text_field('municipality');
+    $mapLatitude = text_field('mapLatitude');
+    $mapLongitude = text_field('mapLongitude');
+    $mapUrl = text_field('mapUrl');
     $bestTime = text_field('bestTime');
     $duration = text_field('duration');
     $things = text_field('things');
@@ -220,13 +229,16 @@ if ($action === 'submit') {
     $userId = (int) $_SESSION['id'];
 
     $stmt->bind_param(
-        'sssssssssssssdddddsssiiissssi',
+        'sssssssssssssssssssssssdddddiiii',
         $name,
         $localName,
         $tagline,
         $province,
         $district,
         $municipality,
+        $mapLatitude,
+        $mapLongitude,
+        $mapUrl,
         $category,
         $shortDesc,
         $bestTime,
