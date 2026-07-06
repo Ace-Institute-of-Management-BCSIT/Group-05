@@ -1,3 +1,4 @@
 /db.sql
 # Ignore uploaded files
 uploads/
+.vscode/tasks.json
