@@ -335,6 +335,7 @@ if ($action === 'submit_review') {
     $stmt = $conn->prepare("
         INSERT INTO place_reviews (place_id, user_id, rating, comment) 
         VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE rating = VALUES(rating), comment = VALUES(comment)
     ");
     $stmt->bind_param('iiis', $placeId, $userId, $rating, $comment);
     
