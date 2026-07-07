@@ -503,41 +503,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setupTableSearch();
 });
 
-// Photo management
-function setupPhotoManagement() {
-    const approveButtons = document.querySelectorAll('.btn-approve');
-    const rejectButtons = document.querySelectorAll('.btn-reject');
-
-    approveButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const photoCard = this.closest('.photo-card');
-            const photoName = photoCard.querySelector('h4').textContent;
-            openModal('Photo Approved', `Photo "${photoName}" has been approved and published.`);
-            setTimeout(() => {
-                photoCard.remove();
-                closeModal();
-            }, 2000);
-        });
-    });
-
-    rejectButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const photoCard = this.closest('.photo-card');
-            const photoName = photoCard.querySelector('h4').textContent;
-            openModal('Photo Rejected', `Photo "${photoName}" has been rejected.`);
-            setTimeout(() => {
-                photoCard.remove();
-                closeModal();
-            }, 2000);
-        });
-    });
-}
-
-// Initialize on page load
-window.addEventListener('load', () => {
-    setupPhotoManagement();
-});
-
 // Add place button
 document.addEventListener('DOMContentLoaded', () => {
     const addPlaceBtn = document.getElementById('addPlaceBtn');

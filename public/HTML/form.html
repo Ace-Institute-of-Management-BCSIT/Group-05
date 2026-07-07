@@ -302,7 +302,7 @@ label .req{color:var(--danger);margin-left:3px}
                   <i class="fa-solid fa-map-location-dot"></i>
                   Select on Google Maps
                 </button>
-                <p class="helper">Open Google Maps, drop a pin, then paste the coordinates below.</p>
+                <p class="helper">Open the embedded Google Map, drop a pin, and the coordinates will fill in automatically.</p>
               </div>
               <input type="hidden" name="mapUrl" id="mapUrlInput" value="">
             </div>
@@ -806,14 +806,47 @@ function openMapPicker(){
     });
 }
 
-function openMapsSearchInNewTab(){
-  if (!mapSearchInput) return;
+async function searchMapLocation(){
+  if (!mapSearchInput || !pickerMap) return;
   const query = mapSearchInput.value.trim();
   if (!query) return;
 
-  const searchUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-  window.open(searchUrl, '_blank', 'noopener,noreferrer');
-  toast('Google Maps opened in a new tab. Drop a pin there, then select the location on the map.', 'fa-map-location-dot');
+  if (!pickerGeocoder) pickerGeocoder = new google.maps.Geocoder();
+
+  try {
+    const result = await new Promise((resolve, reject) => {
+      pickerGeocoder.geocode({ address: query }, (results, status) => {
+        if (status === 'OK' && results?.length) {
+          resolve(results);
+        } else {
+          reject(new Error(status || 'ZERO_RESULTS'));
+        }
+      });
+    });
+    const location = result[0]?.geometry?.location;
+
+    if (!location) {
+      toast('No matching place was found.', 'fa-triangle-exclamation');
+      return;
+    }
+
+    pickerMap.setCenter(location);
+    pickerMap.setZoom(15);
+    if (!pickerMarker) {
+      pickerMarker = new google.maps.Marker({ map: pickerMap, position: location, draggable: true });
+      pickerMarker.addListener('dragend', () => {
+        const position = pickerMarker.getPosition();
+        if (position) updateMapFields(position.lat(), position.lng(), 'Selected location');
+      });
+    } else {
+      pickerMarker.setPosition(location);
+    }
+
+    updateMapFields(location.lat(), location.lng(), result[0]?.formatted_address || 'Selected location');
+    toast('Location selected. Your coordinates are ready to use.', 'fa-map-location-dot');
+  } catch (error) {
+    toast('Unable to search that location right now.', 'fa-triangle-exclamation');
+  }
 }
 
 function syncMapUrlFromFields(){
@@ -879,14 +912,16 @@ if (useMapLocationBtn) useMapLocationBtn.addEventListener('click', () => {
     return;
   }
   closeMapPicker();
+  mapLatitudeInput?.focus();
+  mapLatitudeInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
-if (mapSearchBtn) mapSearchBtn.addEventListener('click', openMapsSearchInNewTab);
+if (mapSearchBtn) mapSearchBtn.addEventListener('click', searchMapLocation);
 if (mapSearchInput) {
   mapSearchInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      openMapsSearchInNewTab();
+      searchMapLocation();
     }
   });
 }
