@@ -19,7 +19,7 @@ if (!str_starts_with($requested, 'uploads/')) {
     $requested = 'uploads/' . $requested;
 }
 
-$basePath = dirname(__DIR__) . '/public/';
+$basePath = dirname(__DIR__) . '/Public/';
 $filePath = realpath($basePath . $requested);
 $allowedBase = realpath($basePath . 'uploads');
 

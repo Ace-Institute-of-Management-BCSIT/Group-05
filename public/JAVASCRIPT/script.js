@@ -45,6 +45,194 @@ function buildGoogleMapsUrl(place = {}) {
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || 'Nepal')}`;
 }
 
+function updateMapFields(lat, lng, label) {
+    const latitude = Number(lat);
+    const longitude = Number(lng);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+
+    pickerLocation = { lat: latitude, lng: longitude };
+    if (mapLatitudeInput) mapLatitudeInput.value = latitude.toFixed(7);
+    if (mapLongitudeInput) mapLongitudeInput.value = longitude.toFixed(7);
+    if (mapSelectionLabel) mapSelectionLabel.textContent = label || 'Selected location';
+    if (mapSelectionCoords) mapSelectionCoords.textContent = `${latitude.toFixed(7)}, ${longitude.toFixed(7)}`;
+    if (mapErr) mapErr.classList.remove('show');
+}
+
+function loadGoogleMaps() {
+    if (window.google?.maps) return Promise.resolve();
+    if (googleMapsPromise) return googleMapsPromise;
+
+    googleMapsPromise = new Promise((resolve, reject) => {
+        const callbackName = '__initAddPlaceMapPicker';
+        window[callbackName] = () => {
+            delete window[callbackName];
+            resolve();
+        };
+
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=${callbackName}`;
+        script.async = true;
+        script.defer = true;
+        script.onerror = () => {
+            delete window[callbackName];
+            reject(new Error('Google Maps failed to load.'));
+        };
+        document.head.appendChild(script);
+    });
+
+    return googleMapsPromise;
+}
+
+function initializePickerMap() {
+    if (!window.google?.maps || pickerMap || !mapPickerCanvas) return;
+
+    const fallbackCenter = { lat: 28.3949, lng: 84.1240 };
+    pickerMap = new google.maps.Map(mapPickerCanvas, {
+        center: pickerLocation || fallbackCenter,
+        zoom: pickerLocation ? 14 : 7,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true
+    });
+
+    pickerMarker = new google.maps.Marker({
+        map: pickerMap,
+        position: pickerLocation || fallbackCenter,
+        draggable: true
+    });
+
+    pickerMap.addListener('click', (event) => {
+        const location = event.latLng;
+        pickerMarker.setPosition(location);
+        updateMapFields(location.lat(), location.lng(), 'Selected location');
+    });
+
+    pickerMarker.addListener('dragend', () => {
+        const position = pickerMarker.getPosition();
+        if (position) updateMapFields(position.lat(), position.lng(), 'Selected location');
+    });
+
+    if (mapSelectionLabel && mapSelectionCoords) {
+        mapSelectionLabel.textContent = 'Click anywhere on the map to place the pin.';
+        mapSelectionCoords.textContent = 'You can also drag the pin after placing it.';
+    }
+
+    if (pickerLocation) {
+        updateMapFields(pickerLocation.lat, pickerLocation.lng, 'Selected location');
+        pickerMap.setCenter(pickerLocation);
+    }
+}
+
+function closeMapPicker() {
+    if (!mapPickerModal) return;
+    mapPickerModal.classList.remove('show');
+    mapPickerModal.setAttribute('aria-hidden', 'true');
+}
+
+function openMapPicker() {
+    if (!mapPickerModal) return;
+    mapPickerModal.classList.add('show');
+    mapPickerModal.setAttribute('aria-hidden', 'false');
+
+    loadGoogleMaps()
+        .then(() => {
+            initializePickerMap();
+            requestAnimationFrame(() => {
+                if (pickerMap) {
+                    google.maps.event.trigger(pickerMap, 'resize');
+                    if (pickerLocation) pickerMap.setCenter(pickerLocation);
+                    if (pickerMarker && pickerLocation) pickerMarker.setPosition(pickerLocation);
+                }
+            });
+        })
+        .catch(() => {
+            toast('Google Maps could not load. Check the API key and Maps JavaScript API settings.', 'fa-triangle-exclamation');
+            closeMapPicker();
+        });
+}
+
+async function geocodeSearchQuery(query) {
+    if (window.google?.maps && !pickerGeocoder) {
+        pickerGeocoder = new google.maps.Geocoder();
+    }
+
+    if (pickerGeocoder) {
+        try {
+            const results = await new Promise((resolve, reject) => {
+                pickerGeocoder.geocode({ address: query }, (response, status) => {
+                    if (status === 'OK' && response?.length) {
+                        resolve(response);
+                    } else {
+                        reject(new Error(status || 'ZERO_RESULTS'));
+                    }
+                });
+            });
+
+            const location = results[0]?.geometry?.location;
+            if (location) {
+                return {
+                    lat: location.lat(),
+                    lng: location.lng(),
+                    label: results[0]?.formatted_address || query
+                };
+            }
+        } catch (error) {
+            // Fall back to an open geocoding service if Google geocoding is denied or unavailable.
+        }
+    }
+
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(query)}`, {
+        headers: {
+            'Accept': 'application/json'
+        }
+    });
+    const results = await response.json();
+    if (!Array.isArray(results) || results.length === 0) {
+        throw new Error('ZERO_RESULTS');
+    }
+
+    return {
+        lat: Number(results[0].lat),
+        lng: Number(results[0].lon),
+        label: results[0].display_name || query
+    };
+}
+
+async function searchMapLocation() {
+    if (!mapSearchInput) return;
+    const query = mapSearchInput.value.trim();
+    if (!query) return;
+
+    try {
+        await loadGoogleMaps();
+        initializePickerMap();
+    } catch (error) {
+        toast('Google Maps could not load. Check the API key and Maps JavaScript API settings.', 'fa-triangle-exclamation');
+        return;
+    }
+
+    try {
+        const location = await geocodeSearchQuery(query);
+
+        pickerMap.setCenter({ lat: location.lat, lng: location.lng });
+        pickerMap.setZoom(15);
+        if (!pickerMarker) {
+            pickerMarker = new google.maps.Marker({ map: pickerMap, position: { lat: location.lat, lng: location.lng }, draggable: true });
+            pickerMarker.addListener('dragend', () => {
+                const position = pickerMarker.getPosition();
+                if (position) updateMapFields(position.lat(), position.lng(), 'Selected location');
+            });
+        } else {
+            pickerMarker.setPosition({ lat: location.lat, lng: location.lng });
+        }
+
+        updateMapFields(location.lat, location.lng, location.label || 'Selected location');
+        toast('Location selected. Your coordinates are ready to use.', 'fa-map-location-dot');
+    } catch (error) {
+        toast('Unable to search that location right now.', 'fa-triangle-exclamation');
+    }
+}
+
 // Sample reviews
 const sampleReviews = [
     {
@@ -103,8 +291,27 @@ const mobileUserBtn = document.getElementById('mobile-user-btn');
 const profileExploreBtn = document.getElementById('profile-explore-btn');
 const refreshTravelBoardBtn = document.getElementById('refresh-travel-board');
 const profileBoardSearch = document.getElementById('profile-board-search');
+const GOOGLE_MAPS_API_KEY = 'AIzaSyCxWlclMAXJMRpiPH0ag-MuC9z-DokH_SM';
+const mapPickerModal = document.getElementById('mapPickerModal');
+const mapPickerCanvas = document.getElementById('mapPickerCanvas');
+const mapSearchInput = document.getElementById('mapSearchInput');
+const mapSearchBtn = document.getElementById('mapSearchBtn');
+const mapSelectionLabel = document.getElementById('mapSelectionLabel');
+const mapSelectionCoords = document.getElementById('mapSelectionCoords');
+const mapLatitudeInput = document.querySelector('input[name="mapLatitude"]');
+const mapLongitudeInput = document.querySelector('input[name="mapLongitude"]');
+const mapErr = document.getElementById('mapErr');
+const openMapPickerBtn = document.getElementById('openMapPickerBtn');
+const closeMapPickerBtn = document.getElementById('closeMapPickerBtn');
+const mapPickerCancelBtn = document.getElementById('mapPickerCancelBtn');
+const useMapLocationBtn = document.getElementById('useMapLocationBtn');
 let currentProfileFeature = 'saved';
 let latestTravelData = { saved: [], trips: [], notes: [] };
+let googleMapsPromise = null;
+let pickerMap = null;
+let pickerMarker = null;
+let pickerGeocoder = null;
+let pickerLocation = null;
 
 // Initialize
 async function init() {
@@ -304,19 +511,26 @@ function attachEventListeners() {
         });
     }
     if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
-    const openMapPickerBtn = document.getElementById('openMapPickerBtn');
-    if (openMapPickerBtn) {
-        openMapPickerBtn.addEventListener('click', () => {
-            const pickerUrl = buildGoogleMapsUrl({
-                name: document.querySelector('input[name="name"]')?.value,
-                destination: document.querySelector('input[name="dest"]')?.value,
-                municipality: document.querySelector('input[name="municipality"]')?.value,
-                district: document.querySelector('input[name="district"]')?.value,
-                province: document.querySelector('select[name="province"]')?.value,
-                mapLatitude: document.querySelector('input[name="mapLatitude"]')?.value,
-                mapLongitude: document.querySelector('input[name="mapLongitude"]')?.value
-            });
-            window.open(pickerUrl, '_blank', 'noopener,noreferrer');
+    if (openMapPickerBtn) openMapPickerBtn.addEventListener('click', openMapPicker);
+    if (closeMapPickerBtn) closeMapPickerBtn.addEventListener('click', closeMapPicker);
+    if (mapPickerCancelBtn) mapPickerCancelBtn.addEventListener('click', closeMapPicker);
+    if (useMapLocationBtn) useMapLocationBtn.addEventListener('click', () => {
+        if (!mapLatitudeInput?.value.trim() || !mapLongitudeInput?.value.trim()) {
+            if (mapErr) mapErr.classList.add('show');
+            toast('Select a location on the map first.', 'fa-triangle-exclamation');
+            return;
+        }
+        closeMapPicker();
+        mapLatitudeInput?.focus();
+        mapLatitudeInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    if (mapSearchBtn) mapSearchBtn.addEventListener('click', searchMapLocation);
+    if (mapSearchInput) {
+        mapSearchInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                searchMapLocation();
+            }
         });
     }
     document.addEventListener('click', (event) => {
@@ -976,8 +1190,15 @@ function openPlaceDetail(id) {
     document.getElementById('detail-location').textContent = `${selectedPlace.district}, ${selectedPlace.province}`;
     document.getElementById('detail-location-full').textContent = `${selectedPlace.municipality}, ${selectedPlace.province} Province`;
     const detailMapBtn = document.getElementById('detail-map-btn');
+    const detailMapFrame = document.getElementById('detail-map-frame');
     if (detailMapBtn) {
-        detailMapBtn.onclick = () => window.open(selectedPlace.mapUrl || buildGoogleMapsUrl(selectedPlace), '_blank', 'noopener,noreferrer');
+        detailMapBtn.onclick = () => {
+            document.querySelector('.detail-map-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            detailMapFrame?.focus();
+        };
+    }
+    if (detailMapFrame) {
+        detailMapFrame.src = selectedPlace.mapUrl || buildGoogleMapsUrl(selectedPlace);
     }
 
     // About
