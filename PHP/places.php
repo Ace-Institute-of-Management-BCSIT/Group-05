@@ -179,7 +179,7 @@ if ($action === 'submit') {
         }
 
         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $uploadDir = dirname(__DIR__) . '/Public/uploads/';
+        $uploadDir = dirname(__DIR__) . '/public/uploads/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }

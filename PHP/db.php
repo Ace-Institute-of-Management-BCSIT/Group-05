@@ -39,6 +39,9 @@ $conn->query("
         province VARCHAR(100) DEFAULT '',
         district VARCHAR(100) DEFAULT '',
         municipality VARCHAR(150) DEFAULT '',
+        map_latitude VARCHAR(100) DEFAULT NULL,
+        map_longitude VARCHAR(100) DEFAULT NULL,
+        map_url VARCHAR(255) DEFAULT '',
         category VARCHAR(100) DEFAULT 'Other',
         short_desc TEXT,
         best_time VARCHAR(190) DEFAULT '',
@@ -118,6 +121,20 @@ $conn->query("
         UNIQUE KEY uniq_place_user (place_id, user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
+
+// Schema migration check: Add missing map columns to places table if they do not exist
+$columnsCheck = $conn->query("SHOW COLUMNS FROM places LIKE 'map_latitude'");
+if ($columnsCheck && $columnsCheck->num_rows === 0) {
+    $conn->query("ALTER TABLE places ADD COLUMN map_latitude VARCHAR(100) DEFAULT NULL AFTER municipality");
+}
+$columnsCheck = $conn->query("SHOW COLUMNS FROM places LIKE 'map_longitude'");
+if ($columnsCheck && $columnsCheck->num_rows === 0) {
+    $conn->query("ALTER TABLE places ADD COLUMN map_longitude VARCHAR(100) DEFAULT NULL AFTER map_latitude");
+}
+$columnsCheck = $conn->query("SHOW COLUMNS FROM places LIKE 'map_url'");
+if ($columnsCheck && $columnsCheck->num_rows === 0) {
+    $conn->query("ALTER TABLE places ADD COLUMN map_url VARCHAR(255) DEFAULT '' AFTER map_longitude");
+}
 
 $adminEmail = 'admin@example.com';
 $adminCheck = $conn->prepare("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
