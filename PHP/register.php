@@ -31,7 +31,7 @@ if (strlen($password) < 6) {
 }
 
 // Check if email already exists
-$emailCheck = $conn->prepare('SELECT id, is_verified FROM users WHERE email = ?');
+$emailCheck = $conn->prepare('SELECT id, full_name, is_verified FROM users WHERE email = ?');
 $emailCheck->bind_param('s', $email);
 $emailCheck->execute();
 $emailResult = $emailCheck->get_result();
@@ -43,11 +43,14 @@ if ($emailResult->num_rows > 0) {
         $_SESSION['otp_user_id'] = $existingUser['id'];
         $otp     = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $expires = date('Y-m-d H:i:s', time() + 600);
-        $conn->query("DELETE FROM otp_verifications WHERE user_id = {$existingUser['id']}");
+        $existingUserId = (int) $existingUser['id'];
+        $delOtpStmt = $conn->prepare('DELETE FROM otp_verifications WHERE user_id = ?');
+        $delOtpStmt->bind_param('i', $existingUserId);
+        $delOtpStmt->execute();
         $otpStmt = $conn->prepare('INSERT INTO otp_verifications (user_id, otp_code, expires_at) VALUES (?, ?, ?)');
-        $otpStmt->bind_param('iss', $existingUser['id'], $otp, $expires);
+        $otpStmt->bind_param('iss', $existingUserId, $otp, $expires);
         $otpStmt->execute();
-        send_otp_email($email, $full_name, $otp);
+        send_otp_email($email, $existingUser['full_name'], $otp);
         $_SESSION['otp_dev'] = $otp;
         header('Location: ../public/HTML/verify_otp.html');
         exit();

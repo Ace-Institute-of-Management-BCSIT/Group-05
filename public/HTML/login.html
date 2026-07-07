@@ -298,32 +298,4 @@
   
 </style>
 
-<?php
-session_start();
-// Inject messages from PHP session
-$loginError    = $_SESSION['login_error']    ?? '';
-$registerError = $_SESSION['register_error'] ?? '';
-$registered    = $_GET['registered'] ?? '';
-unset($_SESSION['login_error'], $_SESSION['register_error']);
-?>
-<script>
-  (function(){
-    const loginErr    = <?= json_encode($loginError) ?>;
-    const registerErr = <?= json_encode($registerError) ?>;
-    const registered  = <?= json_encode($registered) ?>;
-    function showMsg(id, text, type) {
-      const el = document.getElementById(id);
-      if (!el || !text) return;
-      el.textContent = text;
-      el.className = 'form-message ' + type;
-      el.style.display = 'block';
-    }
-    window.addEventListener('DOMContentLoaded', function(){
-      if (loginErr)    showMsg('loginMsg',    loginErr,    'error');
-      if (registerErr) showMsg('registerMsg', registerErr, 'error');
-      if (registered)  showMsg('loginMsg',    'Account created! Please sign in.', 'success');
-    });
-  })();
-</script>
-
 </html>

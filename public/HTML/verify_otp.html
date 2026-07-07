@@ -265,15 +265,25 @@
   const devBanner = document.getElementById('devBanner');
   const devOtpDisplay = document.getElementById('devOtpDisplay');
 
-  // ── Show dev OTP if stored in sessionStorage ──────────────────────────────
-  const devOtp = sessionStorage.getItem('dev_otp');
-  if (devOtp) {
+  function showDevOtp(otp) {
+    if (!otp) return;
     devBanner.classList.add('show');
-    devOtpDisplay.textContent = devOtp;
-    // Auto-fill the boxes for convenience
-    devOtp.split('').forEach((ch, i) => {
+    devOtpDisplay.textContent = otp;
+    sessionStorage.setItem('dev_otp', otp);
+    otp.split('').forEach((ch, i) => {
       if (boxes[i]) { boxes[i].value = ch; boxes[i].classList.add('filled'); }
     });
+  }
+
+  // ── Show dev OTP from sessionStorage or PHP session ───────────────────────
+  const cachedDevOtp = sessionStorage.getItem('dev_otp');
+  if (cachedDevOtp) {
+    showDevOtp(cachedDevOtp);
+  } else {
+    fetch('../../PHP/get_otp_dev.php', { credentials: 'same-origin' })
+      .then(res => res.json())
+      .then(data => { if (data.dev_otp) showDevOtp(data.dev_otp); })
+      .catch(() => {});
   }
 
   // ── OTP box keyboard handling ─────────────────────────────────────────────
@@ -432,26 +442,6 @@
     first.focus();
   });
 </script>
-
-<!-- Inject dev OTP from PHP session into sessionStorage -->
-<?php
-session_start();
-if (!empty($_SESSION['otp_dev'])):
-?>
-<script>
-  sessionStorage.setItem('dev_otp', '<?= htmlspecialchars($_SESSION['otp_dev']) ?>');
-  // Trigger display
-  const dOtp = sessionStorage.getItem('dev_otp');
-  if (dOtp) {
-    document.getElementById('devBanner').classList.add('show');
-    document.getElementById('devOtpDisplay').textContent = dOtp;
-    dOtp.split('').forEach((ch, i) => {
-      const b = document.getElementById('b' + i);
-      if (b) { b.value = ch; b.classList.add('filled'); }
-    });
-  }
-</script>
-<?php endif; ?>
 
 </body>
 </html>

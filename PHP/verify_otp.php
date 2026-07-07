@@ -34,7 +34,9 @@ if ($action === 'resend') {
     $otp     = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     $expires = date('Y-m-d H:i:s', time() + 600);
 
-    $conn->query("DELETE FROM otp_verifications WHERE user_id = $userId");
+    $delOtpStmt = $conn->prepare('DELETE FROM otp_verifications WHERE user_id = ?');
+    $delOtpStmt->bind_param('i', $userId);
+    $delOtpStmt->execute();
     $otpStmt = $conn->prepare('INSERT INTO otp_verifications (user_id, otp_code, expires_at) VALUES (?, ?, ?)');
     $otpStmt->bind_param('iss', $userId, $otp, $expires);
     $otpStmt->execute();
@@ -77,10 +79,15 @@ if ($otpRow['otp_code'] !== $entered) {
 }
 
 // Mark OTP as used
-$conn->query("UPDATE otp_verifications SET used = 1 WHERE id = {$otpRow['id']}");
+$otpId = (int) $otpRow['id'];
+$usedStmt = $conn->prepare('UPDATE otp_verifications SET used = 1 WHERE id = ?');
+$usedStmt->bind_param('i', $otpId);
+$usedStmt->execute();
 
 // Mark user as verified
-$conn->query("UPDATE users SET is_verified = 1 WHERE id = $userId");
+$verifyStmt = $conn->prepare('UPDATE users SET is_verified = 1 WHERE id = ?');
+$verifyStmt->bind_param('i', $userId);
+$verifyStmt->execute();
 
 // Fetch user details to log in
 $userStmt = $conn->prepare('SELECT id, full_name, role FROM users WHERE id = ?');
@@ -89,7 +96,9 @@ $userStmt->execute();
 $user = $userStmt->get_result()->fetch_assoc();
 
 // Clean up old session records
-$conn->query("DELETE FROM user_sessions WHERE user_id = $userId");
+$cleanStmt = $conn->prepare('DELETE FROM user_sessions WHERE user_id = ?');
+$cleanStmt->bind_param('i', $userId);
+$cleanStmt->execute();
 
 // Create session
 session_regenerate_id(true);

@@ -32,7 +32,9 @@ if ($result && $result->num_rows === 1) {
             // Re-generate OTP so they can complete verification
             $otp     = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             $expires = date('Y-m-d H:i:s', time() + 600);
-            $conn->query("DELETE FROM otp_verifications WHERE user_id = {$user['id']}");
+            $delOtpStmt = $conn->prepare('DELETE FROM otp_verifications WHERE user_id = ?');
+            $delOtpStmt->bind_param('i', $user['id']);
+            $delOtpStmt->execute();
             $otpStmt = $conn->prepare('INSERT INTO otp_verifications (user_id, otp_code, expires_at) VALUES (?, ?, ?)');
             $otpStmt->bind_param('iss', $user['id'], $otp, $expires);
             $otpStmt->execute();
