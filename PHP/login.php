@@ -1,4 +1,8 @@
 <?php
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -17,10 +21,15 @@ if ($email === '' || $password === '') {
     exit();
 }
 
-$stmt = $conn->prepare('
-    SELECT id, full_name, email, password, role, is_verified, last_login_ip 
-    FROM users WHERE email = ?
-');
+$stmt = $conn->prepare("
+    SELECT id, full_name, email, password, role, is_verified
+    FROM users
+    WHERE email = ?
+");
+
+if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+}
 $stmt->bind_param('s', $email);
 $stmt->execute();
 $result = $stmt->get_result();
