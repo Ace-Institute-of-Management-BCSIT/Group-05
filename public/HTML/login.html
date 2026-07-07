@@ -1,88 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-      <script src="../JAVASCRIPT/login.js" defer></script>
+  <script src="../JAVASCRIPT/login.js" defer></script>
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login/Register with Email Verification</title>
-
-  <!-- FontAwesome Icons -->
-  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-</head>
-<body>
-
-<div class="container" id="container">
-  <!-- Sign Up Form -->
-  <div class="form-container sign-up-container">
- <form id="registerForm">
-      <h1>Create Account</h1>
-      <div class="social-container">
-        <a href="#"><i class="fa fa-google"></i></a>
-        <a href="#"><i class="fa fa-facebook-f"></i></a>
-        <a href="#"><i class="fa fa-pinterest"></i></a>
-      </div>
-      <span>or use your email for registration</span>
-      <input type="text" name="full_name" id="reg_fullname" placeholder="Full Name" required />
-      <input type="email" name="email" id="reg_email" placeholder="Email" required />
-      <input type="password" name="password" id="reg_password" placeholder="Password (min 6 chars)" required />
-      <button type="submit" id="sendOtpBtn">Send OTP</button>
-      <p id="registerError" style="color: red; font-size: 12px; margin: 5px 0;"></p>
-    </form>
-  </div>
-
-  <!-- Sign In Form -->
-  <div class="form-container sign-in-container">
- <form id="loginForm" action="../../PHP/login.php" method="POST">
-    <h1>Sign in</h1>
-
-    <input type="email" name="email" placeholder="Email" required />
-    <input type="password" name="password" placeholder="Password" required />
-
-    <a href="#">Forgot your password?</a>
-
-    <button type="submit">Sign In</button>
-    <p id="loginError" style="color: red; font-size: 12px; margin: 5px 0;"></p>
-</form>
-  </div>
-
-  <!-- Overlay Panel -->
-  <div class="overlay-container">
-   <div class="overlay">
-     <div class="overlay-panel overlay-left">
-       <h1>Welcome Back!</h1>
-       <p>To keep connected with us please login with your personal info</p>
-       <button class="ghost" id="signIn">Sign In</button>
-     </div>
-     <div class="overlay-panel overlay-right">
-       <h1>Hello, Friend!</h1>
-       <p>Enter your personal details and start your journey with us</p>
-       <button class="ghost" id="signUp">Sign Up</button>
-     </div>
-   </div>
-  </div>
-</div>
-
-<!-- OTP Verification Modal -->
-<div id="otpModal" class="modal" style="display: none;">
-  <div class="modal-content">
-   <span class="close">&times;</span>
-   <h2>Verify Your Email</h2>
-   <p>Enter the 6-digit OTP sent to your email</p>
-   <form id="otpForm">
-     <input type="hidden" id="otpEmail" />
-     <input type="text" id="otpCode" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required />
-     <button type="submit">Verify OTP</button>
-     <p id="otpError" style="color: red; font-size: 12px; margin: 5px 0;"></p>
-     <button type="button" id="resendOtpBtn" style="background-color: transparent; border: 1px solid #ccc; color: #666; margin-top: 10px;">Resend OTP</button>
-   </form>
-  </div>
-</div>
-
-</body>
-
-<style>
+  <style>
    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
    * {
      box-sizing: border-box;
@@ -266,31 +190,6 @@
      transform: translateX(20%);
    }
 
-   .social-container {
-     margin: 20px 0;
-     display: flex;
-     gap: 15px;
-     justify-content: center;
-    }
-
-   .social-container a {
-     border: 1px solid #ddd;
-     border-radius: 50%;
-     padding: 10px;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     width: 40px;
-     height: 40px;
-     color: #333;
-     font-size: 18px;
-     transition: 0.3s;
-   }
-
-   .social-container a:hover {
-     background-color: #eee;
-   }
-
    /* OTP Modal Styles */
    .modal {
      position: fixed;
@@ -355,7 +254,71 @@
      margin-top: 15px;
      border-radius: 5px;
    }
-</style>
+ </style>
+</head>
+<body>
+
+<div class="container" id="container">
+  <!-- Sign Up Form -->
+  <div class="form-container sign-up-container">
+ <form id="registerForm">
+      <h1>Create Account</h1>
+      <span>or use your email for registration</span>
+      <input type="text" name="full_name" id="reg_fullname" placeholder="Full Name" required />
+      <input type="email" name="email" id="reg_email" placeholder="Email" required />
+      <input type="password" name="password" id="reg_password" placeholder="Password (min 6 chars)" required />
+      <button type="submit" id="sendOtpBtn">Send OTP</button>
+      <p id="registerError" style="color: red; font-size: 12px; margin: 5px 0;"></p>
+    </form>
+  </div>
+
+  <!-- Sign In Form -->
+  <div class="form-container sign-in-container">
+ <form id="loginForm" action="../../PHP/login.php" method="POST">
+    <h1>Sign in</h1>
+
+    <input type="email" name="email" placeholder="Email" required />
+    <input type="password" name="password" placeholder="Password" required />
+
+    <a href="#">Forgot your password?</a>
+
+    <button type="submit">Sign In</button>
+    <p id="loginError" style="color: red; font-size: 12px; margin: 5px 0;"></p>
+</form>
+  </div>
+
+  <!-- Overlay Panel -->
+  <div class="overlay-container">
+   <div class="overlay">
+     <div class="overlay-panel overlay-left">
+       <h1>Welcome Back!</h1>
+       <p>To keep connected with us please login with your personal info</p>
+       <button class="ghost" id="signIn">Sign In</button>
+     </div>
+     <div class="overlay-panel overlay-right">
+       <h1>Hello, Friend!</h1>
+       <p>Enter your personal details and start your journey with us</p>
+       <button class="ghost" id="signUp">Sign Up</button>
+     </div>
+   </div>
+  </div>
+</div>
+
+<!-- OTP Verification Modal -->
+<div id="otpModal" class="modal" style="display: none;">
+  <div class="modal-content">
+   <span class="close">&times;</span>
+   <h2>Verify Your Email</h2>
+   <p>Enter the 6-digit OTP sent to your email</p>
+   <form id="otpForm">
+     <input type="hidden" id="otpEmail" />
+     <input type="text" id="otpCode" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required />
+     <button type="submit">Verify OTP</button>
+     <p id="otpError" style="color: red; font-size: 12px; margin: 5px 0;"></p>
+     <button type="button" id="resendOtpBtn" style="background-color: transparent; border: 1px solid #ccc; color: #666; margin-top: 10px;">Resend OTP</button>
+   </form>
+  </div>
+</div>
+
 </body>
 </html>
-
