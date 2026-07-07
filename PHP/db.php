@@ -120,7 +120,6 @@ $conn->query("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
-<<<<<<< HEAD
 // Schema migration check: Add missing map columns to places table if they do not exist
 $columnsCheck = $conn->query("SHOW COLUMNS FROM places LIKE 'map_latitude'");
 if ($columnsCheck && $columnsCheck->num_rows === 0) {
@@ -139,7 +138,6 @@ if ($columnsCheck && $columnsCheck->num_rows === 0) {
 $verCheck = $conn->query("SHOW COLUMNS FROM users LIKE 'is_verified'");
 if ($verCheck && $verCheck->num_rows === 0) {
     $conn->query("ALTER TABLE users ADD COLUMN is_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER role");
-    // Mark existing admin accounts as verified so they aren't locked out
     $conn->query("UPDATE users SET is_verified = 1 WHERE role = 'admin'");
 }
 
@@ -156,7 +154,7 @@ $conn->query("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
-// User sessions table — enforces single active session per user
+// User sessions table
 $conn->query("
     CREATE TABLE IF NOT EXISTS user_sessions (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -168,8 +166,6 @@ $conn->query("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
-=======
->>>>>>> 66921e395a083b3d9cb112f9d5fade6e2ae2b90f
 $adminEmail = 'admin@example.com';
 $adminCheck = $conn->prepare("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
 $adminCheck->execute();

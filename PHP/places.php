@@ -178,7 +178,7 @@ if ($action === 'submit') {
             respond(['success' => false, 'message' => 'Image must be smaller than 5 MB.'], 400);
         }
 
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $ext = pathinfo($file['name'], PAT HINFO_EXTENSION);
         $uploadDir = dirname(__DIR__) . '/Public/uploads/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
