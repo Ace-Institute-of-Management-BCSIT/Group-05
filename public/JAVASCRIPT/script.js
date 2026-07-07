@@ -538,41 +538,52 @@ function renderPlaces() {
         placesGrid.style.display = 'grid';
         noResults.style.display = 'none';
 
-        placesGrid.innerHTML = filteredPlaces.map(place => `
-            <div class="place-card" onclick="openPlaceDetail(${place.id})">
-                <div class="place-image">
-                    <svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    <div class="place-category">${escapeHtml(place.category)}</div>
-                </div>
-                <div class="place-info">
-                    <h3 class="place-name">${escapeHtml(place.name)}</h3>
-                    <div class="place-location">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                            <circle cx="12" cy="10" r="3"></circle>
-                        </svg>
-                        <span>${escapeHtml(place.location)}</span>
+        placesGrid.innerHTML = filteredPlaces.map(place => {
+            // Generate image content - use actual image if available, otherwise SVG placeholder
+            let imageContent = `
+                <svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+            `;
+            
+            if (place.coverImage && place.coverImage !== 'Submitted destination') {
+                imageContent = `<img src="${escapeHtml(place.coverImage)}" alt="${escapeHtml(place.name)}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            }
+            
+            return `
+                <div class="place-card" onclick="openPlaceDetail(${place.id})">
+                    <div class="place-image">
+                        ${imageContent}
+                        <div class="place-category">${escapeHtml(place.category)}</div>
                     </div>
-                    <div class="place-meta">
-                        <div class="place-rating">
-                            <span class="rating-badge">${Number(place.rating || 0).toFixed(1)} / 5</span>
-                        </div>
-                        <div class="place-reviews">
+                    <div class="place-info">
+                        <h3 class="place-name">${escapeHtml(place.name)}</h3>
+                        <div class="place-location">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
                             </svg>
-                            <span>${Number(place.reviews || 0)} reviews</span>
+                            <span>${escapeHtml(place.location)}</span>
+                        </div>
+                        <div class="place-meta">
+                            <div class="place-rating">
+                                <span class="rating-badge">${Number(place.rating || 0).toFixed(1)} / 5</span>
+                            </div>
+                            <div class="place-reviews">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                                <span>${Number(place.reviews || 0)} reviews</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     updateSectionHeader(filteredPlaces.length);

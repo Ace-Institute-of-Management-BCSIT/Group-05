@@ -685,6 +685,34 @@ async function submitPlaceForApproval(){
   const data = new FormData(form);
   const field = name => (data.get(name)||'').toString().trim();
   const numberField = name => Number(field(name))||0;
+  
+  let coverImagePath = 'Submitted destination';
+  
+  // Upload cover image if selected
+  if (coverFile) {
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('image', coverFile);
+      
+      const uploadResponse = await fetch('../../PHP/upload.php', {
+        method: 'POST',
+        body: uploadFormData,
+        credentials: 'same-origin'
+      });
+      
+      const uploadResult = await uploadResponse.json();
+      
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.message || 'Failed to upload image');
+      }
+      
+      coverImagePath = uploadResult.image_path;
+    } catch (uploadError) {
+      toast('Failed to upload cover image: ' + uploadError.message, 'fa-triangle-exclamation');
+      return false;
+    }
+  }
+  
   const submittedPlace = {
     id: Date.now(),
     name: field('name'),
@@ -712,7 +740,7 @@ async function submitPlaceForApproval(){
     homestay: data.has('homestay'),
     parking: data.has('parking'),
     toilets: data.has('toilets'),
-    coverImage: coverFile ? coverFile.name : 'Submitted destination',
+    coverImage: coverImagePath,
     startPoint: field('start'),
     routeDesc: field('routeDesc'),
     destination: field('dest'),
@@ -723,7 +751,7 @@ async function submitPlaceForApproval(){
     status: 'pending'
   };
   data.append('action','submit');
-  data.append('coverImage',submittedPlace.coverImage);
+  data.append('coverImage', coverImagePath);
 
   try{
     const response = await fetch('../../PHP/places.php',{

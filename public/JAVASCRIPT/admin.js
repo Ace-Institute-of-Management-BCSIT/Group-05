@@ -196,6 +196,11 @@ function renderPendingSubmissions(pendingPlaces = []) {
                 <h3>${escapeHtml(place.name)}</h3>
                 <span class="badge badge-pending">Pending Verification</span>
             </div>
+            ${place.coverImage && place.coverImage !== 'Submitted destination' ? `
+                <div class="card-image" style="width: 100%; height: 200px; overflow: hidden; border-radius: 8px; margin: 10px 0;">
+                    <img src="${escapeHtml(place.coverImage)}" alt="${escapeHtml(place.name)}" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+            ` : ''}
             <div class="card-body">
                 <p><strong>Submitted by:</strong> ${escapeHtml(place.submittedBy || 'Traveler')}</p>
                 <p><strong>Date:</strong> ${formatDate(place.submittedAt)}</p>

@@ -26,6 +26,9 @@ $conn->query("
         email VARCHAR(190) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
         role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+        is_verified TINYINT(1) DEFAULT 0,
+        last_login DATETIME NULL,
+        last_login_ip VARCHAR(45) NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
@@ -122,6 +125,33 @@ $conn->query("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
+$conn->query("
+    CREATE TABLE IF NOT EXISTS otp_verifications (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(190) NOT NULL UNIQUE,
+        otp_code VARCHAR(6) NOT NULL,
+        attempts INT DEFAULT 0,
+        max_attempts INT DEFAULT 5,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expires_at DATETIME NOT NULL,
+        verified_at DATETIME NULL,
+        INDEX idx_otp_email (email),
+        INDEX idx_otp_expires (expires_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+");
+
+$conn->query("
+    CREATE TABLE IF NOT EXISTS place_images (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        place_id INT NOT NULL,
+        image_path VARCHAR(255) NOT NULL,
+        image_type ENUM('cover', 'gallery') DEFAULT 'gallery',
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_images_place FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE,
+        INDEX idx_images_place (place_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+");
+
 $adminEmail = 'admin@example.com';
 $adminCheck = $conn->prepare("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
 $adminCheck->execute();
@@ -129,7 +159,7 @@ $adminResult = $adminCheck->get_result();
 
 if ($adminResult->num_rows === 0) {
     $adminPassword = password_hash('admin123', PASSWORD_DEFAULT);
-    $adminStmt = $conn->prepare("INSERT IGNORE INTO users (username, full_name, email, password, role) VALUES ('admin', 'Admin User', ?, ?, 'admin')");
+    $adminStmt = $conn->prepare("INSERT IGNORE INTO users (username, full_name, email, password, role, is_verified) VALUES ('admin', 'Admin User', ?, ?, 'admin', 1)");
     $adminStmt->bind_param('ss', $adminEmail, $adminPassword);
     $adminStmt->execute();
 }
