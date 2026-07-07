@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verify Email — Nepal Discovery</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #2d7a4f;
+      --primary-dark: #1e5c3a;
+      --primary-light: #e8f5ee;
+      --accent: #48bb78;
+      --danger: #e53e3e;
+      --warning: #d69e2e;
+      --text: #1a202c;
+      --text-muted: #718096;
+      --bg: #f7faf9;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --shadow: 0 20px 60px rgba(0,0,0,0.12);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(45,122,79,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(72,187,120,0.06) 0%, transparent 50%);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 440px;
+      animation: slideUp 0.4s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 2rem;
+      justify-content: center;
+    }
+
+    .logo-icon {
+      width: 42px; height: 42px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 1.3rem;
+    }
+
+    .logo-text { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+
+    .icon-circle {
+      width: 72px; height: 72px;
+      background: var(--primary-light);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.5rem;
+      font-size: 2rem;
+      color: var(--primary);
+    }
+
+    h1 { font-size: 1.5rem; font-weight: 700; color: var(--text); text-align: center; margin-bottom: .5rem; }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .subtitle strong { color: var(--text); }
+
+    /* Dev-mode OTP banner */
+    .dev-banner {
+      background: linear-gradient(135deg, #fff9c4, #ffeeba);
+      border: 1.5px solid #f6c026;
+      border-radius: 12px;
+      padding: .75rem 1rem;
+      margin-bottom: 1.5rem;
+      display: none;
+      align-items: center;
+      gap: .6rem;
+    }
+    .dev-banner.show { display: flex; }
+    .dev-banner i { color: var(--warning); font-size: 1.1rem; flex-shrink: 0; }
+    .dev-banner span { font-size: .85rem; color: #7b5800; }
+    .dev-banner strong { font-size: 1.2rem; letter-spacing: .15em; color: #5a3e00; }
+
+    /* OTP boxes */
+    .otp-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .otp-box {
+      width: 52px; height: 60px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 1.6rem;
+      font-weight: 700;
+      text-align: center;
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s, transform .15s;
+      background: #fafafa;
+      caret-color: var(--primary);
+    }
+    .otp-box:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(45,122,79,.15);
+      background: #fff;
+      transform: translateY(-2px);
+    }
+    .otp-box.filled { border-color: var(--accent); background: var(--primary-light); }
+    .otp-box.error  { border-color: var(--danger); background: #fff5f5; animation: shake .3s; }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-6px); }
+      75%      { transform: translateX(6px); }
+    }
+
+    /* Messages */
+    .message {
+      border-radius: 10px;
+      padding: .7rem 1rem;
+      font-size: .875rem;
+      margin-bottom: 1.25rem;
+      display: none;
+      align-items: center;
+      gap: .5rem;
+    }
+    .message.show { display: flex; }
+    .message.error   { background: #fff5f5; border: 1px solid #feb2b2; color: var(--danger); }
+    .message.success { background: #f0fff4; border: 1px solid #9ae6b4; color: #276749; }
+    .message.info    { background: #ebf8ff; border: 1px solid #bee3f8; color: #2a69ac; }
+
+    /* Buttons */
+    .btn-verify {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s, box-shadow .2s;
+      display: flex; align-items: center; justify-content: center; gap: .5rem;
+      letter-spacing: .02em;
+      margin-bottom: 1rem;
+    }
+    .btn-verify:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(45,122,79,.3); }
+    .btn-verify:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    .btn-verify .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    .btn-verify.loading .spinner { display: block; }
+    .btn-verify.loading .btn-text { display: none; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .resend-row { text-align: center; font-size: .875rem; color: var(--text-muted); }
+    .resend-row a { color: var(--primary); font-weight: 600; cursor: pointer; text-decoration: none; }
+    .resend-row a:hover { text-decoration: underline; }
+
+    .timer { font-weight: 600; color: var(--primary); }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 1.25rem;
+      font-size: .875rem;
+      color: var(--text-muted);
+    }
+    .back-link a { color: var(--text-muted); }
+    .back-link a:hover { color: var(--primary); }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon"><i class="fa-solid fa-mountain"></i></div>
+    <span class="logo-text">Nepal Discovery</span>
+  </div>
+
+  <div class="icon-circle"><i class="fa-solid fa-envelope-circle-check"></i></div>
+
+  <h1>Verify Your Email</h1>
+  <p class="subtitle">We've sent a 6-digit code to your email address.<br>Enter it below to activate your account.</p>
+
+  <!-- Dev-mode OTP banner (hidden in production) -->
+  <div class="dev-banner" id="devBanner">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <span>Dev mode — Your OTP is: <strong id="devOtpDisplay">------</strong></span>
+  </div>
+
+  <!-- Messages -->
+  <div class="message error"   id="errorMsg"><i class="fa-solid fa-circle-xmark"></i> <span id="errorText"></span></div>
+  <div class="message success" id="successMsg"><i class="fa-solid fa-circle-check"></i> <span id="successText"></span></div>
+  <div class="message info"    id="infoMsg"><i class="fa-solid fa-circle-info"></i> <span id="infoText"></span></div>
+
+  <!-- OTP Input -->
+  <div class="otp-row" id="otpRow">
+    <input class="otp-box" id="b0" type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code"/>
+    <input class="otp-box" id="b1" type="text" inputmode="numeric" maxlength="1"/>
+    <input class="otp-box" id="b2" type="text" inputmode="numeric" maxlength="1"/>
+    <input class="otp-box" id="b3" type="text" inputmode="numeric" maxlength="1"/>
+    <input class="otp-box" id="b4" type="text" inputmode="numeric" maxlength="1"/>
+    <input class="otp-box" id="b5" type="text" inputmode="numeric" maxlength="1"/>
+  </div>
+
+  <button class="btn-verify" id="verifyBtn">
+    <div class="spinner"></div>
+    <span class="btn-text"><i class="fa-solid fa-shield-halved"></i> Verify &amp; Continue</span>
+  </button>
+
+  <div class="resend-row">
+    Didn't receive it?
+    <a id="resendLink" onclick="resendOtp()">Resend code</a>
+    <span id="timerText"> in <span class="timer" id="timerCount">60</span>s</span>
+  </div>
+
+  <div class="back-link"><a href="login.html">← Back to login</a></div>
+</div>
+
+<script>
+  const boxes = Array.from(document.querySelectorAll('.otp-box'));
+  const verifyBtn = document.getElementById('verifyBtn');
+  const resendLink = document.getElementById('resendLink');
+  const timerText = document.getElementById('timerText');
+  const timerCount = document.getElementById('timerCount');
+  const devBanner = document.getElementById('devBanner');
+  const devOtpDisplay = document.getElementById('devOtpDisplay');
+
+  // ── Show dev OTP if stored in sessionStorage ──────────────────────────────
+  const devOtp = sessionStorage.getItem('dev_otp');
+  if (devOtp) {
+    devBanner.classList.add('show');
+    devOtpDisplay.textContent = devOtp;
+    // Auto-fill the boxes for convenience
+    devOtp.split('').forEach((ch, i) => {
+      if (boxes[i]) { boxes[i].value = ch; boxes[i].classList.add('filled'); }
+    });
+  }
+
+  // ── OTP box keyboard handling ─────────────────────────────────────────────
+  boxes.forEach((box, idx) => {
+    box.addEventListener('input', e => {
+      const val = e.target.value.replace(/\D/g, '');
+      e.target.value = val.slice(-1);
+      e.target.classList.toggle('filled', val !== '');
+      clearMessages();
+      if (val && idx < boxes.length - 1) boxes[idx + 1].focus();
+    });
+
+    box.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+        boxes[idx - 1].focus();
+        boxes[idx - 1].value = '';
+        boxes[idx - 1].classList.remove('filled');
+      }
+      if (e.key === 'Enter') submitOtp();
+    });
+
+    box.addEventListener('paste', e => {
+      e.preventDefault();
+      const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+      pasted.split('').slice(0, 6).forEach((ch, i) => {
+        if (boxes[i]) { boxes[i].value = ch; boxes[i].classList.add('filled'); }
+      });
+      boxes[Math.min(pasted.length, 5)].focus();
+    });
+  });
+
+  // ── Timer ─────────────────────────────────────────────────────────────────
+  let timerSeconds = 60;
+  let timerInterval;
+
+  function startTimer() {
+    timerSeconds = 60;
+    timerCount.textContent = timerSeconds;
+    timerText.style.display = 'inline';
+    resendLink.style.pointerEvents = 'none';
+    resendLink.style.opacity = '.5';
+
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      timerCount.textContent = timerSeconds;
+      if (timerSeconds <= 0) {
+        clearInterval(timerInterval);
+        timerText.style.display = 'none';
+        resendLink.style.pointerEvents = 'auto';
+        resendLink.style.opacity = '1';
+      }
+    }, 1000);
+  }
+
+  startTimer();
+
+  // ── Messages ──────────────────────────────────────────────────────────────
+  function clearMessages() {
+    ['errorMsg','successMsg','infoMsg'].forEach(id => document.getElementById(id).classList.remove('show'));
+  }
+
+  function showError(msg) {
+    clearMessages();
+    document.getElementById('errorText').textContent = msg;
+    document.getElementById('errorMsg').classList.add('show');
+    boxes.forEach(b => b.classList.add('error'));
+    setTimeout(() => boxes.forEach(b => b.classList.remove('error')), 600);
+  }
+
+  function showSuccess(msg) {
+    clearMessages();
+    document.getElementById('successText').textContent = msg;
+    document.getElementById('successMsg').classList.add('show');
+  }
+
+  function showInfo(msg) {
+    clearMessages();
+    document.getElementById('infoText').textContent = msg;
+    document.getElementById('infoMsg').classList.add('show');
+  }
+
+  // ── Submit OTP ────────────────────────────────────────────────────────────
+  async function submitOtp() {
+    const otp = boxes.map(b => b.value).join('');
+    if (otp.length < 6) { showError('Please fill in all 6 digits.'); return; }
+
+    verifyBtn.disabled = true;
+    verifyBtn.classList.add('loading');
+
+    const fd = new FormData();
+    fd.append('action', 'verify');
+    fd.append('otp', otp);
+
+    try {
+      const res  = await fetch('../../PHP/verify_otp.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+      const data = await res.json();
+
+      if (data.success) {
+        showSuccess(data.message || 'Verified! Redirecting...');
+        // Store auth info for JS
+        if (data.redirect) {
+          setTimeout(() => { window.location.href = data.redirect; }, 1200);
+        }
+      } else {
+        showError(data.message || 'Verification failed.');
+        verifyBtn.disabled = false;
+        verifyBtn.classList.remove('loading');
+      }
+    } catch (err) {
+      showError('Network error. Please try again.');
+      verifyBtn.disabled = false;
+      verifyBtn.classList.remove('loading');
+    }
+  }
+
+  verifyBtn.addEventListener('click', submitOtp);
+
+  // ── Resend OTP ────────────────────────────────────────────────────────────
+  async function resendOtp() {
+    showInfo('Sending new code...');
+
+    const fd = new FormData();
+    fd.append('action', 'resend');
+
+    try {
+      const res  = await fetch('../../PHP/verify_otp.php', { method: 'POST', body: fd, credentials: 'same-origin' });
+      const data = await res.json();
+
+      if (data.success) {
+        showInfo('New code sent! Check your email.');
+        startTimer();
+        if (data.dev_otp) {
+          devBanner.classList.add('show');
+          devOtpDisplay.textContent = data.dev_otp;
+          sessionStorage.setItem('dev_otp', data.dev_otp);
+          data.dev_otp.split('').forEach((ch, i) => {
+            if (boxes[i]) { boxes[i].value = ch; boxes[i].classList.add('filled'); }
+          });
+        }
+        boxes.forEach(b => { b.value = ''; b.classList.remove('filled'); });
+        boxes[0].focus();
+      } else {
+        showError(data.message || 'Failed to resend code.');
+      }
+    } catch (err) {
+      showError('Network error. Please try again.');
+    }
+  }
+
+  // ── Check if we have a stored dev OTP from PHP session via meta tag ──────
+  // (The PHP sets it in $_SESSION['otp_dev']; we read it via a small inline script)
+  window.addEventListener('load', () => {
+    // Focus first empty box
+    const first = boxes.find(b => !b.value) || boxes[0];
+    first.focus();
+  });
+</script>
+
+<!-- Inject dev OTP from PHP session into sessionStorage -->
+<?php
+session_start();
+if (!empty($_SESSION['otp_dev'])):
+?>
+<script>
+  sessionStorage.setItem('dev_otp', '<?= htmlspecialchars($_SESSION['otp_dev']) ?>');
+  // Trigger display
+  const dOtp = sessionStorage.getItem('dev_otp');
+  if (dOtp) {
+    document.getElementById('devBanner').classList.add('show');
+    document.getElementById('devOtpDisplay').textContent = dOtp;
+    dOtp.split('').forEach((ch, i) => {
+      const b = document.getElementById('b' + i);
+      if (b) { b.value = ch; b.classList.add('filled'); }
+    });
+  }
+</script>
+<?php endif; ?>
+
+</body>
+</html>

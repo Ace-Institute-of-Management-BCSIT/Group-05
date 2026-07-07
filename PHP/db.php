@@ -26,6 +26,7 @@ $conn->query("
         email VARCHAR(190) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
         role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+        is_verified TINYINT(1) NOT NULL DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
@@ -135,6 +136,39 @@ $columnsCheck = $conn->query("SHOW COLUMNS FROM places LIKE 'map_url'");
 if ($columnsCheck && $columnsCheck->num_rows === 0) {
     $conn->query("ALTER TABLE places ADD COLUMN map_url VARCHAR(255) DEFAULT '' AFTER map_longitude");
 }
+
+// Migrate: add is_verified to existing users table if missing
+$verCheck = $conn->query("SHOW COLUMNS FROM users LIKE 'is_verified'");
+if ($verCheck && $verCheck->num_rows === 0) {
+    $conn->query("ALTER TABLE users ADD COLUMN is_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER role");
+    // Mark existing admin accounts as verified so they aren't locked out
+    $conn->query("UPDATE users SET is_verified = 1 WHERE role = 'admin'");
+}
+
+// OTP verifications table
+$conn->query("
+    CREATE TABLE IF NOT EXISTS otp_verifications (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        otp_code VARCHAR(6) NOT NULL,
+        expires_at DATETIME NOT NULL,
+        used TINYINT(1) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_otp_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+");
+
+// User sessions table — enforces single active session per user
+$conn->query("
+    CREATE TABLE IF NOT EXISTS user_sessions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        session_token VARCHAR(128) NOT NULL UNIQUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_session_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+");
 
 $adminEmail = 'admin@example.com';
 $adminCheck = $conn->prepare("SELECT id FROM users WHERE role = 'admin' LIMIT 1");

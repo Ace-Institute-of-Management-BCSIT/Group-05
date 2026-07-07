@@ -229,7 +229,7 @@ if ($action === 'submit') {
     $userId = (int) $_SESSION['id'];
 
     $stmt->bind_param(
-        'sssssssssssssssssssssssdddddiiii',
+        'ssssssssssssssssdddddsssiiiissssi',
         $name,
         $localName,
         $tagline,

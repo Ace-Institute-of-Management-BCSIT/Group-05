@@ -1,48 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-      <script src="../JAVASCRIPT/login.js" defer></script>
-
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="../JAVASCRIPT/login.js" defer></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login/Register with Social Login</title>
-
-  <!-- FontAwesome Icons -->
-  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <meta name="description" content="Sign in or create an account to discover and share hidden travel destinations in Nepal."/>
+  <title>Sign In — Nepal Discovery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 </head>
 <body>
 
 <div class="container" id="container">
   <!-- Sign Up Form -->
   <div class="form-container sign-up-container">
- <form action="../../PHP/register.php" method="POST">
+    <form action="../../PHP/register.php" method="POST">
       <h1>Create Account</h1>
       <div class="social-container">
-        <a href="#"><i class="fa fa-google"></i></a>
-        <a href="#"><i class="fa fa-facebook-f"></i></a>
-        <a href="#"><i class="fa fa-pinterest"></i></a>
+        <a href="#" title="Google"><i class="fa-brands fa-google"></i></a>
+        <a href="#" title="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+        <a href="#" title="Pinterest"><i class="fa-brands fa-pinterest-p"></i></a>
       </div>
       <span>or use your email for registration</span>
-      <input type="text" name="full_name" placeholder="Name" required />
-      <input type="email" name="email" placeholder="Email" required />
-      <input type="password" name="password" placeholder="Password" required />
+      <div id="registerMsg" class="form-message" style="display:none"></div>
+      <input type="text"     name="full_name" placeholder="Full Name" required />
+      <input type="email"    name="email"     placeholder="Email"      required />
+      <input type="password" name="password"  placeholder="Password (min 6 chars)" required minlength="6"/>
       <button type="submit">Sign Up</button>
     </form>
   </div>
 
   <!-- Sign In Form -->
   <div class="form-container sign-in-container">
- <form action="../../PHP/login.php" method="POST">
-    <h1>Sign in</h1>
-
-    <input type="email" name="email" placeholder="Email" required />
-    <input type="password" name="password" placeholder="Password" required />
-
-    <a href="#">Forgot your password?</a>
-
-    <button type="submit">Sign In</button>
-</form>
+    <form action="../../PHP/login.php" method="POST">
+      <h1>Sign In</h1>
+      <div id="loginMsg" class="form-message" style="display:none"></div>
+      <input type="email"    name="email"    placeholder="Email"    required />
+      <input type="password" name="password" placeholder="Password" required />
+      <a href="#">Forgot your password?</a>
+      <button type="submit">Sign In</button>
+    </form>
   </div>
 
   <!-- Overlay Panel -->
@@ -269,11 +266,64 @@
       transition: 0.3s;
     }
 
+    .social-container a {
+      border: 1px solid #ddd;
+      border-radius: 50%;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      color: #333;
+      font-size: 18px;
+      transition: 0.3s;
+    }
+
     .social-container a:hover {
       background-color: #eee;
     }
-  
-   
 
+    .form-message {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      text-align: left;
+      margin-bottom: 4px;
+    }
+    .form-message.error   { background: #fff0f0; border: 1px solid #ffb3b3; color: #c0392b; }
+    .form-message.success { background: #f0fff4; border: 1px solid #9ae6b4; color: #276749; }
+  
 </style>
+
+<?php
+session_start();
+// Inject messages from PHP session
+$loginError    = $_SESSION['login_error']    ?? '';
+$registerError = $_SESSION['register_error'] ?? '';
+$registered    = $_GET['registered'] ?? '';
+unset($_SESSION['login_error'], $_SESSION['register_error']);
+?>
+<script>
+  (function(){
+    const loginErr    = <?= json_encode($loginError) ?>;
+    const registerErr = <?= json_encode($registerError) ?>;
+    const registered  = <?= json_encode($registered) ?>;
+    function showMsg(id, text, type) {
+      const el = document.getElementById(id);
+      if (!el || !text) return;
+      el.textContent = text;
+      el.className = 'form-message ' + type;
+      el.style.display = 'block';
+    }
+    window.addEventListener('DOMContentLoaded', function(){
+      if (loginErr)    showMsg('loginMsg',    loginErr,    'error');
+      if (registerErr) showMsg('registerMsg', registerErr, 'error');
+      if (registered)  showMsg('loginMsg',    'Account created! Please sign in.', 'success');
+    });
+  })();
+</script>
+
 </html>
