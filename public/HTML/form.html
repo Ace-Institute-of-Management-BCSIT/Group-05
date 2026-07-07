@@ -94,28 +94,6 @@ label .req{color:var(--danger);margin-left:3px}
 .err-msg{font-size:12px;color:var(--danger);display:none}
 .err-msg.show{display:block}
 
-.map-pick{display:flex;flex-direction:column;gap:.65rem}
-.map-pick-btn{width:fit-content;padding:.85rem 1rem;border:none;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:.5rem;font:inherit;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--green-700),var(--green-500));box-shadow:0 12px 24px -14px rgba(15,61,46,.65);transition:transform .2s ease,box-shadow .2s ease}
-.map-pick-btn:hover{transform:translateY(-1px)}
-.map-pick-btn i{font-size:.95rem}
-
-.map-picker-modal{position:fixed;inset:0;background:rgba(12,31,26,.6);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
-.map-picker-modal.show{display:flex}
-.map-picker-sheet{width:min(980px,100%);background:#fff;border-radius:20px;box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--border)}
-.map-picker-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#fff,#fbfaf6)}
-.map-picker-head h3{margin:0;font-family:'Fraunces',serif;font-size:22px}
-.map-picker-close{width:40px;height:40px;border:none;border-radius:50%;background:#f2ede1;cursor:pointer;font-size:20px;line-height:1;color:var(--ink)}
-.map-picker-body{padding:18px 20px 20px;display:grid;gap:14px}
-.map-picker-search{display:flex;gap:10px;flex-wrap:wrap}
-.map-picker-search input{flex:1;min-width:220px;border:1px solid var(--border);border-radius:12px;padding:12px 14px;font:inherit;background:var(--cream);outline:none}
-.map-picker-search input:focus{border-color:var(--green-500);background:#fff;box-shadow:0 0 0 4px rgba(61,163,126,.15)}
-.map-picker-search button,.map-picker-actions button{border:none;border-radius:12px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer}
-.map-picker-search button{background:var(--green-700);color:#fff}
-.map-picker-canvas{width:100%;height:420px;border-radius:16px;overflow:hidden;border:1px solid var(--border);background:linear-gradient(135deg,#dde9df,#f7f4ea)}
-.map-picker-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
-.map-picker-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
-.map-picker-actions .use-location{background:linear-gradient(135deg,var(--green-700),var(--green-500));color:#fff}
-
 /* Category chips */
 .chips{display:flex;flex-wrap:wrap;gap:10px}
 .chip{
@@ -294,33 +272,6 @@ label .req{color:var(--danger);margin-left:3px}
             <div class="input-wrap"><i class="fa-solid fa-house-flag"></i>
               <input class="input" name="municipality" placeholder="e.g. Annapurna RM"/></div>
           </div>
-
-            <div class="field col-12">
-              <label>Google Map Location</label>
-              <div class="map-pick">
-                <button type="button" class="map-pick-btn" id="openMapPickerBtn">
-                  <i class="fa-solid fa-map-location-dot"></i>
-                  Select on Google Maps
-                </button>
-                <p class="helper">Open the embedded Google Map, drop a pin, and the coordinates will fill in automatically.</p>
-              </div>
-              <input type="hidden" name="mapUrl" id="mapUrlInput" value="">
-            </div>
-
-            <div class="field col-6">
-              <label>Map Latitude</label>
-              <div class="input-wrap"><i class="fa-solid fa-location-dot"></i>
-                <input class="input" name="mapLatitude" placeholder="e.g. 28.3754000"/></div>
-            </div>
-            <div class="field col-6">
-              <label>Map Longitude</label>
-              <div class="input-wrap"><i class="fa-solid fa-location-crosshairs"></i>
-                <input class="input" name="mapLongitude" placeholder="e.g. 83.6861000"/></div>
-            </div>
-
-            <div class="field col-12">
-              <div class="err-msg" id="mapErr">Please select a location on Google Maps.</div>
-            </div>
 
           <div class="field col-12">
             <label>Category <span class="req">*</span></label>
@@ -576,31 +527,6 @@ label .req{color:var(--danger);margin-left:3px}
   </div>
 </div>
 
-<!-- Google Maps Picker Modal -->
-<div class="map-picker-modal" id="mapPickerModal" aria-hidden="true">
-  <div class="map-picker-sheet" role="dialog" aria-modal="true" aria-labelledby="mapPickerTitle">
-    <div class="map-picker-head">
-      <h3 id="mapPickerTitle">Select a location on Google Maps</h3>
-      <button type="button" class="map-picker-close" id="closeMapPickerBtn" aria-label="Close map picker">×</button>
-    </div>
-    <div class="map-picker-body">
-      <div class="map-picker-search">
-        <input type="text" id="mapSearchInput" placeholder="Search a place, district, or landmark">
-        <button type="button" id="mapSearchBtn">Search</button>
-      </div>
-      <div class="map-picker-canvas" id="mapPickerCanvas"></div>
-      <div class="map-picker-meta">
-        <span id="mapSelectionLabel">Click the map to place a pin.</span>
-        <span id="mapSelectionCoords">No location selected yet.</span>
-      </div>
-      <div class="map-picker-actions">
-        <button type="button" class="btn btn-outline" id="mapPickerCancelBtn">Cancel</button>
-        <button type="button" class="use-location" id="useMapLocationBtn">Use this location</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- Toast -->
 <div class="toast" id="toast">
   <i class="fa-solid fa-check"></i>
@@ -615,7 +541,6 @@ const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 const publishBtn = document.getElementById('publishBtn');
 const PLACE_STORAGE_KEY = 'nepalTravelPlaces';
-const GOOGLE_MAPS_API_KEY = 'AIzaSyCxWlclMAXJMRpiPH0ag-MuC9z-DokH_SM';
 let current = 1;
 const total = pages.length;
 
@@ -653,10 +578,6 @@ function validateStep(n){
     drop.parentElement.querySelector('.err-msg').classList.add('show');
     ok=false;
   }
-  if (n === 1 && (!mapLatitudeInput?.value.trim() || !mapLongitudeInput?.value.trim())) {
-    if (mapErr) mapErr.classList.add('show');
-    ok = false;
-  }
   return ok;
 }
 
@@ -680,190 +601,11 @@ document.querySelectorAll('#chips .chip').forEach(c=>{
 // Uploads
 let coverFile = null;
 let galleryFiles = [];
-const mapPickerModal = document.getElementById('mapPickerModal');
-const mapPickerCanvas = document.getElementById('mapPickerCanvas');
-const mapSearchInput = document.getElementById('mapSearchInput');
-const mapSearchBtn = document.getElementById('mapSearchBtn');
-const mapSelectionLabel = document.getElementById('mapSelectionLabel');
-const mapSelectionCoords = document.getElementById('mapSelectionCoords');
-const mapLatitudeInput = document.querySelector('input[name="mapLatitude"]');
-const mapLongitudeInput = document.querySelector('input[name="mapLongitude"]');
-const mapUrlInput = document.getElementById('mapUrlInput');
-const mapErr = document.getElementById('mapErr');
-const openMapPickerBtn = document.getElementById('openMapPickerBtn');
-const closeMapPickerBtn = document.getElementById('closeMapPickerBtn');
-const mapPickerCancelBtn = document.getElementById('mapPickerCancelBtn');
-const useMapLocationBtn = document.getElementById('useMapLocationBtn');
-let googleMapsPromise = null;
-let pickerMap = null;
-let pickerMarker = null;
-let pickerGeocoder = null;
-let pickerLocation = null;
-
-function updateMapFields(lat, lng, label){
-  const latitude = Number(lat);
-  const longitude = Number(lng);
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
-  pickerLocation = { lat: latitude, lng: longitude };
-  if (mapLatitudeInput) mapLatitudeInput.value = latitude.toFixed(7);
-  if (mapLongitudeInput) mapLongitudeInput.value = longitude.toFixed(7);
-  if (mapUrlInput) mapUrlInput.value = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude.toFixed(7)},${longitude.toFixed(7)}`)}`;
-  if (mapSelectionLabel) mapSelectionLabel.textContent = label || 'Selected location';
-  if (mapSelectionCoords) mapSelectionCoords.textContent = `${latitude.toFixed(7)}, ${longitude.toFixed(7)}`;
-  if (mapErr) mapErr.classList.remove('show');
-}
-
-function loadGoogleMaps(){
-  if (window.google?.maps) return Promise.resolve();
-  if (googleMapsPromise) return googleMapsPromise;
-
-  googleMapsPromise = new Promise((resolve, reject) => {
-    const callbackName = '__initAddPlaceMapPicker';
-    window[callbackName] = () => {
-      delete window[callbackName];
-      resolve();
-    };
-
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=${callbackName}`;
-    script.async = true;
-    script.defer = true;
-    script.onerror = () => {
-      delete window[callbackName];
-      reject(new Error('Google Maps failed to load.'));
-    };
-    document.head.appendChild(script);
-  });
-
-  return googleMapsPromise;
-}
-
-function initializePickerMap(){
-  if (!window.google?.maps || pickerMap || !mapPickerCanvas) return;
-
-  const fallbackCenter = { lat: 28.3949, lng: 84.1240 };
-  pickerMap = new google.maps.Map(mapPickerCanvas, {
-    center: pickerLocation || fallbackCenter,
-    zoom: pickerLocation ? 14 : 7,
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: true,
-  });
-
-  pickerMarker = new google.maps.Marker({
-    map: pickerMap,
-    position: pickerLocation || fallbackCenter,
-    draggable: true,
-  });
-
-  pickerMap.addListener('click', (event) => {
-    const location = event.latLng;
-    pickerMarker.setPosition(location);
-    updateMapFields(location.lat(), location.lng(), 'Selected location');
-  });
-
-  pickerMarker.addListener('dragend', () => {
-    const position = pickerMarker.getPosition();
-    if (position) updateMapFields(position.lat(), position.lng(), 'Selected location');
-  });
-
-  if (mapSelectionLabel && mapSelectionCoords) {
-    mapSelectionLabel.textContent = 'Click anywhere on the map to place the pin.';
-    mapSelectionCoords.textContent = 'You can also drag the pin after placing it.';
-  }
-
-  if (pickerLocation) {
-    updateMapFields(pickerLocation.lat, pickerLocation.lng, 'Selected location');
-    pickerMap.setCenter(pickerLocation);
-  }
-}
-
-function closeMapPicker(){
-  if (!mapPickerModal) return;
-  mapPickerModal.classList.remove('show');
-  mapPickerModal.setAttribute('aria-hidden', 'true');
-}
-
-function openMapPicker(){
-  if (!mapPickerModal) return;
-  mapPickerModal.classList.add('show');
-  mapPickerModal.setAttribute('aria-hidden', 'false');
-
-  loadGoogleMaps()
-    .then(() => {
-      initializePickerMap();
-      requestAnimationFrame(() => {
-        if (pickerMap) {
-          google.maps.event.trigger(pickerMap, 'resize');
-          if (pickerLocation) pickerMap.setCenter(pickerLocation);
-          if (pickerMarker && pickerLocation) pickerMarker.setPosition(pickerLocation);
-        }
-      });
-    })
-    .catch(() => {
-      toast('Google Maps could not load. Check the API key and Maps JavaScript API settings.', 'fa-triangle-exclamation');
-      closeMapPicker();
-    });
-}
-
-async function searchMapLocation(){
-  if (!mapSearchInput || !pickerMap) return;
-  const query = mapSearchInput.value.trim();
-  if (!query) return;
-
-  if (!pickerGeocoder) pickerGeocoder = new google.maps.Geocoder();
-
-  try {
-    const result = await new Promise((resolve, reject) => {
-      pickerGeocoder.geocode({ address: query }, (results, status) => {
-        if (status === 'OK' && results?.length) {
-          resolve(results);
-        } else {
-          reject(new Error(status || 'ZERO_RESULTS'));
-        }
-      });
-    });
-    const location = result[0]?.geometry?.location;
-
-    if (!location) {
-      toast('No matching place was found.', 'fa-triangle-exclamation');
-      return;
-    }
-
-    pickerMap.setCenter(location);
-    pickerMap.setZoom(15);
-    if (!pickerMarker) {
-      pickerMarker = new google.maps.Marker({ map: pickerMap, position: location, draggable: true });
-      pickerMarker.addListener('dragend', () => {
-        const position = pickerMarker.getPosition();
-        if (position) updateMapFields(position.lat(), position.lng(), 'Selected location');
-      });
-    } else {
-      pickerMarker.setPosition(location);
-    }
-
-    updateMapFields(location.lat(), location.lng(), result[0]?.formatted_address || 'Selected location');
-    toast('Location selected. Your coordinates are ready to use.', 'fa-map-location-dot');
-  } catch (error) {
-    toast('Unable to search that location right now.', 'fa-triangle-exclamation');
-  }
-}
-
-function syncMapUrlFromFields(){
-  const latitude = parseFloat(mapLatitudeInput?.value || '');
-  const longitude = parseFloat(mapLongitudeInput?.value || '');
-  if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
-    updateMapFields(latitude, longitude, 'Selected location');
-    return;
-  }
-  if (mapUrlInput) mapUrlInput.value = '';
-}
 
 function setupDrop(dropId, inputId, isMulti, onFiles){
   const drop = document.getElementById(dropId);
   const input = document.getElementById(inputId);
   drop.addEventListener('click',()=>input.click());
-  input.addEventListener('click', e => e.stopPropagation());
   drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag')});
   drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));
   drop.addEventListener('drop',e=>{
@@ -901,33 +643,6 @@ setupDrop('coverDrop','coverInput',false,(files)=>{
 setupDrop('galleryDrop','galleryInput',true,(files)=>{
   galleryFiles = galleryFiles.concat(files);renderGallery();
 });
-
-if (openMapPickerBtn) openMapPickerBtn.addEventListener('click', openMapPicker);
-if (closeMapPickerBtn) closeMapPickerBtn.addEventListener('click', closeMapPicker);
-if (mapPickerCancelBtn) mapPickerCancelBtn.addEventListener('click', closeMapPicker);
-if (useMapLocationBtn) useMapLocationBtn.addEventListener('click', () => {
-  if (!mapLatitudeInput?.value.trim() || !mapLongitudeInput?.value.trim()) {
-    if (mapErr) mapErr.classList.add('show');
-    toast('Select a location on the map first.', 'fa-triangle-exclamation');
-    return;
-  }
-  closeMapPicker();
-  mapLatitudeInput?.focus();
-  mapLatitudeInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-});
-
-if (mapSearchBtn) mapSearchBtn.addEventListener('click', searchMapLocation);
-if (mapSearchInput) {
-  mapSearchInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      searchMapLocation();
-    }
-  });
-}
-
-if (mapLatitudeInput) mapLatitudeInput.addEventListener('input', syncMapUrlFromFields);
-if (mapLongitudeInput) mapLongitudeInput.addEventListener('input', syncMapUrlFromFields);
 
 // Cancel & Draft
 document.getElementById('cancelBtn').addEventListener('click',()=>{
@@ -970,6 +685,34 @@ async function submitPlaceForApproval(){
   const data = new FormData(form);
   const field = name => (data.get(name)||'').toString().trim();
   const numberField = name => Number(field(name))||0;
+  
+  let coverImagePath = 'Submitted destination';
+  
+  // Upload cover image if selected
+  if (coverFile) {
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('image', coverFile);
+      
+      const uploadResponse = await fetch('../../PHP/upload.php', {
+        method: 'POST',
+        body: uploadFormData,
+        credentials: 'same-origin'
+      });
+      
+      const uploadResult = await uploadResponse.json();
+      
+      if (!uploadResult.success) {
+        throw new Error(uploadResult.message || 'Failed to upload image');
+      }
+      
+      coverImagePath = uploadResult.image_path;
+    } catch (uploadError) {
+      toast('Failed to upload cover image: ' + uploadError.message, 'fa-triangle-exclamation');
+      return false;
+    }
+  }
+  
   const submittedPlace = {
     id: Date.now(),
     name: field('name'),
@@ -997,7 +740,7 @@ async function submitPlaceForApproval(){
     homestay: data.has('homestay'),
     parking: data.has('parking'),
     toilets: data.has('toilets'),
-    coverImage: coverFile ? coverFile.name : '',
+    coverImage: coverImagePath,
     startPoint: field('start'),
     routeDesc: field('routeDesc'),
     destination: field('dest'),
@@ -1008,10 +751,7 @@ async function submitPlaceForApproval(){
     status: 'pending'
   };
   data.append('action','submit');
-  // Attach the actual file for server-side upload (replaces text-only filename)
-  if (coverFile) {
-    data.set('coverImage', coverFile, coverFile.name);
-  }
+  data.append('coverImage', coverImagePath);
 
   try{
     const response = await fetch('../../PHP/places.php',{

@@ -26,7 +26,9 @@ $conn->query("
         email VARCHAR(190) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
         role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
-        is_verified TINYINT(1) NOT NULL DEFAULT 0,
+        is_verified TINYINT(1) DEFAULT 0,
+        last_login DATETIME NULL,
+        last_login_ip VARCHAR(45) NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
@@ -110,59 +112,43 @@ $conn->query("
         id INT AUTO_INCREMENT PRIMARY KEY,
         place_id INT NOT NULL,
         user_id INT NOT NULL,
-        rating TINYINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+        rating TINYINT NOT NULL,
         comment TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        CONSTRAINT fk_place_reviews_place FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE,
-        CONSTRAINT fk_place_reviews_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-        UNIQUE KEY uniq_place_user (place_id, user_id)
+        CONSTRAINT fk_reviews_place FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE,
+        CONSTRAINT fk_reviews_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        CONSTRAINT chk_reviews_rating CHECK (rating BETWEEN 1 AND 5),
+        UNIQUE KEY uniq_place_user (place_id, user_id),
+        INDEX idx_reviews_place (place_id),
+        INDEX idx_reviews_created (created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
-// Schema migration check: Add missing map columns to places table if they do not exist
-$columnsCheck = $conn->query("SHOW COLUMNS FROM places LIKE 'map_latitude'");
-if ($columnsCheck && $columnsCheck->num_rows === 0) {
-    $conn->query("ALTER TABLE places ADD COLUMN map_latitude VARCHAR(100) DEFAULT NULL AFTER municipality");
-}
-$columnsCheck = $conn->query("SHOW COLUMNS FROM places LIKE 'map_longitude'");
-if ($columnsCheck && $columnsCheck->num_rows === 0) {
-    $conn->query("ALTER TABLE places ADD COLUMN map_longitude VARCHAR(100) DEFAULT NULL AFTER map_latitude");
-}
-$columnsCheck = $conn->query("SHOW COLUMNS FROM places LIKE 'map_url'");
-if ($columnsCheck && $columnsCheck->num_rows === 0) {
-    $conn->query("ALTER TABLE places ADD COLUMN map_url VARCHAR(255) DEFAULT '' AFTER map_longitude");
-}
-
-// Migrate: add is_verified to existing users table if missing
-$verCheck = $conn->query("SHOW COLUMNS FROM users LIKE 'is_verified'");
-if ($verCheck && $verCheck->num_rows === 0) {
-    $conn->query("ALTER TABLE users ADD COLUMN is_verified TINYINT(1) NOT NULL DEFAULT 0 AFTER role");
-    $conn->query("UPDATE users SET is_verified = 1 WHERE role = 'admin'");
-}
-
-// OTP verifications table
 $conn->query("
     CREATE TABLE IF NOT EXISTS otp_verifications (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
+        email VARCHAR(190) NOT NULL UNIQUE,
         otp_code VARCHAR(6) NOT NULL,
-        expires_at DATETIME NOT NULL,
-        used TINYINT(1) NOT NULL DEFAULT 0,
+        attempts INT DEFAULT 0,
+        max_attempts INT DEFAULT 5,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        CONSTRAINT fk_otp_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        expires_at DATETIME NOT NULL,
+        verified_at DATETIME NULL,
+        INDEX idx_otp_email (email),
+        INDEX idx_otp_expires (expires_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
-// User sessions table
 $conn->query("
-    CREATE TABLE IF NOT EXISTS user_sessions (
+    CREATE TABLE IF NOT EXISTS place_images (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        session_token VARCHAR(128) NOT NULL UNIQUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        CONSTRAINT fk_session_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        place_id INT NOT NULL,
+        image_path VARCHAR(255) NOT NULL,
+        image_type ENUM('cover', 'gallery') DEFAULT 'gallery',
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_images_place FOREIGN KEY (place_id) REFERENCES places(id) ON DELETE CASCADE,
+        INDEX idx_images_place (place_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
@@ -173,7 +159,7 @@ $adminResult = $adminCheck->get_result();
 
 if ($adminResult->num_rows === 0) {
     $adminPassword = password_hash('admin123', PASSWORD_DEFAULT);
-    $adminStmt = $conn->prepare("INSERT IGNORE INTO users (username, full_name, email, password, role) VALUES ('admin', 'Admin User', ?, ?, 'admin')");
+    $adminStmt = $conn->prepare("INSERT IGNORE INTO users (username, full_name, email, password, role, is_verified) VALUES ('admin', 'Admin User', ?, ?, 'admin', 1)");
     $adminStmt->bind_param('ss', $adminEmail, $adminPassword);
     $adminStmt->execute();
 }

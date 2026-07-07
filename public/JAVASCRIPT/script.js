@@ -1,265 +1,13 @@
-function escapeHtml(value = '') {
-    if (value === null || value === undefined) return '';
-    return value.toString().replace(/[&<>"']/g, char => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    }[char]));
-}
-
 let places = [];
 
-const BASE_CATEGORIES = ['All', 'Hidden Village', 'Viewpoint', 'Waterfall', 'Trekking Route',
-    'Lake', 'Cultural Site', 'Monastery', 'Cave', 'Forest', 'Camping Spot', 'Homestay',
-    'Adventure', 'Nature', 'Beach', 'Historical', 'Urban', 'Cultural', 'Other'];
+const categories = ['All', 'Nature', 'Beach', 'Historical', 'Urban', 'Adventure', 'Cultural'];
 
 let currentFilter = 'All';
 let searchQuery = '';
 let selectedPlace = null;
 let userRating = 0;
-const STAR_FILLED = '#fbbc04';
-const STAR_EMPTY = '#dadce0';
-const PLACE_STORAGE_KEY = 'nepalTravelPlaces';
 
-function buildGoogleMapsUrl(place = {}) {
-    const latitude = (place.mapLatitude ?? '').toString().trim();
-    const longitude = (place.mapLongitude ?? '').toString().trim();
-
-    if (latitude && longitude) {
-        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}`;
-    }
-
-    const query = [
-        place.name,
-        place.destination,
-        place.municipality,
-        place.district,
-        place.province
-    ]
-        .map(value => (value ?? '').toString().trim())
-        .filter(Boolean)
-        .join(', ');
-
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || 'Nepal')}`;
-}
-
-function updateMapFields(lat, lng, label) {
-    const latitude = Number(lat);
-    const longitude = Number(lng);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
-
-    pickerLocation = { lat: latitude, lng: longitude };
-    if (mapLatitudeInput) mapLatitudeInput.value = latitude.toFixed(7);
-    if (mapLongitudeInput) mapLongitudeInput.value = longitude.toFixed(7);
-    if (mapSelectionLabel) mapSelectionLabel.textContent = label || 'Selected location';
-    if (mapSelectionCoords) mapSelectionCoords.textContent = `${latitude.toFixed(7)}, ${longitude.toFixed(7)}`;
-    if (mapErr) mapErr.classList.remove('show');
-}
-
-function loadGoogleMaps() {
-    if (window.google?.maps) return Promise.resolve();
-    if (googleMapsPromise) return googleMapsPromise;
-
-    googleMapsPromise = new Promise((resolve, reject) => {
-        const callbackName = '__initAddPlaceMapPicker';
-        window[callbackName] = () => {
-            delete window[callbackName];
-            resolve();
-        };
-
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=${callbackName}`;
-        script.async = true;
-        script.defer = true;
-        script.onerror = () => {
-            delete window[callbackName];
-            reject(new Error('Google Maps failed to load.'));
-        };
-        document.head.appendChild(script);
-    });
-
-    return googleMapsPromise;
-}
-
-function initializePickerMap() {
-    if (!window.google?.maps || pickerMap || !mapPickerCanvas) return;
-
-    const fallbackCenter = { lat: 28.3949, lng: 84.1240 };
-    pickerMap = new google.maps.Map(mapPickerCanvas, {
-        center: pickerLocation || fallbackCenter,
-        zoom: pickerLocation ? 14 : 7,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: true
-    });
-
-    pickerMarker = new google.maps.Marker({
-        map: pickerMap,
-        position: pickerLocation || fallbackCenter,
-        draggable: true
-    });
-
-    pickerMap.addListener('click', (event) => {
-        const location = event.latLng;
-        pickerMarker.setPosition(location);
-        updateMapFields(location.lat(), location.lng(), 'Selected location');
-    });
-
-    pickerMarker.addListener('dragend', () => {
-        const position = pickerMarker.getPosition();
-        if (position) updateMapFields(position.lat(), position.lng(), 'Selected location');
-    });
-
-    if (mapSelectionLabel && mapSelectionCoords) {
-        mapSelectionLabel.textContent = 'Click anywhere on the map to place the pin.';
-        mapSelectionCoords.textContent = 'You can also drag the pin after placing it.';
-    }
-
-    if (pickerLocation) {
-        updateMapFields(pickerLocation.lat, pickerLocation.lng, 'Selected location');
-        pickerMap.setCenter(pickerLocation);
-    }
-}
-
-function closeMapPicker() {
-    if (!mapPickerModal) return;
-    mapPickerModal.classList.remove('show');
-    mapPickerModal.setAttribute('aria-hidden', 'true');
-}
-
-function openMapPicker() {
-    if (!mapPickerModal) return;
-    mapPickerModal.classList.add('show');
-    mapPickerModal.setAttribute('aria-hidden', 'false');
-
-    loadGoogleMaps()
-        .then(() => {
-            initializePickerMap();
-            requestAnimationFrame(() => {
-                if (pickerMap) {
-                    google.maps.event.trigger(pickerMap, 'resize');
-                    if (pickerLocation) pickerMap.setCenter(pickerLocation);
-                    if (pickerMarker && pickerLocation) pickerMarker.setPosition(pickerLocation);
-                }
-            });
-        })
-        .catch(() => {
-            toast('Google Maps could not load. Check the API key and Maps JavaScript API settings.', 'fa-triangle-exclamation');
-            closeMapPicker();
-        });
-}
-
-async function geocodeSearchQuery(query) {
-    if (window.google?.maps && !pickerGeocoder) {
-        pickerGeocoder = new google.maps.Geocoder();
-    }
-
-    if (pickerGeocoder) {
-        try {
-            const results = await new Promise((resolve, reject) => {
-                pickerGeocoder.geocode({ address: query }, (response, status) => {
-                    if (status === 'OK' && response?.length) {
-                        resolve(response);
-                    } else {
-                        reject(new Error(status || 'ZERO_RESULTS'));
-                    }
-                });
-            });
-
-            const location = results[0]?.geometry?.location;
-            if (location) {
-                return {
-                    lat: location.lat(),
-                    lng: location.lng(),
-                    label: results[0]?.formatted_address || query
-                };
-            }
-        } catch (error) {
-            // Fall back to an open geocoding service if Google geocoding is denied or unavailable.
-        }
-    }
-
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(query)}`, {
-        headers: {
-            'Accept': 'application/json'
-        }
-    });
-    const results = await response.json();
-    if (!Array.isArray(results) || results.length === 0) {
-        throw new Error('ZERO_RESULTS');
-    }
-
-    return {
-        lat: Number(results[0].lat),
-        lng: Number(results[0].lon),
-        label: results[0].display_name || query
-    };
-}
-
-async function searchMapLocation() {
-    if (!mapSearchInput) return;
-    const query = mapSearchInput.value.trim();
-    if (!query) return;
-
-    try {
-        await loadGoogleMaps();
-        initializePickerMap();
-    } catch (error) {
-        toast('Google Maps could not load. Check the API key and Maps JavaScript API settings.', 'fa-triangle-exclamation');
-        return;
-    }
-
-    try {
-        const location = await geocodeSearchQuery(query);
-
-        pickerMap.setCenter({ lat: location.lat, lng: location.lng });
-        pickerMap.setZoom(15);
-        if (!pickerMarker) {
-            pickerMarker = new google.maps.Marker({ map: pickerMap, position: { lat: location.lat, lng: location.lng }, draggable: true });
-            pickerMarker.addListener('dragend', () => {
-                const position = pickerMarker.getPosition();
-                if (position) updateMapFields(position.lat(), position.lng(), 'Selected location');
-            });
-        } else {
-            pickerMarker.setPosition({ lat: location.lat, lng: location.lng });
-        }
-
-        updateMapFields(location.lat, location.lng, location.label || 'Selected location');
-        toast('Location selected. Your coordinates are ready to use.', 'fa-map-location-dot');
-    } catch (error) {
-        toast('Unable to search that location right now.', 'fa-triangle-exclamation');
-    }
-}
-
-// Sample reviews
-const sampleReviews = [
-    {
-        id: 1,
-        author: 'Sarah Johnson',
-        rating: 5,
-        date: '2 weeks ago',
-        comment: 'Absolutely stunning! The scenery was breathtaking and the local culture was so welcoming. A must-visit destination for any traveler.',
-        helpful: 24
-    },
-    {
-        id: 2,
-        author: 'Michael Chen',
-        rating: 4,
-        date: '1 month ago',
-        comment: 'Great place with amazing views. The hiking trails are well-maintained and offer spectacular vistas. Would definitely recommend!',
-        helpful: 15
-    },
-    {
-        id: 3,
-        author: 'Emma Williams',
-        rating: 5,
-        date: '2 months ago',
-        comment: 'One of the best experiences of my life! The natural beauty combined with rich history makes this place truly special.',
-        helpful: 31
-    }
-];
+let currentPlaceReviews = [];
 
 // DOM Elements
 const loginPage = document.getElementById('login-page');
@@ -287,35 +35,15 @@ const reviewForm = document.getElementById('review-form');
 const starRating = document.getElementById('star-rating');
 const travelStatus = document.getElementById('travel-status');
 const travelBoardContent = document.getElementById('travel-board-content');
-const mobileUserBtn = document.getElementById('mobile-user-btn');
-const profileExploreBtn = document.getElementById('profile-explore-btn');
-const refreshTravelBoardBtn = document.getElementById('refresh-travel-board');
-const profileBoardSearch = document.getElementById('profile-board-search');
-const GOOGLE_MAPS_API_KEY = 'AIzaSyCxWlclMAXJMRpiPH0ag-MuC9z-DokH_SM';
-const mapPickerModal = document.getElementById('mapPickerModal');
-const mapPickerCanvas = document.getElementById('mapPickerCanvas');
-const mapSearchInput = document.getElementById('mapSearchInput');
-const mapSearchBtn = document.getElementById('mapSearchBtn');
-const mapSelectionLabel = document.getElementById('mapSelectionLabel');
-const mapSelectionCoords = document.getElementById('mapSelectionCoords');
-const mapLatitudeInput = document.querySelector('input[name="mapLatitude"]');
-const mapLongitudeInput = document.querySelector('input[name="mapLongitude"]');
-const mapErr = document.getElementById('mapErr');
-const openMapPickerBtn = document.getElementById('openMapPickerBtn');
-const closeMapPickerBtn = document.getElementById('closeMapPickerBtn');
-const mapPickerCancelBtn = document.getElementById('mapPickerCancelBtn');
-const useMapLocationBtn = document.getElementById('useMapLocationBtn');
-let currentProfileFeature = 'saved';
-let latestTravelData = { saved: [], trips: [], notes: [] };
-let googleMapsPromise = null;
-let pickerMap = null;
-let pickerMarker = null;
-let pickerGeocoder = null;
-let pickerLocation = null;
 
 // Initialize
 async function init() {
-    places = await loadApprovedPlaces();
+    try {
+        places = await loadApprovedPlaces();
+    } catch (error) {
+        places = [];
+    }
+    refreshCategories();
     renderCategories();
     renderPlaces();
     updateStats();
@@ -323,21 +51,40 @@ async function init() {
     attachEventListeners();
 }
 
-function getStoredPlaces() {
-    try {
-        return JSON.parse(localStorage.getItem(PLACE_STORAGE_KEY) || '[]');
-    } catch (error) {
-        return [];
-    }
+function escapeHtml(value = '') {
+    return value.toString().replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    }[char]));
 }
 
-function saveStoredPlaces(nextPlaces) {
-    localStorage.setItem(PLACE_STORAGE_KEY, JSON.stringify(nextPlaces));
+function formatDate(value) {
+    if (!value) return 'Unknown';
+    return new Date(value).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
+function refreshCategories() {
+    const dynamicCategories = Array.from(
+        new Set(
+            places
+                .map(place => place.category)
+                .filter(Boolean)
+        )
+    ).sort((a, b) => a.localeCompare(b));
+
+    categories.splice(0, categories.length, 'All', ...dynamicCategories);
 }
 
 function normalizePlace(place) {
     return {
-        rating: 4.8,
+        rating: 0,
         reviews: 0,
         category: 'Other',
         budget: 0,
@@ -367,35 +114,22 @@ function normalizePlace(place) {
         toilets: false,
         ...place,
         location: place.location || [place.district, place.province].filter(Boolean).join(', ') || place.destination || 'Nepal',
-        mapLatitude: place.mapLatitude || '',
-        mapLongitude: place.mapLongitude || '',
-        mapUrl: place.mapUrl || buildGoogleMapsUrl(place),
         status: place.status || 'approved'
     };
 }
 
-function getApprovedPlacesFallback() {
-    return getStoredPlaces()
-        .filter(place => place.status === 'approved')
-        .map(normalizePlace);
-}
-
 async function loadApprovedPlaces() {
-    try {
-        const response = await fetch('../../PHP/places.php?action=approved', {
-            method: 'GET',
-            credentials: 'same-origin'
-        });
-        const data = await response.json();
+    const response = await fetch('../../PHP/places.php?action=approved', {
+        method: 'GET',
+        credentials: 'same-origin'
+    });
+    const data = await response.json();
 
-        if (data.success) {
-            return (data.places || []).map(normalizePlace);
-        }
-    } catch (error) {
-        // Fall back to local data when the PHP server/database is not reachable.
+    if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Unable to load approved places.');
     }
 
-    return getApprovedPlacesFallback();
+    return (data.places || []).map(normalizePlace);
 }
 
 function buildPlaceFromForm(formElement) {
@@ -433,17 +167,6 @@ function buildPlaceFromForm(formElement) {
         startPoint: field('start'),
         routeDesc: field('routeDesc'),
         destination: field('dest'),
-        mapLatitude: field('mapLatitude'),
-        mapLongitude: field('mapLongitude'),
-        mapUrl: field('mapUrl') || buildGoogleMapsUrl({
-            name: field('name'),
-            destination: field('dest'),
-            municipality: field('municipality'),
-            district: field('district'),
-            province: field('province'),
-            mapLatitude: field('mapLatitude'),
-            mapLongitude: field('mapLongitude')
-        }),
         submittedBy: localStorage.getItem('userName') || getCookie('userName') || 'Traveler',
         submittedAt: new Date().toISOString(),
         status: 'pending'
@@ -454,10 +177,7 @@ async function submitPlaceForApproval(formElement) {
     const submittedPlace = buildPlaceFromForm(formElement);
     const formData = new FormData(formElement);
     formData.append('action', 'submit');
-    formData.set('mapUrl', submittedPlace.mapUrl || buildGoogleMapsUrl(submittedPlace));
-    if (coverFile) {
-        formData.set('coverImage', coverFile, coverFile.name);
-    }
+    formData.append('coverImage', submittedPlace.coverImage);
 
     try {
         const response = await fetch('../../PHP/places.php', {
@@ -490,49 +210,9 @@ function attachEventListeners() {
 
     if (loginForm) loginForm.addEventListener('submit', handleLogin);
     if (signupForm) signupForm.addEventListener('submit', handleLogin);
-    if (userBtn) userBtn.addEventListener('click', openProfilePage);
-    if (mobileUserBtn) {
-        mobileUserBtn.addEventListener('click', (event) => {
-            event.preventDefault();
-            mobileMenu?.classList.remove('active');
-            openProfilePage(event);
-        });
-    }
+    if (userBtn) userBtn.addEventListener('click', toggleUserProfile);
     if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
-    if (refreshTravelBoardBtn) refreshTravelBoardBtn.addEventListener('click', () => updateTravelBoard(currentProfileFeature, true));
-    if (profileBoardSearch) {
-        profileBoardSearch.addEventListener('input', () => renderTravelBoard(currentProfileFeature));
-    }
-    if (profileExploreBtn) {
-        profileExploreBtn.addEventListener('click', () => {
-            hideProfileCard();
-            mobileMenu?.classList.remove('active');
-            document.querySelector('.places-section')?.scrollIntoView({ behavior: 'smooth' });
-        });
-    }
     if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
-    if (openMapPickerBtn) openMapPickerBtn.addEventListener('click', openMapPicker);
-    if (closeMapPickerBtn) closeMapPickerBtn.addEventListener('click', closeMapPicker);
-    if (mapPickerCancelBtn) mapPickerCancelBtn.addEventListener('click', closeMapPicker);
-    if (useMapLocationBtn) useMapLocationBtn.addEventListener('click', () => {
-        if (!mapLatitudeInput?.value.trim() || !mapLongitudeInput?.value.trim()) {
-            if (mapErr) mapErr.classList.add('show');
-            toast('Select a location on the map first.', 'fa-triangle-exclamation');
-            return;
-        }
-        closeMapPicker();
-        mapLatitudeInput?.focus();
-        mapLatitudeInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-    if (mapSearchBtn) mapSearchBtn.addEventListener('click', searchMapLocation);
-    if (mapSearchInput) {
-        mapSearchInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                searchMapLocation();
-            }
-        });
-    }
     document.addEventListener('click', (event) => {
         if (event.target.closest('#travel-features')) {
             handleTravelFeatureClick(event);
@@ -555,7 +235,14 @@ function attachEventListeners() {
     if (clearFiltersBtn) clearFiltersBtn.addEventListener('click', clearFilters);
     if (reviewForm) reviewForm.addEventListener('submit', handleReviewSubmit);
 
-    initStarRating();
+    if (starRating) {
+        const starBtns = starRating.querySelectorAll('.star-btn');
+        starBtns.forEach(btn => {
+            btn.addEventListener('click', () => setRating(parseInt(btn.dataset.rating)));
+            btn.addEventListener('mouseenter', () => highlightStars(parseInt(btn.dataset.rating)));
+        });
+        starRating.addEventListener('mouseleave', () => highlightStars(userRating));
+    }
 
     if (addPlaceModal) {
         addPlaceModal.addEventListener('click', (e) => {
@@ -567,28 +254,6 @@ function attachEventListeners() {
             if (e.target === placeDetailModal) closePlaceDetail();
         });
     }
-}
-
-function initStarRating() {
-    highlightStars(userRating);
-
-    const container = document.getElementById('star-rating');
-    if (!container || container.dataset.bound === 'true') return;
-    container.dataset.bound = 'true';
-
-    container.addEventListener('click', (e) => {
-        const btn = e.target.closest('.star-btn');
-        if (!btn) return;
-        e.preventDefault();
-        setRating(parseInt(btn.dataset.rating, 10));
-    });
-
-    container.addEventListener('mouseover', (e) => {
-        const btn = e.target.closest('.star-btn');
-        if (btn) highlightStars(parseInt(btn.dataset.rating, 10));
-    });
-
-    container.addEventListener('mouseleave', () => highlightStars(userRating));
 }
 
 // Auth Functions
@@ -622,21 +287,19 @@ function getCookie(name) {
 }
 
 function initializeUserProfile() {
-    normalizeProfileFeatureButtons();
     const userName = localStorage.getItem('userName') || getCookie('userName') || 'Traveler';
     const userRole = localStorage.getItem('userRole') || getCookie('userRole') || 'User';
     const profileName = document.getElementById('profile-name');
     const profileRole = document.getElementById('profile-role');
     const userAvatar = document.getElementById('user-avatar');
-    const profileMember = document.getElementById('profile-member');
     const isLoggedIn = Boolean(localStorage.getItem('userRole') || getCookie('userRole'));
 
     if (profileName) profileName.textContent = userName;
     if (profileRole) profileRole.textContent = userRole.charAt(0).toUpperCase() + userRole.slice(1);
     if (userAvatar) userAvatar.textContent = userName.charAt(0).toUpperCase();
-    if (profileMember) profileMember.textContent = isLoggedIn ? 'Your personal travel board is ready.' : 'Sign in to start your travel board.';
 
     if (isLoggedIn) {
+        showProfileCard();
         updateTravelBoard();
     }
 
@@ -645,27 +308,17 @@ function initializeUserProfile() {
     }
 }
 
-function normalizeProfileFeatureButtons() {
-    const config = {
-        saved: ['fa-bookmark', 'Saved'],
-        future: ['fa-calendar-days', 'Trips'],
-        notes: ['fa-note-sticky', 'Notes'],
-        more: ['fa-compass', 'Tools']
-    };
-
-    document.querySelectorAll('#travel-features .feature-item').forEach(button => {
-        const [icon, label] = config[button.dataset.feature] || ['fa-compass', 'Tools'];
-        button.innerHTML = `<i class="fa-solid ${icon}"></i><span>${label}</span>`;
-        button.classList.toggle('active', button.dataset.feature === currentProfileFeature);
-    });
-}
-
 function showProfileCard() {
     if (!profileCard) return;
 
     profileCard.classList.add('active');
     profileCard.setAttribute('aria-hidden', 'false');
+
     if (profileHideTimer) clearTimeout(profileHideTimer);
+    profileHideTimer = setTimeout(() => {
+        profileCard.classList.remove('active');
+        profileCard.setAttribute('aria-hidden', 'true');
+    }, 8000);
 }
 
 function hideProfileCard() {
@@ -691,11 +344,6 @@ function toggleUserProfile() {
         showProfileCard();
         updateTravelBoard();
     }
-}
-
-function openProfilePage(event) {
-    event?.preventDefault();
-    window.location.href = isUserLoggedIn() ? 'profile.html' : 'login.html';
 }
 
 function setTravelStatus(message) {
@@ -734,7 +382,7 @@ function updateTravelBoard(feature = 'saved') {
                 } else {
                     travelBoardContent.innerHTML = saved.map(item => {
                         const place = places.find(p => p.id === item.place_id);
-                        return `<div class="travel-board-item">💾 ${place ? place.name : `Place ${item.place_id}`}</div>`;
+                        return `<div class="travel-board-item">💾 ${escapeHtml(place ? place.name : `Place ${item.place_id}`)}</div>`;
                     }).join('');
                 }
                 setTravelStatus('Your saved places are ready for the next trip.');
@@ -744,7 +392,7 @@ function updateTravelBoard(feature = 'saved') {
                 } else {
                     travelBoardContent.innerHTML = trips.map(item => {
                         const place = places.find(p => p.id === item.place_id);
-                        return `<div class="travel-board-item">🗓️ ${place ? place.name : `Place ${item.place_id}`}</div>`;
+                        return `<div class="travel-board-item">🗓️ ${escapeHtml(place ? place.name : `Place ${item.place_id}`)}</div>`;
                     }).join('');
                 }
                 setTravelStatus('Your future trips are ready to review.');
@@ -752,165 +400,13 @@ function updateTravelBoard(feature = 'saved') {
                 if (notes.length === 0) {
                     travelBoardContent.innerHTML = '<p class="empty-state">No trip notes yet.</p>';
                 } else {
-                    travelBoardContent.innerHTML = notes.map(note => `<div class="travel-board-item">📝 ${note.note_text}</div>`).join('');
+                    travelBoardContent.innerHTML = notes.map(note => `<div class="travel-board-item">📝 ${escapeHtml(note.note_text)}</div>`).join('');
                 }
                 setTravelStatus('Your notes are stored here for later.');
             } else {
                 travelBoardContent.innerHTML = '<div class="travel-board-item">✨ More travel tools will appear here soon.</div>';
                 setTravelStatus('More travel tools are on the way.');
             }
-        })
-        .catch(() => {
-            travelBoardContent.innerHTML = '<p class="empty-state">Unable to load your travel board right now.</p>';
-        });
-}
-
-function setProfileFeature(feature) {
-    currentProfileFeature = feature || 'saved';
-    document.querySelectorAll('#travel-features .feature-item').forEach(button => {
-        button.classList.toggle('active', button.dataset.feature === currentProfileFeature);
-    });
-}
-
-function updateProfileCounts(data = latestTravelData) {
-    const counts = {
-        'profile-saved-count': data.saved?.length || 0,
-        'profile-trip-count': data.trips?.length || 0,
-        'profile-note-count': data.notes?.length || 0
-    };
-
-    Object.entries(counts).forEach(([id, value]) => {
-        const element = document.getElementById(id);
-        if (element) element.textContent = value;
-    });
-}
-
-function getPlaceName(placeId) {
-    const numericPlaceId = Number(placeId);
-    const place = places.find(p => Number(p.id) === numericPlaceId);
-    return place ? place.name : `Place ${placeId}`;
-}
-
-function formatBoardDate(value) {
-    if (!value) return 'Recently updated';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 'Recently updated';
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function buildBoardItem(icon, title, meta) {
-    return `
-        <div class="travel-board-item">
-            <div class="travel-board-icon"><i class="fa-solid ${icon}"></i></div>
-            <div>
-                <p class="travel-board-title">${escapeHtml(title)}</p>
-                <p class="travel-board-meta">${escapeHtml(meta)}</p>
-            </div>
-        </div>
-    `;
-}
-
-function renderTravelBoard(feature = currentProfileFeature) {
-    if (!travelBoardContent) return;
-    setProfileFeature(feature);
-
-    if (!isUserLoggedIn()) {
-        travelBoardContent.innerHTML = '<p class="empty-state">Please sign in to view your saved places and trips.</p>';
-        setTravelStatus('Sign in to start saving places and shaping your next trip.');
-        return;
-    }
-
-    const query = (profileBoardSearch?.value || '').trim().toLowerCase();
-    let items = [];
-    let emptyMessage = '';
-    let status = '';
-
-    if (currentProfileFeature === 'saved') {
-        items = (latestTravelData.saved || []).map(item => ({
-            title: getPlaceName(item.place_id),
-            meta: `Saved ${formatBoardDate(item.saved_at)}`,
-            icon: 'fa-bookmark'
-        }));
-        emptyMessage = 'No saved places yet. Open a destination and save it here.';
-        status = 'Your saved places are ready for the next trip.';
-    } else if (currentProfileFeature === 'future') {
-        items = (latestTravelData.trips || []).map(item => ({
-            title: getPlaceName(item.place_id),
-            meta: `Planned ${formatBoardDate(item.planned_at)}`,
-            icon: 'fa-calendar-days'
-        }));
-        emptyMessage = 'No future trips planned yet.';
-        status = 'Your future trips are ready to review.';
-    } else if (currentProfileFeature === 'notes') {
-        items = (latestTravelData.notes || []).map(note => ({
-            title: note.note_text || 'Trip note',
-            meta: `${getPlaceName(note.place_id)} - ${formatBoardDate(note.created_at)}`,
-            icon: 'fa-note-sticky'
-        }));
-        emptyMessage = 'No trip notes yet.';
-        status = 'Your notes are stored here for later.';
-    } else {
-        travelBoardContent.innerHTML = [
-            buildBoardItem('fa-route', 'Build a route', 'Save places first, then plan the order.'),
-            buildBoardItem('fa-cloud-sun', 'Check best seasons', 'Use place details to compare timing.'),
-            buildBoardItem('fa-wallet', 'Estimate budget', 'Review cost cards before you go.')
-        ].join('');
-        setTravelStatus('Quick tools for planning are ready.');
-        return;
-    }
-
-    const filteredItems = query
-        ? items.filter(item => `${item.title} ${item.meta}`.toLowerCase().includes(query))
-        : items;
-
-    if (filteredItems.length === 0) {
-        travelBoardContent.innerHTML = `<p class="empty-state">${query ? 'No matching board items found.' : emptyMessage}</p>`;
-    } else {
-        travelBoardContent.innerHTML = filteredItems
-            .map(item => buildBoardItem(item.icon, item.title, item.meta))
-            .join('');
-    }
-
-    setTravelStatus(status);
-}
-
-function updateTravelBoard(feature = 'saved', forceRefresh = false) {
-    if (!travelBoardContent) return;
-    setProfileFeature(feature);
-
-    if (!isUserLoggedIn()) {
-        latestTravelData = { saved: [], trips: [], notes: [] };
-        updateProfileCounts();
-        renderTravelBoard(feature);
-        return;
-    }
-
-    if (!forceRefresh && latestTravelData.loaded) {
-        renderTravelBoard(feature);
-        return;
-    }
-
-    travelBoardContent.innerHTML = '<p class="empty-state">Loading your travel board...</p>';
-
-    fetch('../../PHP/travel.php?action=get', {
-        method: 'GET',
-        credentials: 'same-origin'
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (!data.success) {
-                travelBoardContent.innerHTML = '<p class="empty-state">Unable to load your travel board right now.</p>';
-                return;
-            }
-
-            latestTravelData = {
-                saved: data.saved || [],
-                trips: data.trips || [],
-                notes: data.notes || [],
-                loaded: true
-            };
-            updateProfileCounts(latestTravelData);
-            renderTravelBoard(feature);
         })
         .catch(() => {
             travelBoardContent.innerHTML = '<p class="empty-state">Unable to load your travel board right now.</p>';
@@ -956,7 +452,7 @@ function savePlaceToCollection(placeId) {
         .then(() => {
             showProfileCard();
             setTravelStatus('Saved to your collection.');
-            updateTravelBoard('saved', true);
+            updateTravelBoard('saved');
         })
         .catch(() => {
             setTravelStatus('Unable to save right now.');
@@ -980,7 +476,7 @@ function addNoteToPlace(placeId, note) {
         .then(() => {
             showProfileCard();
             setTravelStatus('Note saved to your travel board.');
-            updateTravelBoard('notes', true);
+            updateTravelBoard('notes');
         })
         .catch(() => {
             setTravelStatus('Unable to save note right now.');
@@ -1003,7 +499,7 @@ function organizeTrip(placeId) {
         .then(() => {
             showProfileCard();
             setTravelStatus('Added to your future trips.');
-            updateTravelBoard('future', true);
+            updateTravelBoard('future');
         })
         .catch(() => {
             setTravelStatus('Unable to plan trip right now.');
@@ -1017,18 +513,10 @@ function toggleMobileMenu() {
 
 // Categories
 function renderCategories() {
-    // Build category list from loaded places + base categories
-    const placeCategories = [...new Set(places.map(p => p.category).filter(Boolean))];
-    const allCategories = ['All', ...placeCategories.filter(c => !BASE_CATEGORIES.includes(c)),
-        ...BASE_CATEGORIES.filter(c => c !== 'All' && placeCategories.includes(c))];
-    // Deduplicate while preserving order
-    const seen = new Set();
-    const displayCategories = allCategories.filter(c => !seen.has(c) && seen.add(c));
-
-    categoriesContainer.innerHTML = displayCategories.map(cat => `
+    categoriesContainer.innerHTML = categories.map(cat => `
         <button class="category-btn ${cat === currentFilter ? 'active' : ''}"
-                onclick="setCategory('${cat}')">
-            ${cat}
+                onclick="setCategory(${JSON.stringify(cat)})">
+            ${escapeHtml(cat)}
         </button>
     `).join('');
 }
@@ -1051,55 +539,51 @@ function renderPlaces() {
         noResults.style.display = 'none';
 
         placesGrid.innerHTML = filteredPlaces.map(place => {
-            const imgUrl = place.coverImage
-                ? `../../PHP/serve_image.php?path=${encodeURIComponent(place.coverImage)}`
-                : '';
-            const imgHtml = imgUrl
-                ? `<img src="${imgUrl}" alt="${escapeHtml(place.name)}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                   <div class="place-img-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">
-                     <svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                       <circle cx="12" cy="10" r="3"></circle>
-                     </svg>
-                   </div>`
-                : `<svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                     <circle cx="12" cy="10" r="3"></circle>
-                   </svg>`;
+            // Generate image content - use actual image if available, otherwise SVG placeholder
+            let imageContent = `
+                <svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+            `;
+            
+            if (place.coverImage && place.coverImage !== 'Submitted destination') {
+                imageContent = `<img src="${escapeHtml(place.coverImage)}" alt="${escapeHtml(place.name)}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            }
+            
             return `
-            <div class="place-card" onclick="openPlaceDetail(${place.id})">
-                <div class="place-image">
-                    ${imgHtml}
-                    <div class="place-category">${escapeHtml(place.category)}</div>
-                </div>
-                <div class="place-info">
-                    <h3 class="place-name">${escapeHtml(place.name)}</h3>
-                    <div class="place-location">
-                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                            <circle cx="12" cy="10" r="3"></circle>
-                        </svg>
-                        <span>${escapeHtml(place.location)}</span>
+                <div class="place-card" onclick="openPlaceDetail(${place.id})">
+                    <div class="place-image">
+                        ${imageContent}
+                        <div class="place-category">${escapeHtml(place.category)}</div>
                     </div>
-                    <div class="place-meta">
-                        <div class="place-rating">
-                            <span class="rating-badge">${place.rating.toFixed(1)} / 5</span>
-                        </div>
-                        <div class="place-reviews">
+                    <div class="place-info">
+                        <h3 class="place-name">${escapeHtml(place.name)}</h3>
+                        <div class="place-location">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="9" cy="7" r="4"></circle>
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
                             </svg>
-                            <span>${place.reviews} reviews</span>
+                            <span>${escapeHtml(place.location)}</span>
+                        </div>
+                        <div class="place-meta">
+                            <div class="place-rating">
+                                <span class="rating-badge">${Number(place.rating || 0).toFixed(1)} / 5</span>
+                            </div>
+                            <div class="place-reviews">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                                <span>${Number(place.reviews || 0)} reviews</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
         }).join('');
-
     }
 
     updateSectionHeader(filteredPlaces.length);
@@ -1115,7 +599,7 @@ function getFilteredPlaces() {
                 place.category.toLowerCase().includes(searchQuery.toLowerCase());
             return matchesCategory && matchesSearch;
         })
-        .sort((a, b) => b.rating - a.rating);
+        .sort((a, b) => (Number(b.rating || 0) - Number(a.rating || 0)) || (Number(b.reviews || 0) - Number(a.reviews || 0)));
 }
 
 function filterPlaces() {
@@ -1139,7 +623,18 @@ function updateSectionHeader(count) {
 }
 
 function updateStats() {
-    document.getElementById('stat-places').textContent = `${places.length}+`;
+    const totalPlaces = places.length;
+    const totalReviews = places.reduce((sum, place) => sum + Number(place.reviews || 0), 0);
+    const totalWeighted = places.reduce((sum, place) => sum + (Number(place.rating || 0) * Number(place.reviews || 0)), 0);
+    const averageRating = totalReviews > 0 ? (totalWeighted / totalReviews) : 0;
+
+    const placesEl = document.getElementById('stat-places');
+    const reviewsEl = document.getElementById('stat-reviews');
+    const avgEl = document.getElementById('stat-avg-rating');
+
+    if (placesEl) placesEl.textContent = `${totalPlaces}`;
+    if (reviewsEl) reviewsEl.textContent = `${totalReviews}`;
+    if (avgEl) avgEl.textContent = averageRating.toFixed(1);
 }
 
 function openAddPlaceModal() {
@@ -1147,11 +642,13 @@ function openAddPlaceModal() {
         window.location.href = 'login.html';
         return;
     }
+    if (!addPlaceModal) return;
     addPlaceModal.classList.add('active');
-    mobileMenu.classList.remove('active');
+    if (mobileMenu) mobileMenu.classList.remove('active');
 }
 
 function closeAddPlaceModal() {
+    if (!addPlaceModal) return;
     addPlaceModal.classList.remove('active');
 }
 
@@ -1161,65 +658,39 @@ function openPlaceDetail(id) {
     if (!selectedPlace) return;
 
     // Header info
-    document.getElementById('detail-name').textContent = selectedPlace.name;
-    document.getElementById('detail-local-name').textContent = selectedPlace.localName;
-    document.getElementById('detail-tagline').textContent = selectedPlace.tagline;
+    document.getElementById('detail-name').textContent = selectedPlace.name || 'Selected Place';
+    document.getElementById('detail-local-name').textContent = selectedPlace.localName || '';
+    document.getElementById('detail-tagline').textContent = selectedPlace.tagline || '';
 
-    // Hero cover image
-    const heroImg = document.getElementById('detail-hero-img');
-    const heroSvg = document.getElementById('detail-hero-svg');
-    if (heroImg && heroSvg) {
-        if (selectedPlace.coverImage) {
-            const imgUrl = `../../PHP/serve_image.php?path=${encodeURIComponent(selectedPlace.coverImage)}`;
-            heroImg.src = imgUrl;
-            heroImg.alt = selectedPlace.name;
-            heroImg.style.display = 'block';
-            heroSvg.style.display = 'none';
-            heroImg.onerror = () => {
-                heroImg.style.display = 'none';
-                heroSvg.style.display = '';
-            };
-        } else {
-            heroImg.style.display = 'none';
-            heroSvg.style.display = '';
-        }
-    }
-
+    const detailRating = document.getElementById('detail-rating-value');
+    const detailReviewCount = document.getElementById('detail-review-count');
+    if (detailRating) detailRating.textContent = Number(selectedPlace.rating || 0).toFixed(1);
+    if (detailReviewCount) detailReviewCount.textContent = `${Number(selectedPlace.reviews || 0)}`;
 
     // Location info
-    document.getElementById('detail-location').textContent = `${selectedPlace.district}, ${selectedPlace.province}`;
-    document.getElementById('detail-location-full').textContent = `${selectedPlace.municipality}, ${selectedPlace.province} Province`;
-    const detailMapBtn = document.getElementById('detail-map-btn');
-    const detailMapFrame = document.getElementById('detail-map-frame');
-    if (detailMapBtn) {
-        detailMapBtn.onclick = () => {
-            document.querySelector('.detail-map-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            detailMapFrame?.focus();
-        };
-    }
-    if (detailMapFrame) {
-        detailMapFrame.src = selectedPlace.mapUrl || buildGoogleMapsUrl(selectedPlace);
-    }
+    const districtProvince = [selectedPlace.district, selectedPlace.province].filter(Boolean).join(', ');
+    document.getElementById('detail-location').textContent = districtProvince || 'Nepal';
+    document.getElementById('detail-location-full').textContent = [selectedPlace.municipality, selectedPlace.province].filter(Boolean).join(', ');
 
     // About
-    document.getElementById('detail-desc').textContent = selectedPlace.shortDesc;
+    document.getElementById('detail-desc').textContent = selectedPlace.shortDesc || '-';
 
     // Trip Information
-    document.getElementById('detail-best-time').textContent = selectedPlace.bestTime;
-    document.getElementById('detail-duration').textContent = selectedPlace.duration;
-    document.getElementById('detail-difficulty').textContent = selectedPlace.difficulty;
-    document.getElementById('detail-category').textContent = selectedPlace.category;
+    document.getElementById('detail-best-time').textContent = selectedPlace.bestTime || '-';
+    document.getElementById('detail-duration').textContent = selectedPlace.duration || '-';
+    document.getElementById('detail-difficulty').textContent = selectedPlace.difficulty || '-';
+    document.getElementById('detail-category').textContent = selectedPlace.category || '-';
 
     // Things to Do
-    document.getElementById('detail-things').textContent = selectedPlace.things;
+    document.getElementById('detail-things').textContent = selectedPlace.things || '-';
 
     // Tips
-    document.getElementById('detail-tips').textContent = selectedPlace.tips;
+    document.getElementById('detail-tips').textContent = selectedPlace.tips || '-';
 
     // Route
-    document.getElementById('detail-start').textContent = selectedPlace.startPoint;
-    document.getElementById('detail-route').textContent = selectedPlace.routeDesc;
-    document.getElementById('detail-dest').textContent = selectedPlace.destination;
+    document.getElementById('detail-start').textContent = selectedPlace.startPoint || '-';
+    document.getElementById('detail-route').textContent = selectedPlace.routeDesc || '-';
+    document.getElementById('detail-dest').textContent = selectedPlace.destination || '-';
 
     // Budget
     document.getElementById('detail-budget').textContent = `NPR ${selectedPlace.budget.toLocaleString()}`;
@@ -1229,9 +700,9 @@ function openPlaceDetail(id) {
     document.getElementById('detail-fee').textContent = `NPR ${selectedPlace.fee.toLocaleString()}`;
 
     // Facilities
-    document.getElementById('detail-accom').textContent = selectedPlace.accomDesc;
-    document.getElementById('detail-hotels').textContent = selectedPlace.hotels;
-    document.getElementById('detail-restaurants').textContent = selectedPlace.restaurants;
+    document.getElementById('detail-accom').textContent = selectedPlace.accomDesc || '-';
+    document.getElementById('detail-hotels').textContent = selectedPlace.hotels || '-';
+    document.getElementById('detail-restaurants').textContent = selectedPlace.restaurants || '-';
 
     // Features
     document.getElementById('feature-homestay').style.display = selectedPlace.homestay ? 'flex' : 'none';
@@ -1267,73 +738,73 @@ function openPlaceDetail(id) {
     };
     if (planBtn) planBtn.onclick = () => organizeTrip(selectedPlace.id);
 
-    placeDetailModal.classList.add('active');
+    loadPlaceReviews(selectedPlace.id);
     userRating = 0;
-    initStarRating();
-    loadAndRenderReviews(selectedPlace.id);
+    highlightStars(0);
+    const reviewText = document.getElementById('review-text');
+    if (reviewText) reviewText.value = '';
+
+    placeDetailModal.classList.add('active');
 }
 
 function closePlaceDetail() {
     placeDetailModal.classList.remove('active');
     selectedPlace = null;
+    currentPlaceReviews = [];
 }
 
-async function loadAndRenderReviews(placeId) {
-    const addReviewContainer = document.getElementById('add-review-container');
-    if (addReviewContainer) {
-        addReviewContainer.style.display = 'block';
+async function loadPlaceReviews(placeId) {
+    try {
+        const response = await fetch(`../../PHP/places.php?action=reviews&place_id=${encodeURIComponent(placeId)}`, {
+            method: 'GET',
+            credentials: 'same-origin'
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Unable to load reviews.');
+        }
+        currentPlaceReviews = data.reviews || [];
+    } catch (error) {
+        currentPlaceReviews = [];
     }
 
-    try {
-        const response = await fetch(`../../PHP/places.php?action=get_reviews&place_id=${placeId}`);
-        const data = await response.json();
-        
-        if (data.success) {
-            const list = document.getElementById('reviews-list');
-            const countEl = document.getElementById('review-count');
-            const avgEl = document.getElementById('detail-average-rating');
-            
-            if (countEl) countEl.textContent = `(${data.reviews.length})`;
-            
-            let avgRating = 0;
-            if (data.reviews.length > 0) {
-                const totalRating = data.reviews.reduce((sum, r) => sum + r.rating, 0);
-                avgRating = totalRating / data.reviews.length;
-            }
-            if (avgEl) avgEl.textContent = `${avgRating.toFixed(1)} / 5`;
-            
-            if (!list) return;
-            if (data.reviews.length === 0) {
-                list.innerHTML = `<p class="empty-state" style="color: var(--text-muted); text-align: center; padding: 1.5rem 0;">No reviews yet. Be the first to review this place!</p>`;
-                return;
-            }
-            
-            list.innerHTML = data.reviews.map(review => `
-                <div class="review-item">
-                    <div class="review-header">
-                        <div class="review-avatar">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                        </div>
-                        <div class="review-info">
-                            <div class="review-top">
-                                <div>
-                                    <h4 class="review-author" style="margin:0; font-size:1rem; color:var(--text-primary);">${escapeHtml(review.author)} <small style="color:var(--text-muted); font-weight:normal;">(@${escapeHtml(review.username)})</small></h4>
-                                    <div class="review-date" style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">${escapeHtml(new Date(review.date).toLocaleDateString())}</div>
-                                </div>
-                                <span class="rating-badge rating-badge-sm" style="font-size:0.85rem; padding:4px 8px; font-weight:600;">${review.rating} / 5</span>
-                            </div>
-                            <p class="review-text" style="margin:8px 0 0; color:var(--text-secondary); line-height:1.5;">${escapeHtml(review.comment)}</p>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-    } catch (error) {
-        console.error('Error loading reviews:', error);
+    renderReviews();
+}
+
+function renderReviews() {
+    const reviewCount = document.getElementById('review-count');
+    const reviewsList = document.getElementById('reviews-list');
+    if (!reviewCount || !reviewsList) return;
+
+    reviewCount.textContent = `(${currentPlaceReviews.length})`;
+
+    if (currentPlaceReviews.length === 0) {
+        reviewsList.innerHTML = '<p class="empty-state">No reviews yet. Be the first to review this place.</p>';
+        return;
     }
+
+    reviewsList.innerHTML = currentPlaceReviews.map(review => `
+        <div class="review-item">
+            <div class="review-header">
+                <div class="review-avatar">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <div class="review-info">
+                    <div class="review-top">
+                        <div>
+                            <h4 class="review-author">${escapeHtml(review.author || 'Traveler')}</h4>
+                            <div class="review-date">${formatDate(review.createdAt)}</div>
+                        </div>
+                        <span class="rating-badge rating-badge-sm">${Number(review.rating || 0)}/5</span>
+                    </div>
+                    <p class="review-text">${escapeHtml(review.comment || '')}</p>
+                </div>
+            </div>
+        </div>
+    `).join('');
 }
 
 function setRating(rating) {
@@ -1342,21 +813,18 @@ function setRating(rating) {
 }
 
 function highlightStars(rating) {
-    const container = document.getElementById('star-rating');
-    if (!container) return;
-
-    container.querySelectorAll('.star-btn').forEach((btn, index) => {
-        const filled = index < rating;
-        btn.classList.toggle('active', filled);
-        btn.textContent = filled ? '★' : '☆';
-        btn.style.color = filled ? STAR_FILLED : STAR_EMPTY;
+    if (!starRating) return;
+    const starBtns = starRating.querySelectorAll('.star-btn');
+    starBtns.forEach((btn, index) => {
+        btn.classList.toggle('active', index < rating);
     });
 }
 
 async function handleReviewSubmit(e) {
     e.preventDefault();
     if (!isUserLoggedIn()) { window.location.href = 'login.html'; return; }
-    const reviewText = document.getElementById('review-text').value.trim();
+    if (!selectedPlace) return;
+    const reviewText = document.getElementById('review-text').value;
 
     if (userRating === 0) {
         alert('Please select a rating');
@@ -1364,34 +832,40 @@ async function handleReviewSubmit(e) {
     }
 
     const formData = new FormData();
-    formData.append('action', 'submit_review');
+    formData.append('action', 'add_review');
     formData.append('place_id', selectedPlace.id);
     formData.append('rating', userRating);
-    formData.append('comment', reviewText);
+    formData.append('comment', reviewText.trim());
+
+    const response = await fetch('../../PHP/places.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin'
+    });
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+        alert(data.message || 'Unable to submit review.');
+        return;
+    }
 
     try {
-        const response = await fetch('../../PHP/places.php', {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin'
-        });
-        const data = await response.json();
-
-        if (data.success) {
-            showToastGlobal('Review submitted successfully!', 'fa-check');
-            userRating = 0;
-            highlightStars(0);
-            document.getElementById('review-text').value = '';
-            
-            await loadAndRenderReviews(selectedPlace.id);
-            places = await loadApprovedPlaces();
-            renderPlaces();
-        } else {
-            showToastGlobal(data.message || 'Unable to submit review.', 'fa-triangle-exclamation');
-        }
+        places = await loadApprovedPlaces();
+        refreshCategories();
+        renderCategories();
+        renderPlaces();
+        selectedPlace = places.find(place => Number(place.id) === Number(selectedPlace.id)) || selectedPlace;
     } catch (error) {
-        showToastGlobal('Error submitting review.', 'fa-triangle-exclamation');
+        // Keep current UI state if place reload fails.
     }
+    await loadPlaceReviews(selectedPlace.id);
+    updateStats();
+    if (typeof showToast === 'function') {
+        showToast('Review submitted successfully!', 'fa-check');
+    }
+    userRating = 0;
+    highlightStars(0);
+    document.getElementById('review-text').value = '';
 }
 
 // ===== FORM FUNCTIONALITY =====
@@ -1471,7 +945,6 @@ if (form) {
         const input = document.getElementById(inputId);
         if (!drop || !input) return;
         drop.addEventListener('click', () => input.click());
-        input.addEventListener('click', e => e.stopPropagation());
         drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
         drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
         drop.addEventListener('drop', e => {
@@ -1577,7 +1050,12 @@ if (form) {
     });
 
     function showToast(msg, icon) {
-        showToastGlobal(msg, icon);
+        const t = document.getElementById('toast');
+        if (!t) return;
+        t.querySelector('div strong').textContent = msg;
+        t.querySelector('i').className = `fa-solid ${icon || 'fa-check'}`;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2800);
     }
 
     // Clear errors on input
@@ -1588,15 +1066,6 @@ if (form) {
             if (err) err.classList.remove('show');
         }
     });
-}
-
-function showToastGlobal(msg, icon) {
-    const t = document.getElementById('toast');
-    if (!t) return;
-    t.querySelector('div strong').textContent = msg;
-    t.querySelector('i').className = `fa-solid ${icon || 'fa-check'}`;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2800);
 }
 
 // Start the app

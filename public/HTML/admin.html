@@ -30,6 +30,9 @@
                     <li><a href="#" data-section="manage-users" class="nav-link">
                         <i class="fas fa-users"></i> <span>Manage Users</span>
                     </a></li>
+                    <li><a href="#" data-section="manage-photos" class="nav-link">
+                        <i class="fas fa-images"></i> <span>Manage Photos</span>
+                    </a></li>
                     <li><a href="#" data-section="verify-content" class="nav-link">
                         <i class="fas fa-check-circle"></i> <span>Verify Content</span>
                     </a></li>
@@ -75,7 +78,7 @@
                             </div>
                             <div class="stat-content">
                                 <h3>Total Places</h3>
-                                <p class="stat-number">124</p>
+                                <p class="stat-number">0</p>
                                 <span class="stat-label">Active locations</span>
                             </div>
                         </div>
@@ -97,8 +100,8 @@
                             </div>
                             <div class="stat-content">
                                 <h3>Photos Uploaded</h3>
-                                <p class="stat-number">2,341</p>
-                                <span class="stat-label">Pending verification: 45</span>
+                                <p class="stat-number">0</p>
+                                <span class="stat-label">Pending verification: 0</span>
                             </div>
                         </div>
 
@@ -108,8 +111,8 @@
                             </div>
                             <div class="stat-content">
                                 <h3>Reviews</h3>
-                                <p class="stat-number">592</p>
-                                <span class="stat-label">Flagged for review: 12</span>
+                                <p class="stat-number">0</p>
+                                <span class="stat-label">User reviews</span>
                             </div>
                         </div>
                     </div>
@@ -181,7 +184,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Managed places are loaded dynamically from PHP -->
+                                <tr>
+                                    <td colspan="5">No approved places yet.</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -253,77 +258,92 @@
                     </div>
                 </section>
 
+                <!-- Manage Photos Section -->
+                <section id="manage-photos" class="section">
+                    <div class="section-header">
+                        <h2>Manage Photos</h2>
+                    </div>
+
+                    <div class="filter-bar">
+                        <input type="text" class="search-input" placeholder="Search photos...">
+                        <select class="filter-select">
+                            <option>All Photos</option>
+                            <option>Pending Verification</option>
+                            <option>Approved</option>
+                            <option>Rejected</option>
+                        </select>
+                    </div>
+
+                    <div class="photos-grid">
+                        <div class="photo-card">
+                            <img src="https://via.placeholder.com/200" alt="Photo">
+                            <div class="photo-info">
+                                <h4>Kathmandu Skyline</h4>
+                                <p>Uploaded by: user_123</p>
+                                <p>Status: <span class="badge badge-pending">Pending</span></p>
+                                <div class="photo-actions">
+                                    <button class="btn-approve">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                    <button class="btn-reject">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="photo-card">
+                            <img src="https://via.placeholder.com/200" alt="Photo">
+                            <div class="photo-info">
+                                <h4>Temple Details</h4>
+                                <p>Uploaded by: user_456</p>
+                                <p>Status: <span class="badge badge-active">Approved</span></p>
+                                <div class="photo-actions">
+                                    <button class="btn-icon" title="View"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-icon btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="photo-card">
+                            <img src="https://via.placeholder.com/200" alt="Photo">
+                            <div class="photo-info">
+                                <h4>Lake Sunset</h4>
+                                <p>Uploaded by: user_789</p>
+                                <p>Status: <span class="badge badge-pending">Pending</span></p>
+                                <div class="photo-actions">
+                                    <button class="btn-approve">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                    <button class="btn-reject">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="photo-card">
+                            <img src="https://via.placeholder.com/200" alt="Photo">
+                            <div class="photo-info">
+                                <h4>Mountain View</h4>
+                                <p>Uploaded by: user_321</p>
+                                <p>Status: <span class="badge badge-active">Approved</span></p>
+                                <div class="photo-actions">
+                                    <button class="btn-icon" title="View"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-icon btn-delete" title="Delete"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Verify Content Section -->
                 <section id="verify-content" class="section">
                     <div class="section-header">
                         <h2>Verify Uploaded Content & Update Travel Information</h2>
                     </div>
 
-                    <div class="content-grid">
-                        <div class="content-card pending">
-                            <div class="card-header">
-                                <h3>Annapurna Circuit Trail</h3>
-                                <span class="badge badge-pending">Pending Verification</span>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Submitted by:</strong> trek_expert_01</p>
-                                <p><strong>Date:</strong> 2024-03-15</p>
-                                <p><strong>Content Type:</strong> Trail Information & Photos</p>
-                                <p><strong>Description:</strong> Updated trek information with new route and difficulty levels</p>
-                                <div class="verification-actions">
-                                    <button class="btn-approve" onclick="approveContent('annapurna')">
-                                        <i class="fas fa-check"></i> Approve & Publish
-                                    </button>
-                                    <button class="btn-reject" onclick="rejectContent('annapurna')">
-                                        <i class="fas fa-times"></i> Reject
-                                    </button>
-                                    <button class="btn-secondary" onclick="requestChanges('annapurna')">
-                                        <i class="fas fa-comment"></i> Request Changes
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="content-card pending">
-                            <div class="card-header">
-                                <h3>Chitwan National Park Update</h3>
-                                <span class="badge badge-pending">Pending Verification</span>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Submitted by:</strong> wildlife_guide</p>
-                                <p><strong>Date:</strong> 2024-03-14</p>
-                                <p><strong>Content Type:</strong> Location Information</p>
-                                <p><strong>Description:</strong> Updated animal spotting information and best season guide</p>
-                                <div class="verification-actions">
-                                    <button class="btn-approve" onclick="approveContent('chitwan')">
-                                        <i class="fas fa-check"></i> Approve & Publish
-                                    </button>
-                                    <button class="btn-reject" onclick="rejectContent('chitwan')">
-                                        <i class="fas fa-times"></i> Reject
-                                    </button>
-                                    <button class="btn-secondary" onclick="requestChanges('chitwan')">
-                                        <i class="fas fa-comment"></i> Request Changes
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="content-card approved">
-                            <div class="card-header">
-                                <h3>Pokhara City Guide</h3>
-                                <span class="badge badge-active">Verified & Published</span>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Submitted by:</strong> local_guide_02</p>
-                                <p><strong>Date:</strong> 2024-03-10</p>
-                                <p><strong>Content Type:</strong> Comprehensive City Guide</p>
-                                <p><strong>Verified By:</strong> admin</p>
-                                <button class="btn-secondary" onclick="viewContent('pokhara')">
-                                    <i class="fas fa-eye"></i> View Published Content
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="content-grid"></div>
                 </section>
 
                 <!-- Delete Reviews Section -->
@@ -343,9 +363,7 @@
                         </select>
                     </div>
 
-                    <div class="reviews-list">
-                        <!-- Reviews will be loaded dynamically from PHP -->
-                    </div>
+                    <div class="reviews-list"></div>
                 </section>
 
                 <!-- Monitor Community Activity Section -->

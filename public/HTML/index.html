@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nepal Travel - Discover Hidden Natural Retreats</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="../css/styles.css?v=3">
+    <link rel="stylesheet" href="../css/styles.css">
 
 </head>
 <body>
@@ -45,57 +45,38 @@
                         <span>Add Place</span>
                       </button>
                     <div class="user-menu-wrapper">
-                        <a class="user-btn" id="user-btn" href="profile.html" aria-label="Open user profile">
+                        <button class="user-btn" id="user-btn" type="button" aria-label="Open user menu">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="12" cy="7" r="4"></circle>
                             </svg>
-                        </a>
-                        <div class="user-profile-card" id="user-profile-card" aria-hidden="true" role="dialog" aria-label="User profile">
+                        </button>
+                        <div class="user-profile-card" id="user-profile-card" aria-hidden="true">
                             <div class="user-profile-header">
-                                <div class="user-avatar-wrap">
-                                    <div class="user-avatar" id="user-avatar">U</div>
-                                    <span class="profile-online-dot" aria-label="Online"></span>
-                                </div>
-                                <div class="profile-heading">
-                                    <span class="profile-kicker">Traveler Profile</span>
+                                <div class="user-avatar" id="user-avatar">U</div>
+                                <div>
                                     <h3 id="profile-name">User</h3>
                                     <p id="profile-role">Traveler</p>
-                                    <small id="profile-member">Ready for your next Nepal route</small>
-                                </div>
-                            </div>
-
-                            <div class="profile-stats" aria-label="Travel board totals">
-                                <div class="profile-stat">
-                                    <strong id="profile-saved-count">0</strong>
-                                    <span>Saved</span>
-                                </div>
-                                <div class="profile-stat">
-                                    <strong id="profile-trip-count">0</strong>
-                                    <span>Trips</span>
-                                </div>
-                                <div class="profile-stat">
-                                    <strong id="profile-note-count">0</strong>
-                                    <span>Notes</span>
                                 </div>
                             </div>
 
                             <div class="travel-features" id="travel-features">
-                                <button class="feature-item active" type="button" data-feature="saved">
-                                    <i class="fa-solid fa-bookmark"></i>
-                                    <span>Saved</span>
+                                <h4>Travel Hub</h4>
+                                <button class="feature-item" type="button" data-feature="saved">
+                                    <span>💾 Saved Places</span>
+                                    <small>Keep your favorite spots</small>
                                 </button>
                                 <button class="feature-item" type="button" data-feature="future">
-                                    <i class="fa-solid fa-calendar-days"></i>
-                                    <span>Trips</span>
+                                    <span>🗓️ Future Trips</span>
+                                    <small>Plan your next adventure</small>
                                 </button>
                                 <button class="feature-item" type="button" data-feature="notes">
-                                    <i class="fa-solid fa-note-sticky"></i>
-                                    <span>Notes</span>
+                                    <span>📝 Trip Notes</span>
+                                    <small>Save ideas and reminders</small>
                                 </button>
                                 <button class="feature-item" type="button" data-feature="more">
-                                    <i class="fa-solid fa-compass"></i>
-                                    <span>Tools</span>
+                                    <span>✨ More</span>
+                                    <small>Explore travel tools</small>
                                 </button>
                             </div>
 
@@ -104,30 +85,14 @@
                             </div>
 
                             <div class="travel-board" id="travel-board">
-                                <div class="travel-board-head">
-                                    <h5>Your Travel Board</h5>
-                                    <button class="profile-icon-btn" id="refresh-travel-board" type="button" aria-label="Refresh travel board">
-                                        <i class="fa-solid fa-rotate-right"></i>
-                                    </button>
-                                </div>
-                                <label class="profile-search" for="profile-board-search">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                    <input type="search" id="profile-board-search" placeholder="Search your board">
-                                </label>
+                                <h5>Your Travel Board</h5>
                                 <div class="travel-board-content" id="travel-board-content">
                                     <p class="empty-state">Nothing saved yet. Save a place or plan a trip to get started.</p>
                                 </div>
                             </div>
 
                             <div class="user-profile-actions">
-                                <button class="profile-action-btn ghost" id="profile-explore-btn" type="button">
-                                    <i class="fa-solid fa-map-location-dot"></i>
-                                    Explore Places
-                                </button>
-                                <button class="profile-action-btn" id="logout-btn" type="button">
-                                    <i class="fa-solid fa-right-from-bracket"></i>
-                                    Logout
-                                </button>
+                                <button class="profile-action-btn" id="logout-btn" type="button">Logout</button>
                             </div>
                         </div>
                     </div>
@@ -164,13 +129,6 @@
                     </svg>
                     <span>Add Place</span>
                 </button>
-                <a class="nav-link" id="mobile-user-btn" href="profile.html">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                    <span>Profile</span>
-                </a>
             </div>
         </nav>
 
@@ -211,11 +169,11 @@
                         <div class="stat-label">Destinations</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value">2.5K+</div>
+                        <div class="stat-value" id="stat-reviews">0</div>
                         <div class="stat-label">Reviews</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value">4.8</div>
+                        <div class="stat-value" id="stat-avg-rating">0.0</div>
                         <div class="stat-label">
                             Avg Rating
                         </div>
@@ -234,7 +192,7 @@
                 <div class="section-header spotlight-header">
                     <div>
                         <h2 class="section-title">Spotlight Picks</h2>
-                        <p class="section-subtitle">Editorial routes and quick-hit itineraries curated for you</p>
+                        <p class="section-subtitle">Top approved places with the highest ratings appear first below.</p>
                     </div>
                     <button class="btn-secondary" id="featured-add-btn" type="button">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -245,61 +203,7 @@
                     </button>
                 </div>
 
-                <div class="spotlight-grid">
-                    <article class="spotlight-card">
-                        <div class="spotlight-media">
-                            <div class="spotlight-badge">Editors Choice</div>
-                            <svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M3 20h18"></path>
-                                <path d="M5 20l4-9 3 5 3-4 4 8"></path>
-                                <circle cx="17" cy="6" r="2"></circle>
-                            </svg>
-                        </div>
-                        <div class="spotlight-body">
-                            <h3>Himalayan Dawn Loop</h3>
-                            <p>A two-day arc across ridgelines, lakes, and old town stops with the best light for photos.</p>
-                            <div class="spotlight-meta">
-                                <span class="spotlight-pill">2 Days</span>
-                                <span class="spotlight-pill">3 Stops</span>
-                                <span class="spotlight-pill">Photo Ready</span>
-                            </div>
-                        </div>
-                    </article>
-
-                    <div class="spotlight-stack">
-                        <article class="mini-card">
-                            <div class="mini-icon">
-                                <svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M4 21v-7"></path>
-                                    <path d="M4 14h16"></path>
-                                    <path d="M7 14V7h10v7"></path>
-                                    <path d="M10 7V4"></path>
-                                    <path d="M14 7V4"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <h4>Old City Walk</h4>
-                                <p>Markets, courtyards, and local craft studios in one relaxed loop.</p>
-                                <div class="mini-meta">4.9 rating · Cultural</div>
-                            </div>
-                        </article>
-
-                        <article class="mini-card">
-                            <div class="mini-icon">
-                                <svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                    <path d="M4 19h16"></path>
-                                    <path d="M6 19V9l6-4 6 4v10"></path>
-                                    <path d="M10 19v-5h4v5"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <h4>Weekend Escape</h4>
-                                <p>Forest cabins, warm tea stops, and a short sunrise ridge hike.</p>
-                                <div class="mini-meta">Adventure · 1 Night</div>
-                            </div>
-                        </article>
-                    </div>
-                </div>
+                <div class="spotlight-grid"></div>
             </div>
         </section>
 
@@ -309,17 +213,11 @@
                 <div class="section-header">
                     <div>
                         <h2 class="section-title" id="section-title">All Destinations</h2>
-                        <p class="section-subtitle" id="section-subtitle">Sorted by rating • 1 place</p>
+                        <p class="section-subtitle" id="section-subtitle">Sorted by rating • 0 places</p>
                     </div>
                 </div>
 
-                <div id="places-grid" class="places-grid">
-                    <!-- Places will be loaded dynamically from the database -->
-                    <div class="loading-placeholder" style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">
-                        <i class="fa-solid fa-spinner fa-spin" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--color-primary);"></i>
-                        <p style="font-size: 1.1rem; font-weight: 500;">Loading adventure destinations...</p>
-                    </div>
-                </div>
+                <div id="places-grid" class="places-grid"></div>
 
                 <div id="no-results" class="no-results" style="display: none;">
                     <svg class="icon-large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -406,9 +304,8 @@
                 </svg>
             </button>
 
-            <div class="detail-hero" id="detail-hero" style="position:relative;overflow:hidden;">
-                <img id="detail-hero-img" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:none;">
-                <svg id="detail-hero-svg" class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <div class="detail-hero">
+                <svg class="icon-xl" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path d="M3 20h18"></path>
                     <path d="M5 20l4-9 3 5 3-4 4 8"></path>
                     <circle cx="17" cy="6" r="2"></circle>
@@ -419,9 +316,9 @@
                 <!-- Header Section -->
                 <div class="detail-card">
                     <div class="detail-header">
-                        <h1 id="detail-name">Khopra Danda</h1>
-                        <p id="detail-local-name" class="detail-local">खोप्रा डाँडा</p>
-                        <p id="detail-tagline" class="detail-tagline">Alpine meadow with panoramic mountain views above the clouds</p>
+                        <h1 id="detail-name">Selected Place</h1>
+                        <p id="detail-local-name" class="detail-local"></p>
+                        <p id="detail-tagline" class="detail-tagline"></p>
                     </div>
                     <div class="detail-location-section">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -429,19 +326,16 @@
                             <circle cx="12" cy="10" r="3"></circle>
                         </svg>
                         <div>
-                            <p class="detail-location" id="detail-location">Myagdi, Gandaki</p>
-                            <p class="detail-location-full" id="detail-location-full">Annapurna Municipality, Gandaki Province</p>
+                            <p class="detail-location" id="detail-location">-</p>
+                            <p class="detail-location-full" id="detail-location-full">-</p>
                         </div>
-                        <button type="button" class="detail-map-btn" id="detail-map-btn" aria-label="Open location in Google Maps">
-                            <i class="fa-solid fa-map-location-dot"></i>
-                        </button>
                     </div>
                 </div>
 
                 <!-- About Section -->
                 <div class="detail-card">
                     <h2>About This Place</h2>
-                    <p id="detail-desc" class="detail-description">A stunning high-altitude meadow offering breathtaking 360-degree views of the Annapurna, Dhaulagiri, and Nilgiri ranges. The experience of being above the clouds at sunrise is truly magical.</p>
+                    <p id="detail-desc" class="detail-description">-</p>
                 </div>
 
                 <!-- Trip Information -->
@@ -450,19 +344,19 @@
                     <div class="detail-grid">
                         <div class="detail-col">
                             <label class="detail-label">Best Time to Visit</label>
-                            <p id="detail-best-time">October - May</p>
+                            <p id="detail-best-time">-</p>
                         </div>
                         <div class="detail-col">
                             <label class="detail-label">Duration</label>
-                            <p id="detail-duration">3 days / 2 nights</p>
+                            <p id="detail-duration">-</p>
                         </div>
                         <div class="detail-col">
                             <label class="detail-label">Difficulty Level</label>
-                            <p id="detail-difficulty" class="difficulty-badge">Moderate</p>
+                            <p id="detail-difficulty" class="difficulty-badge">-</p>
                         </div>
                         <div class="detail-col">
                             <label class="detail-label">Category</label>
-                            <p id="detail-category" class="category-badge">Viewpoint</p>
+                            <p id="detail-category" class="category-badge">-</p>
                         </div>
                     </div>
                 </div>
@@ -470,13 +364,13 @@
                 <!-- Things to Do -->
                 <div class="detail-card">
                     <h2>Things to Do</h2>
-                    <p id="detail-things">Sunrise hike, sunset watching, local tea houses, photography</p>
+                    <p id="detail-things">-</p>
                 </div>
 
                 <!-- Travel Tips -->
                 <div class="detail-card">
                     <h2>Travel Tips</h2>
-                    <p id="detail-tips">Carry warm clothing, sunscreen, water. No mobile signal above 3000m. Respect the local community.</p>
+                    <p id="detail-tips">-</p>
                 </div>
 
                 <!-- Route Information -->
@@ -485,17 +379,17 @@
                     <div class="detail-route">
                         <div class="route-item">
                             <div class="route-label">Starting Point</div>
-                            <p id="detail-start">Pokhara</p>
+                            <p id="detail-start">-</p>
                         </div>
                         <div class="route-divider"></div>
                         <div class="route-item">
                             <div class="route-label">Route Description</div>
-                            <p id="detail-route">From Pokhara, take local bus to Baglung (3 hours), then jeep to Ghar (2 hours). Trek begins from Ghar...</p>
+                            <p id="detail-route">-</p>
                         </div>
                         <div class="route-divider"></div>
                         <div class="route-item">
                             <div class="route-label">Destination</div>
-                            <p id="detail-dest">Khopra Danda viewpoint</p>
+                            <p id="detail-dest">-</p>
                         </div>
                     </div>
                 </div>
@@ -506,23 +400,23 @@
                     <div class="detail-budget-grid">
                         <div class="budget-item">
                             <label class="detail-label">Total Budget</label>
-                            <p class="budget-value" id="detail-budget">NPR 12,000</p>
+                            <p class="budget-value" id="detail-budget">NPR 0</p>
                         </div>
                         <div class="budget-item">
                             <label class="detail-label">Transportation</label>
-                            <p id="detail-transport">NPR 3,000</p>
+                            <p id="detail-transport">NPR 0</p>
                         </div>
                         <div class="budget-item">
                             <label class="detail-label">Accommodation</label>
-                            <p id="detail-stay">NPR 4,000</p>
+                            <p id="detail-stay">NPR 0</p>
                         </div>
                         <div class="budget-item">
                             <label class="detail-label">Food</label>
-                            <p id="detail-food">NPR 3,500</p>
+                            <p id="detail-food">NPR 0</p>
                         </div>
                         <div class="budget-item">
                             <label class="detail-label">Entry Fee</label>
-                            <p id="detail-fee">NPR 500</p>
+                            <p id="detail-fee">NPR 0</p>
                         </div>
                     </div>
                 </div>
@@ -533,16 +427,16 @@
                     <div class="facility-list">
                         <div class="facility-desc">
                             <label class="detail-label">Accommodation Available</label>
-                            <p id="detail-accom">Community homestays and basic teahouses available along the route</p>
+                            <p id="detail-accom">-</p>
                         </div>
                         <div class="facility-grid">
                             <div class="facility-info">
                                 <label class="detail-label">Hotels Nearby</label>
-                                <p id="detail-hotels">Pokhara (2 hotels)</p>
+                                <p id="detail-hotels">-</p>
                             </div>
                             <div class="facility-info">
                                 <label class="detail-label">Restaurants Nearby</label>
-                                <p id="detail-restaurants">Local teahouses and small eateries</p>
+                                <p id="detail-restaurants">-</p>
                             </div>
                         </div>
                         <div class="facility-features">
@@ -572,39 +466,33 @@
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Reviews Section -->
-                <div class="detail-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 8px;">
-                        <h2 style="margin:0;">Reviews <span id="review-count">(0)</span></h2>
-                        <span id="detail-average-rating" class="rating-badge">0.0 / 5</span>
-                    </div>
+                    <div class="detail-card">
+                        <div class="review-top">
+                            <h2>Ratings & Reviews <span id="review-count">(0)</span></h2>
+                            <div class="detail-rating">
+                                <span class="detail-rating-value" id="detail-rating-value">0.0</span>
+                                <span class="detail-reviews"><span id="detail-review-count">0</span> reviews</span>
+                            </div>
+                        </div>
 
-                    <!-- Add Review Form -->
-                    <div id="add-review-container">
-                        <form id="review-form" class="review-form" style="margin-top: 1rem; border-top: 1px solid rgba(33, 79, 66, 0.1); padding-top: 1.5rem;">
-                            <h3>Leave a Review</h3>
-                            <div class="field" style="margin-bottom:12px;">
-                                <label style="margin-bottom:6px; display:block; font-weight: 500;">Your Rating</label>
-                                <div class="star-rating" id="star-rating">
-                                    <button type="button" class="star-btn" data-rating="1" aria-label="1 star">☆</button>
-                                    <button type="button" class="star-btn" data-rating="2" aria-label="2 stars">☆</button>
-                                    <button type="button" class="star-btn" data-rating="3" aria-label="3 stars">☆</button>
-                                    <button type="button" class="star-btn" data-rating="4" aria-label="4 stars">☆</button>
-                                    <button type="button" class="star-btn" data-rating="5" aria-label="5 stars">☆</button>
-                                </div>
+                        <form id="review-form" class="review-form">
+                            <label class="detail-label">Your Rating</label>
+                            <div class="star-rating" id="star-rating">
+                                <button type="button" class="star-btn" data-rating="1">&#9733;</button>
+                                <button type="button" class="star-btn" data-rating="2">&#9733;</button>
+                                <button type="button" class="star-btn" data-rating="3">&#9733;</button>
+                                <button type="button" class="star-btn" data-rating="4">&#9733;</button>
+                                <button type="button" class="star-btn" data-rating="5">&#9733;</button>
                             </div>
-                            <div class="field" style="margin-bottom:12px;">
-                                <label for="review-text" style="margin-bottom:6px; display:block; font-weight: 500;">Comment</label>
-                                <textarea id="review-text" class="textarea" placeholder="Share your experience..." required style="min-height:80px; width:100%; border:1px solid rgba(33, 79, 66, 0.1); border-radius:8px; padding:12px; font-family:inherit; box-sizing:border-box; background:#fff; color:var(--text-primary);"></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary" style="margin-top:8px;">Submit Review</button>
+                            <label class="detail-label" for="review-text">Your Review</label>
+                            <textarea id="review-text" class="textarea" rows="4" maxlength="1000" placeholder="Share your travel experience..."></textarea>
+                            <button type="submit" class="btn-primary">Submit Review</button>
                         </form>
-                    </div>
 
-                    <div id="reviews-list" style="margin-top: 1.5rem;">
-                        <!-- Review items will be loaded dynamically -->
+                        <div id="reviews-list" class="reviews-list">
+                            <p class="empty-state">No reviews yet. Be the first to review this place.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -680,28 +568,6 @@
                                 <label>Municipality / VDC</label>
                                 <div class="input-wrap"><i class="fa-solid fa-house-flag"></i>
                                     <input class="input" name="municipality" placeholder="e.g. Annapurna RM"/></div>
-                            </div>
-
-                            <div class="field col-12">
-                                <label>Google Map Location</label>
-                                <div class="map-pick">
-                                    <button type="button" class="map-pick-btn" id="openMapPickerBtn">
-                                        <i class="fa-solid fa-map-location-dot"></i>
-                                        Select on Google Maps
-                                    </button>
-                                    <p class="helper">Open Google Maps, drop a pin, then paste the coordinates below.</p>
-                                </div>
-                            </div>
-
-                            <div class="field col-6">
-                                <label>Map Latitude</label>
-                                <div class="input-wrap"><i class="fa-solid fa-location-dot"></i>
-                                    <input class="input" name="mapLatitude" placeholder="e.g. 28.3754000"/></div>
-                            </div>
-                            <div class="field col-6">
-                                <label>Map Longitude</label>
-                                <div class="input-wrap"><i class="fa-solid fa-location-crosshairs"></i>
-                                    <input class="input" name="mapLongitude" placeholder="e.g. 83.6861000"/></div>
                             </div>
 
                             <div class="field col-12">
@@ -851,38 +717,13 @@
         </div>
     </div>
 
-    <!-- Google Maps Picker Modal -->
-    <div class="map-picker-modal" id="mapPickerModal" aria-hidden="true">
-        <div class="map-picker-sheet" role="dialog" aria-modal="true" aria-labelledby="mapPickerTitle">
-            <div class="map-picker-head">
-                <h3 id="mapPickerTitle">Select a location on Google Maps</h3>
-                <button type="button" class="map-picker-close" id="closeMapPickerBtn" aria-label="Close map picker">×</button>
-            </div>
-            <div class="map-picker-body">
-                <div class="map-picker-search">
-                    <input type="text" id="mapSearchInput" placeholder="Search a place, district, or landmark">
-                    <button type="button" id="mapSearchBtn">Search</button>
-                </div>
-                <div class="map-picker-canvas" id="mapPickerCanvas"></div>
-                <div class="map-picker-meta">
-                    <span id="mapSelectionLabel">Click the map to place a pin.</span>
-                    <span id="mapSelectionCoords">No location selected yet.</span>
-                </div>
-                <div class="map-picker-actions">
-                    <button type="button" class="btn btn-outline" id="mapPickerCancelBtn">Cancel</button>
-                    <button type="button" class="use-location" id="useMapLocationBtn">Use this location</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Toast Notification -->
     <div class="toast" id="toast">
         <i class="fa-solid fa-check"></i>
         <div><strong>Success!</strong><div style="font-size:12px;opacity:.85">Operation completed</div></div>
     </div>
 
-    <script src="../JAVASCRIPT/script.js?v=3"></script>
+    <script src="../JAVASCRIPT/script.js"></script>
 </body>
 
 </html>
