@@ -22,6 +22,14 @@ function otpMatches($storedOtp, $enteredOtp) {
     return hash_equals((string) $storedOtp, (string) $enteredOtp);
 }
 
+function isLocalOtpDevMode() {
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    return $host === ''
+        || str_starts_with($host, 'localhost')
+        || str_starts_with($host, '127.0.0.1')
+        || str_starts_with($host, '[::1]');
+}
+
 // Generate and send OTP
 function sendOTP($email, $conn) {
     $email = normalizeOtpEmail($email);
@@ -72,25 +80,32 @@ function sendOTP($email, $conn) {
     $headers = "From: noreply@nepaltravel.com\r\n";
     $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
     
+    $_SESSION['otp_email'] = $email;
+    $_SESSION['otp_dev'] = $otp;
+
     // Using mail() function - make sure XAMPP has mail configured
-    if (@mail($email, $subject, $message, $headers)) {
-        $_SESSION['otp_email'] = $email;
-        $_SESSION['otp_dev'] = $otp;
-        return [
-            'success' => true,
-            'message' => 'OTP sent to your email'
-        ];
-    } else {
-        // For development: if mail() doesn't work, still return success and log OTP
-        // In production, use SendGrid, Mailgun, or configure mail properly
+    $mailSent = @mail($email, $subject, $message, $headers);
+
+    if (!$mailSent || isLocalOtpDevMode()) {
         error_log("OTP for $email: $otp");
-        $_SESSION['otp_email'] = $email;
-        $_SESSION['otp_dev'] = $otp;
-        return [
-            'success' => true,
-            'message' => 'OTP sent to your email. If email is not configured locally, check the PHP error log.'
-        ];
     }
+
+    $response = [
+        'success' => true,
+        'mail_sent' => $mailSent,
+        'message' => $mailSent
+            ? 'OTP sent to your email'
+            : 'Email is not configured locally. Use the dev OTP shown below.'
+    ];
+
+    if (isLocalOtpDevMode()) {
+        $response['dev_otp'] = $otp;
+        if ($mailSent) {
+            $response['message'] = 'OTP generated. If it does not arrive by email, use the dev OTP shown below.';
+        }
+    }
+
+    return $response;
 }
 
 // Verify OTP
