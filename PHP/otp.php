@@ -1,4 +1,5 @@
 <?php
+session_start();
 require 'db.php';
 
 header('Content-Type: application/json');
@@ -46,6 +47,8 @@ function sendOTP($email, $conn) {
     
     // Using mail() function - make sure XAMPP has mail configured
     if (mail($email, $subject, $message, $headers)) {
+        $_SESSION['otp_email'] = $email;
+        $_SESSION['otp_dev'] = $otp;
         return [
             'success' => true,
             'message' => 'OTP sent to your email'
@@ -54,6 +57,8 @@ function sendOTP($email, $conn) {
         // For development: if mail() doesn't work, still return success and log OTP
         // In production, use SendGrid, Mailgun, or configure mail properly
         error_log("OTP for $email: $otp");
+        $_SESSION['otp_email'] = $email;
+        $_SESSION['otp_dev'] = $otp;
         return [
             'success' => true,
             'message' => 'OTP sent to your email (Dev mode: check logs)',
