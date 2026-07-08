@@ -1842,6 +1842,24 @@ textarea:focus {
     align-items: center;
     justify-content: center;
     position: relative;
+    overflow: hidden;
+}
+
+.detail-cover-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+}
+
+.detail-hero.has-image .detail-cover-image {
+    display: block;
+}
+
+.detail-hero.has-image .icon-xl {
+    display: none;
 }
 
 .detail-header {

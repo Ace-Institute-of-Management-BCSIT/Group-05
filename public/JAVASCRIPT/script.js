@@ -673,6 +673,14 @@ function openPlaceDetail(id) {
     document.getElementById('detail-name').textContent = selectedPlace.name || 'Selected Place';
     document.getElementById('detail-local-name').textContent = selectedPlace.localName || '';
     document.getElementById('detail-tagline').textContent = selectedPlace.tagline || '';
+    const detailHero = document.querySelector('.detail-hero');
+    const detailCoverImage = document.getElementById('detail-cover-image');
+    const detailImageUrl = getPlaceImageUrl(selectedPlace.coverImage);
+    if (detailHero && detailCoverImage) {
+        detailHero.classList.toggle('has-image', Boolean(detailImageUrl));
+        detailCoverImage.src = detailImageUrl || '';
+        detailCoverImage.alt = detailImageUrl ? (selectedPlace.name || 'Place cover image') : '';
+    }
 
     const detailRating = document.getElementById('detail-rating-value');
     const detailReviewCount = document.getElementById('detail-review-count');
@@ -767,7 +775,7 @@ function closePlaceDetail() {
 
 async function loadPlaceReviews(placeId) {
     try {
-        const response = await fetch(`../../PHP/places.php?action=reviews&place_id=${encodeURIComponent(placeId)}`, {
+        const response = await fetch(`../../PHP/places.php?action=get_reviews&place_id=${encodeURIComponent(placeId)}`, {
             method: 'GET',
             credentials: 'same-origin'
         });
@@ -844,7 +852,7 @@ async function handleReviewSubmit(e) {
     }
 
     const formData = new FormData();
-    formData.append('action', 'add_review');
+    formData.append('action', 'submit_review');
     formData.append('place_id', selectedPlace.id);
     formData.append('rating', userRating);
     formData.append('comment', reviewText.trim());

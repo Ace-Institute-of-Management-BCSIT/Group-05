@@ -353,7 +353,7 @@ if ($action === 'approve' || $action === 'reject' || $action === 'delete') {
     respond(['success' => true, 'message' => $status === 'approved' ? 'Place approved.' : 'Place rejected.']);
 }
 
-if ($action === 'get_reviews') {
+if ($action === 'get_reviews' || $action === 'reviews') {
     $placeId = (int) ($_POST['place_id'] ?? $_GET['place_id'] ?? 0);
     if ($placeId <= 0) {
         respond(['success' => false, 'message' => 'Invalid place.'], 400);
@@ -378,13 +378,14 @@ if ($action === 'get_reviews') {
             'rating' => (int) $row['rating'],
             'comment' => $row['comment'],
             'date' => $row['created_at'],
+            'createdAt' => $row['created_at'],
             'helpful' => 0
         ];
     }
     respond(['success' => true, 'reviews' => $reviews]);
 }
 
-if ($action === 'submit_review') {
+if ($action === 'submit_review' || $action === 'add_review') {
     require_login();
     $placeId = (int) ($_POST['place_id'] ?? 0);
     $rating = (int) ($_POST['rating'] ?? 0);
