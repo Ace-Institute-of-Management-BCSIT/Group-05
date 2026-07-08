@@ -113,6 +113,7 @@ if ($result && $result->num_rows === 1) {
         }
         exit();
     }
+    
 }
 
 $_SESSION['login_error'] = 'Invalid email or password.';
