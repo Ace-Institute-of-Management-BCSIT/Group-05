@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-if (!isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['id']) && !isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
@@ -30,12 +30,12 @@ if (!isset($_FILES['image'])) {
 $file = $_FILES['image'];
 
 // Validate file
-$allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+$allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 $maxSize = 5 * 1024 * 1024; // 5MB
 
 if (!in_array($file['type'], $allowedTypes)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Only JPEG, PNG, and GIF images are allowed']);
+    echo json_encode(['success' => false, 'message' => 'Only JPEG, PNG, GIF, and WebP images are allowed']);
     exit;
 }
 
@@ -67,7 +67,7 @@ if ($imageInfo === false) {
 // Move uploaded file
 if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
     // Return relative path for web access
-    $relativePath = 'public/uploads/' . $uniqueFileName;
+    $relativePath = 'uploads/' . $uniqueFileName;
     
     echo json_encode([
         'success' => true,

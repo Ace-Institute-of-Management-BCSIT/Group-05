@@ -61,6 +61,15 @@ function escapeHtml(value = '') {
     }[char]));
 }
 
+function getPlaceImageUrl(imagePath = '') {
+    const path = imagePath.toString().trim();
+    if (!path || path === 'Submitted destination') return '';
+    if (/^(https?:|data:|blob:)/i.test(path)) return path;
+
+    const normalizedPath = path.replace(/^(\.\.\/)+/, '').replace(/^public\//i, '');
+    return `../../PHP/serve_image.php?path=${encodeURIComponent(normalizedPath)}`;
+}
+
 function formatDate(value) {
     if (!value) return 'Unknown';
     return new Date(value).toLocaleDateString(undefined, {
@@ -177,7 +186,9 @@ async function submitPlaceForApproval(formElement) {
     const submittedPlace = buildPlaceFromForm(formElement);
     const formData = new FormData(formElement);
     formData.append('action', 'submit');
-    formData.append('coverImage', submittedPlace.coverImage);
+    if (coverFile) {
+        formData.set('coverImage', coverFile, coverFile.name);
+    }
 
     try {
         const response = await fetch('../../PHP/places.php', {
@@ -196,7 +207,7 @@ async function submitPlaceForApproval(formElement) {
             throw new Error(data.message || 'Unable to submit place.');
         }
 
-        return { ...submittedPlace, id: data.id };
+        return { ...submittedPlace, id: data.id, coverImage: data.coverImage || submittedPlace.coverImage };
     } catch (error) {
         throw new Error(error.message || 'Unable to submit place. Please check Apache, MySQL, and login status.');
     }
@@ -547,8 +558,9 @@ function renderPlaces() {
                 </svg>
             `;
             
-            if (place.coverImage && place.coverImage !== 'Submitted destination') {
-                imageContent = `<img src="${escapeHtml(place.coverImage)}" alt="${escapeHtml(place.name)}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            const imageUrl = getPlaceImageUrl(place.coverImage);
+            if (imageUrl) {
+                imageContent = `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(place.name)}" style="width: 100%; height: 100%; object-fit: cover;">`;
             }
             
             return `

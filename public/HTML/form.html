@@ -685,33 +685,7 @@ async function submitPlaceForApproval(){
   const data = new FormData(form);
   const field = name => (data.get(name)||'').toString().trim();
   const numberField = name => Number(field(name))||0;
-  
   let coverImagePath = 'Submitted destination';
-  
-  // Upload cover image if selected
-  if (coverFile) {
-    try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('image', coverFile);
-      
-      const uploadResponse = await fetch('../../PHP/upload.php', {
-        method: 'POST',
-        body: uploadFormData,
-        credentials: 'same-origin'
-      });
-      
-      const uploadResult = await uploadResponse.json();
-      
-      if (!uploadResult.success) {
-        throw new Error(uploadResult.message || 'Failed to upload image');
-      }
-      
-      coverImagePath = uploadResult.image_path;
-    } catch (uploadError) {
-      toast('Failed to upload cover image: ' + uploadError.message, 'fa-triangle-exclamation');
-      return false;
-    }
-  }
   
   const submittedPlace = {
     id: Date.now(),
@@ -751,7 +725,9 @@ async function submitPlaceForApproval(){
     status: 'pending'
   };
   data.append('action','submit');
-  data.append('coverImage', coverImagePath);
+  if (coverFile) {
+    data.set('coverImage', coverFile, coverFile.name);
+  }
 
   try{
     const response = await fetch('../../PHP/places.php',{
@@ -767,6 +743,8 @@ async function submitPlaceForApproval(){
     }
 
     if(!result.success) throw new Error(result.message||'Unable to submit place.');
+    submittedPlace.id = result.id || submittedPlace.id;
+    submittedPlace.coverImage = result.coverImage || submittedPlace.coverImage;
     return true;
   }catch(error){
     toast(error.message || 'Unable to submit place. Please check Apache, MySQL, and login status.','fa-triangle-exclamation');

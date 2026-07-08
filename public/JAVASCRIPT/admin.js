@@ -137,6 +137,15 @@ function escapeHtml(value = '') {
     }[char]));
 }
 
+function getPlaceImageUrl(imagePath = '') {
+    const path = imagePath.toString().trim();
+    if (!path || path === 'Submitted destination') return '';
+    if (/^(https?:|data:|blob:)/i.test(path)) return path;
+
+    const normalizedPath = path.replace(/^(\.\.\/)+/, '').replace(/^public\//i, '');
+    return `../../PHP/serve_image.php?path=${encodeURIComponent(normalizedPath)}`;
+}
+
 function formatDate(value) {
     if (!value) return 'Unknown date';
     return new Date(value).toLocaleDateString(undefined, {
@@ -190,15 +199,17 @@ function renderPendingSubmissions(pendingPlaces = []) {
         return;
     }
 
-    grid.innerHTML = pendingPlaces.map(place => `
+    grid.innerHTML = pendingPlaces.map(place => {
+        const imageUrl = getPlaceImageUrl(place.coverImage);
+        return `
         <div class="content-card pending">
             <div class="card-header">
                 <h3>${escapeHtml(place.name)}</h3>
                 <span class="badge badge-pending">Pending Verification</span>
             </div>
-            ${place.coverImage && place.coverImage !== 'Submitted destination' ? `
+            ${imageUrl ? `
                 <div class="card-image" style="width: 100%; height: 200px; overflow: hidden; border-radius: 8px; margin: 10px 0;">
-                    <img src="${escapeHtml(place.coverImage)}" alt="${escapeHtml(place.name)}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(place.name)}" style="width: 100%; height: 100%; object-fit: cover;">
                 </div>
             ` : ''}
             <div class="card-body">
@@ -217,7 +228,8 @@ function renderPendingSubmissions(pendingPlaces = []) {
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function renderManagedPlaces(allPlaces = []) {

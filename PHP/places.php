@@ -92,6 +92,30 @@ function bool_field($name) {
     return isset($_POST[$name]) && in_array($_POST[$name], ['1', 'true', 'on', 'yes'], true);
 }
 
+function existing_upload_path($path) {
+    $path = trim((string) $path);
+    if ($path === '' || $path === 'Submitted destination') {
+        return '';
+    }
+
+    $path = ltrim($path, '/\\');
+    $path = preg_replace('#^public/#i', '', $path);
+    $path = str_replace(['..', "\0"], '', $path);
+
+    if (!str_starts_with($path, 'uploads/')) {
+        return '';
+    }
+
+    $uploadsDir = realpath(dirname(__DIR__) . '/public/uploads');
+    $resolvedPath = realpath(dirname(__DIR__) . '/public/' . $path);
+
+    if ($uploadsDir === false || $resolvedPath === false || strpos($resolvedPath, $uploadsDir) !== 0 || !is_file($resolvedPath)) {
+        return '';
+    }
+
+    return $path;
+}
+
 $action = $_POST['action'] ?? $_GET['action'] ?? 'approved';
 
 if ($action === 'session') {
@@ -210,6 +234,8 @@ if ($action === 'submit') {
             respond(['success' => false, 'message' => 'Failed to save the uploaded image.'], 500);
         }
         $coverImage = 'uploads/' . $fileName;
+    } else {
+        $coverImage = existing_upload_path($_POST['coverImage'] ?? '');
     }
 
     $stmt = $conn->prepare("
@@ -288,7 +314,12 @@ if ($action === 'submit') {
         respond(['success' => false, 'message' => 'Unable to submit place.'], 500);
     }
 
-    respond(['success' => true, 'message' => 'Place submitted for approval.', 'id' => $stmt->insert_id]);
+    respond([
+        'success' => true,
+        'message' => 'Place submitted for approval.',
+        'id' => $stmt->insert_id,
+        'coverImage' => $coverImage
+    ]);
 }
 
 if ($action === 'approve' || $action === 'reject' || $action === 'delete') {
