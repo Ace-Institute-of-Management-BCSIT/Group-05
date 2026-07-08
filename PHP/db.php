@@ -193,15 +193,28 @@ $conn->query("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
-$adminEmail = 'admin@example.com';
-$adminCheck = $conn->prepare("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
+$adminEmail = 'admin@gmail.com';
+$adminPasswordPlain = 'admin123';
+$adminCheck = $conn->prepare("SELECT id, full_name, email, password FROM users WHERE role = 'admin' LIMIT 1");
 $adminCheck->execute();
 $adminResult = $adminCheck->get_result();
 
 if ($adminResult->num_rows === 0) {
-    $adminPassword = password_hash('admin123', PASSWORD_DEFAULT);
+    $adminPassword = password_hash($adminPasswordPlain, PASSWORD_DEFAULT);
     $adminStmt = $conn->prepare("INSERT IGNORE INTO users (username, full_name, email, password, role, is_verified) VALUES ('admin', 'Admin User', ?, ?, 'admin', 1)");
     $adminStmt->bind_param('ss', $adminEmail, $adminPassword);
     $adminStmt->execute();
+} else {
+    $adminRow = $adminResult->fetch_assoc();
+    $needsAdminRefresh = $adminRow['email'] !== $adminEmail
+        || !password_verify($adminPasswordPlain, $adminRow['password'])
+        || $adminRow['full_name'] !== 'Admin User';
+
+    if ($needsAdminRefresh) {
+        $adminPassword = password_hash($adminPasswordPlain, PASSWORD_DEFAULT);
+        $adminUpdate = $conn->prepare("UPDATE users SET username = 'admin', full_name = 'Admin User', email = ?, password = ?, role = 'admin', is_verified = 1 WHERE id = ?");
+        $adminUpdate->bind_param('ssi', $adminEmail, $adminPassword, $adminRow['id']);
+        $adminUpdate->execute();
+    }
 }
 ?>
