@@ -26,6 +26,7 @@ if (registerForm) {
       const email = document.getElementById("reg_email").value;
       const password = document.getElementById("reg_password").value;
       const errorDiv = document.getElementById("registerError");
+      const submitBtn = document.getElementById("sendOtpBtn");
        
       if (!fullName || !email || !password) {
           errorDiv.textContent = "Please fill in all fields";
@@ -38,11 +39,17 @@ if (registerForm) {
       }
        
       try {
+          if (submitBtn) {
+              submitBtn.disabled = true;
+              submitBtn.textContent = "Sending...";
+          }
+          errorDiv.textContent = "";
           const response = await fetch("../../PHP/register.php", {
               method: "POST",
               headers: {
                   "Content-Type": "application/x-www-form-urlencoded"
               },
+              credentials: "same-origin",
               body: new URLSearchParams({
                   action: "send_otp_register",
                   full_name: fullName,
@@ -57,7 +64,6 @@ if (registerForm) {
               // Store registration data
               sessionStorage.setItem("pendingEmail", email);
               sessionStorage.setItem("pendingFullName", fullName);
-              sessionStorage.setItem("pendingPassword", password);
                
               // Show OTP modal
               document.getElementById("otpEmail").value = email;
@@ -70,6 +76,11 @@ if (registerForm) {
           }
       } catch (error) {
           errorDiv.textContent = "Error: " + error.message;
+      } finally {
+          if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = "Send OTP";
+          }
       }
   });
 }
@@ -83,6 +94,7 @@ if (otpForm) {
       const email = document.getElementById("otpEmail").value;
       const otp = document.getElementById("otpCode").value;
       const errorDiv = document.getElementById("otpError");
+      const verifyBtn = otpForm.querySelector('button[type="submit"]');
        
       if (!otp || otp.length !== 6) {
           errorDiv.textContent = "Please enter a valid 6-digit OTP";
@@ -90,11 +102,18 @@ if (otpForm) {
       }
        
       try {
+          if (verifyBtn) {
+              verifyBtn.disabled = true;
+              verifyBtn.textContent = "Verifying...";
+          }
+          errorDiv.textContent = "";
+          errorDiv.style.color = "red";
           const response = await fetch("../../PHP/register.php", {
               method: "POST",
               headers: {
                   "Content-Type": "application/x-www-form-urlencoded"
               },
+              credentials: "same-origin",
               body: new URLSearchParams({
                   action: "verify_otp_register",
                   email: email,
@@ -110,7 +129,6 @@ if (otpForm) {
               otpModal.style.display = "none";
               sessionStorage.removeItem("pendingEmail");
               sessionStorage.removeItem("pendingFullName");
-              sessionStorage.removeItem("pendingPassword");
                
               // Switch to login form
               container.classList.remove("right-panel-active");
@@ -121,6 +139,11 @@ if (otpForm) {
           }
       } catch (error) {
           errorDiv.textContent = "Error: " + error.message;
+      } finally {
+          if (verifyBtn) {
+              verifyBtn.disabled = false;
+              verifyBtn.textContent = "Verify OTP";
+          }
       }
   });
 }
@@ -131,18 +154,19 @@ if (resendOtpBtn) {
   resendOtpBtn.addEventListener("click", async (e) => {
       e.preventDefault();
        
-      const email = document.getElementById("otpEmail").value;
       const errorDiv = document.getElementById("otpError");
        
       try {
-          const response = await fetch("../../PHP/otp.php", {
+          errorDiv.textContent = "Sending new OTP...";
+          errorDiv.style.color = "green";
+          const response = await fetch("../../PHP/register.php", {
               method: "POST",
               headers: {
                   "Content-Type": "application/x-www-form-urlencoded"
               },
+              credentials: "same-origin",
               body: new URLSearchParams({
-                  action: "send_otp",
-                  email: email
+                  action: "resend_otp_register"
               })
           });
            
@@ -177,3 +201,23 @@ if (otpModal) {
         }
     });
 }
+
+fetch("../../PHP/get_session_msg.php", { credentials: "same-origin" })
+    .then((response) => response.ok ? response.json() : null)
+    .then((messages) => {
+        if (!messages) {
+            return;
+        }
+
+        const loginError = document.getElementById("loginError");
+        const registerError = document.getElementById("registerError");
+
+        if (loginError && messages.login_error) {
+            loginError.textContent = messages.login_error;
+        }
+
+        if (registerError && messages.register_error) {
+            registerError.textContent = messages.register_error;
+        }
+    })
+    .catch(() => {});

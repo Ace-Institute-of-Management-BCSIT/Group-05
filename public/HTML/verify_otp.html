@@ -262,29 +262,6 @@
   const resendLink = document.getElementById('resendLink');
   const timerText = document.getElementById('timerText');
   const timerCount = document.getElementById('timerCount');
-  const devBanner = document.getElementById('devBanner');
-  const devOtpDisplay = document.getElementById('devOtpDisplay');
-
-  function showDevOtp(otp) {
-    if (!otp) return;
-    devBanner.classList.add('show');
-    devOtpDisplay.textContent = otp;
-    sessionStorage.setItem('dev_otp', otp);
-    otp.split('').forEach((ch, i) => {
-      if (boxes[i]) { boxes[i].value = ch; boxes[i].classList.add('filled'); }
-    });
-  }
-
-  // ── Show dev OTP from sessionStorage or PHP session ───────────────────────
-  const cachedDevOtp = sessionStorage.getItem('dev_otp');
-  if (cachedDevOtp) {
-    showDevOtp(cachedDevOtp);
-  } else {
-    fetch('../../PHP/get_otp_dev.php', { credentials: 'same-origin' })
-      .then(res => res.json())
-      .then(data => { if (data.dev_otp) showDevOtp(data.dev_otp); })
-      .catch(() => {});
-  }
 
   // ── OTP box keyboard handling ─────────────────────────────────────────────
   boxes.forEach((box, idx) => {
@@ -416,14 +393,6 @@
       if (data.success) {
         showInfo('New code sent! Check your email.');
         startTimer();
-        if (data.dev_otp) {
-          devBanner.classList.add('show');
-          devOtpDisplay.textContent = data.dev_otp;
-          sessionStorage.setItem('dev_otp', data.dev_otp);
-          data.dev_otp.split('').forEach((ch, i) => {
-            if (boxes[i]) { boxes[i].value = ch; boxes[i].classList.add('filled'); }
-          });
-        }
         boxes.forEach(b => { b.value = ''; b.classList.remove('filled'); });
         boxes[0].focus();
       } else {

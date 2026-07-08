@@ -1,6 +1,7 @@
 <?php
 session_start();
-include 'db.php';
+require_once 'db.php';
+require_once 'otp.php';
 
 header('Content-Type: application/json');
 
@@ -17,7 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $action = trim($_POST['action'] ?? 'verify');
 
 function currentOtpEmail() {
-    return trim($_SESSION['otp_email'] ?? ($_SESSION['pending_registration']['email'] ?? ''));
+    $email = normalizeOtpEmail($_SESSION['otp_email'] ?? ($_SESSION['pending_registration']['email'] ?? ''));
+    return $email ?: '';
 }
 
 // ── Resend OTP ──────────────────────────────────────────────────────────────
@@ -27,14 +29,15 @@ if ($action === 'resend') {
         respond(['success' => false, 'message' => 'Session expired. Please register again.'], 400);
     }
 
-    $otp     = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    $otp     = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    $otpHash = password_hash($otp, PASSWORD_DEFAULT);
     $expires = date('Y-m-d H:i:s', time() + 600);
 
     $delOtpStmt = $conn->prepare('DELETE FROM otp_verifications WHERE email = ?');
     $delOtpStmt->bind_param('s', $email);
     $delOtpStmt->execute();
     $otpStmt = $conn->prepare('INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES (?, ?, ?)');
-    $otpStmt->bind_param('sss', $email, $otp, $expires);
+    $otpStmt->bind_param('sss', $email, $otpHash, $expires);
     $otpStmt->execute();
 
     $fullName = $_SESSION['pending_registration']['full_name'] ?? 'Traveler';
@@ -43,7 +46,7 @@ if ($action === 'resend') {
 
     $_SESSION['otp_email'] = $email;
     $_SESSION['otp_dev'] = $otp;
-    respond(['success' => true, 'message' => 'New OTP sent.', 'dev_otp' => $otp]);
+    respond(['success' => true, 'message' => 'New OTP sent.']);
 }
 
 // ── Verify OTP ──────────────────────────────────────────────────────────────
@@ -72,9 +75,15 @@ if (!$otpRow) {
     respond(['success' => false, 'message' => 'OTP has expired. Please request a new one.'], 400);
 }
 
-if ($otpRow['otp_code'] !== $entered) {
-    $attempts = (int) ($otpRow['attempts'] ?? 0) + 1;
-    $maxAttempts = (int) ($otpRow['max_attempts'] ?? 5);
+$attempts = (int) ($otpRow['attempts'] ?? 0);
+$maxAttempts = (int) ($otpRow['max_attempts'] ?? 5);
+
+if ($attempts >= $maxAttempts) {
+    respond(['success' => false, 'message' => 'Maximum attempts exceeded. Please request a new OTP.'], 400);
+}
+
+if (!otpMatches($otpRow['otp_code'], $entered)) {
+    $attempts++;
     $updateAttempts = $conn->prepare('UPDATE otp_verifications SET attempts = ? WHERE id = ?');
     $updateAttempts->bind_param('ii', $attempts, $otpRow['id']);
     $updateAttempts->execute();
@@ -86,6 +95,14 @@ if ($otpRow['otp_code'] !== $entered) {
 $pending = $_SESSION['pending_registration'] ?? null;
 
 if ($pending && isset($pending['email']) && $pending['email'] === $email) {
+    $emailCheck = $conn->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
+    $emailCheck->bind_param('s', $email);
+    $emailCheck->execute();
+    if ($emailCheck->get_result()->num_rows > 0) {
+        unset($_SESSION['pending_registration']);
+        respond(['success' => false, 'message' => 'This email is already registered. Please log in instead.'], 409);
+    }
+
     $username = strtolower(str_replace(' ', '_', $pending['full_name']));
     if ($username === '') {
         $username = 'user';
@@ -131,6 +148,10 @@ $userStmt = $conn->prepare('SELECT id, full_name, role FROM users WHERE email = 
 $userStmt->bind_param('s', $email);
 $userStmt->execute();
 $user = $userStmt->get_result()->fetch_assoc();
+
+if (!$user) {
+    respond(['success' => false, 'message' => 'Unable to find the verified account. Please log in or register again.'], 500);
+}
 
 // Create session
 session_regenerate_id(true);

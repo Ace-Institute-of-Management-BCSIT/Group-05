@@ -1,11 +1,37 @@
 <?php
-session_start();
-require 'db.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once 'db.php';
 
-header('Content-Type: application/json');
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
+    header('Content-Type: application/json');
+}
+
+function normalizeOtpEmail($email) {
+    $validEmail = filter_var(trim((string) $email), FILTER_VALIDATE_EMAIL);
+    return $validEmail ? strtolower($validEmail) : false;
+}
+
+function otpMatches($storedOtp, $enteredOtp) {
+    $info = password_get_info($storedOtp);
+    if (!empty($info['algo'])) {
+        return password_verify($enteredOtp, $storedOtp);
+    }
+
+    return hash_equals((string) $storedOtp, (string) $enteredOtp);
+}
 
 // Generate and send OTP
 function sendOTP($email, $conn) {
+    $email = normalizeOtpEmail($email);
+    if (!$email) {
+        return [
+            'success' => false,
+            'message' => 'Please enter a valid email address'
+        ];
+    }
+
     // Check if email already exists in users table
     $emailCheck = $conn->prepare("SELECT id FROM users WHERE email = ?");
     $emailCheck->bind_param('s', $email);
@@ -20,7 +46,8 @@ function sendOTP($email, $conn) {
     }
     
     // Generate 6-digit OTP
-    $otp = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
+    $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    $otpHash = password_hash($otp, PASSWORD_DEFAULT);
     
     // Clear any existing OTP for this email
     $deleteOld = $conn->prepare("DELETE FROM otp_verifications WHERE email = ?");
@@ -30,7 +57,7 @@ function sendOTP($email, $conn) {
     // Insert new OTP with 10-minute expiry
     $expiryTime = date('Y-m-d H:i:s', time() + 600);
     $insertOTP = $conn->prepare("INSERT INTO otp_verifications (email, otp_code, expires_at) VALUES (?, ?, ?)");
-    $insertOTP->bind_param('sss', $email, $otp, $expiryTime);
+    $insertOTP->bind_param('sss', $email, $otpHash, $expiryTime);
     
     if (!$insertOTP->execute()) {
         return [
@@ -46,7 +73,7 @@ function sendOTP($email, $conn) {
     $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
     
     // Using mail() function - make sure XAMPP has mail configured
-    if (mail($email, $subject, $message, $headers)) {
+    if (@mail($email, $subject, $message, $headers)) {
         $_SESSION['otp_email'] = $email;
         $_SESSION['otp_dev'] = $otp;
         return [
@@ -61,14 +88,21 @@ function sendOTP($email, $conn) {
         $_SESSION['otp_dev'] = $otp;
         return [
             'success' => true,
-            'message' => 'OTP sent to your email (Dev mode: check logs)',
-            'dev_otp' => $otp // Remove in production
+            'message' => 'OTP sent to your email. If email is not configured locally, check the PHP error log.'
         ];
     }
 }
 
 // Verify OTP
 function verifyOTP($email, $otp, $conn) {
+    $email = normalizeOtpEmail($email);
+    if (!$email || !preg_match('/^\d{6}$/', $otp)) {
+        return [
+            'success' => false,
+            'message' => 'Invalid email or OTP'
+        ];
+    }
+
     $stmt = $conn->prepare("
         SELECT id, otp_code, attempts, max_attempts, expires_at, verified_at 
         FROM otp_verifications 
@@ -112,7 +146,7 @@ function verifyOTP($email, $otp, $conn) {
     }
     
     // Verify OTP
-    if ($row['otp_code'] !== $otp) {
+    if (!otpMatches($row['otp_code'], $otp)) {
         $newAttempts = $row['attempts'] + 1;
         $updateAttempts = $conn->prepare("UPDATE otp_verifications SET attempts = ? WHERE email = ?");
         $updateAttempts->bind_param('is', $newAttempts, $email);
@@ -136,12 +170,12 @@ function verifyOTP($email, $otp, $conn) {
     ];
 }
 
-// Route requests
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Route requests only when this file is called directly, not when it is included by register.php.
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__ && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? $_GET['action'] ?? null;
     
     if ($action === 'send_otp') {
-        $email = filter_var($_POST['email'] ?? '', FILTER_VALIDATE_EMAIL);
+        $email = normalizeOtpEmail($_POST['email'] ?? '');
         
         if (!$email) {
             http_response_code(400);
@@ -153,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode($response);
     } 
     elseif ($action === 'verify_otp') {
-        $email = filter_var($_POST['email'] ?? '', FILTER_VALIDATE_EMAIL);
+        $email = normalizeOtpEmail($_POST['email'] ?? '');
         $otp = trim($_POST['otp'] ?? '');
         
         if (!$email || !$otp || strlen($otp) !== 6) {
@@ -169,7 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
     }
-} else {
+} elseif (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed']);
 }

@@ -1,46 +1,63 @@
 <?php
 session_start();
-require 'db.php';
-require 'otp.php';
+require_once 'db.php';
+require_once 'otp.php';
 
 header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+function respond($data, $status = 200) {
+    http_response_code($status);
+    echo json_encode($data);
     exit;
+}
+
+function normalized_email($value) {
+    $email = filter_var(trim((string) $value), FILTER_VALIDATE_EMAIL);
+    return $email ? strtolower($email) : false;
+}
+
+function email_exists($conn, $email) {
+    $emailCheck = $conn->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+    $emailCheck->bind_param('s', $email);
+    $emailCheck->execute();
+    return $emailCheck->get_result()->num_rows > 0;
+}
+
+function username_from_name($fullName) {
+    $username = strtolower(trim($fullName));
+    $username = preg_replace('/[^a-z0-9]+/', '_', $username);
+    $username = trim($username, '_');
+
+    return $username !== '' ? $username : 'user';
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    respond(['success' => false, 'message' => 'Method not allowed'], 405);
 }
 
 $action = $_POST['action'] ?? '';
 
 if ($action === 'send_otp_register') {
     // Step 1: User initiates registration, send OTP
-    $email = filter_var($_POST['email'] ?? '', FILTER_VALIDATE_EMAIL);
-    $full_name = trim($_POST['full_name'] ?? '');
+    $email = normalized_email($_POST['email'] ?? '');
+    $full_name = preg_replace('/\s+/', ' ', trim($_POST['full_name'] ?? ''));
     $password = trim($_POST['password'] ?? '');
     
-    if (!$email || !$full_name || !$password) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'All fields are required']);
-        exit;
+    if (!$full_name || !$password) {
+        respond(['success' => false, 'message' => 'All fields are required'], 400);
+    }
+
+    if (!$email) {
+        respond(['success' => false, 'message' => 'Please enter a valid email address'], 400);
     }
     
     if (strlen($password) < 6) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Password must be at least 6 characters']);
-        exit;
+        respond(['success' => false, 'message' => 'Password must be at least 6 characters'], 400);
     }
     
     // Check if email already registered
-    $emailCheck = $conn->prepare("SELECT id FROM users WHERE email = ?");
-    $emailCheck->bind_param('s', $email);
-    $emailCheck->execute();
-    $emailResult = $emailCheck->get_result();
-    
-    if ($emailResult->num_rows > 0) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Email already registered']);
-        exit;
+    if (email_exists($conn, $email)) {
+        respond(['success' => false, 'message' => 'This email is already registered. Please log in instead.'], 409);
     }
     
     // Send OTP
@@ -56,41 +73,57 @@ if ($action === 'send_otp_register') {
         ];
     }
     
-    echo json_encode($response);
+    respond($response, $response['success'] ? 200 : 400);
+}
+elseif ($action === 'resend_otp_register') {
+    $pending = $_SESSION['pending_registration'] ?? null;
+
+    if (!$pending || empty($pending['email']) || (time() - (int) $pending['timestamp']) > 1800) {
+        unset($_SESSION['pending_registration']);
+        respond(['success' => false, 'message' => 'Registration session expired. Please start again.'], 400);
+    }
+
+    $email = normalized_email($pending['email']);
+    if (!$email || email_exists($conn, $email)) {
+        unset($_SESSION['pending_registration']);
+        respond(['success' => false, 'message' => 'This email is already registered. Please log in instead.'], 409);
+    }
+
+    $response = sendOTP($email, $conn);
+    $_SESSION['pending_registration']['timestamp'] = time();
+    respond($response, $response['success'] ? 200 : 400);
 }
 elseif ($action === 'verify_otp_register') {
     // Step 2: User verifies OTP and completes registration
-    $email = filter_var($_POST['email'] ?? '', FILTER_VALIDATE_EMAIL);
+    $email = normalized_email($_POST['email'] ?? '');
     $otp = trim($_POST['otp'] ?? '');
     
-    if (!$email || !$otp || strlen($otp) !== 6) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Invalid email or OTP']);
-        exit;
+    if (!$email || !preg_match('/^\d{6}$/', $otp)) {
+        respond(['success' => false, 'message' => 'Invalid email or OTP'], 400);
     }
     
     // Verify OTP
     $verifyResponse = verifyOTP($email, $otp, $conn);
     
     if (!$verifyResponse['success']) {
-        echo json_encode($verifyResponse);
-        exit;
+        respond($verifyResponse, 400);
     }
     
     // Get pending registration data from session
     $pending = $_SESSION['pending_registration'] ?? null;
     
     if (!$pending || $pending['email'] !== $email || (time() - $pending['timestamp']) > 1800) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Registration session expired. Please start over.']);
-        exit;
+        unset($_SESSION['pending_registration']);
+        respond(['success' => false, 'message' => 'Registration session expired. Please start over.'], 400);
+    }
+
+    if (email_exists($conn, $email)) {
+        unset($_SESSION['pending_registration']);
+        respond(['success' => false, 'message' => 'This email is already registered. Please log in instead.'], 409);
     }
     
     // Create username from full name
-    $username = strtolower(str_replace(' ', '_', $pending['full_name']));
-    if ($username === '') {
-        $username = 'user';
-    }
+    $username = username_from_name($pending['full_name']);
     
     $baseUsername = $username;
     $counter = 1;
@@ -120,18 +153,19 @@ elseif ($action === 'verify_otp_register') {
     if ($stmt->execute()) {
         unset($_SESSION['pending_registration']);
         
-        echo json_encode([
+        respond([
             'success' => true,
             'message' => 'Registration successful! You can now log in.',
             'redirect' => '../public/HTML/login.html'
         ]);
     } else {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Registration failed. Please try again.']);
+        $message = $conn->errno === 1062
+            ? 'This email is already registered. Please log in instead.'
+            : 'Registration failed. Please try again.';
+        respond(['success' => false, 'message' => $message], $conn->errno === 1062 ? 409 : 500);
     }
 }
 else {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Invalid action']);
+    respond(['success' => false, 'message' => 'Invalid action'], 400);
 }
 ?>

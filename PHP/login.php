@@ -12,14 +12,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 include 'db.php';
 
-$email = trim($_POST['email'] ?? '');
+$email = filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL);
 $password = trim($_POST['password'] ?? '');
 
-if ($email === '' || $password === '') {
+if (!$email || $password === '') {
     $_SESSION['login_error'] = 'Email and password are required.';
     header('Location: ../public/HTML/login.html');
     exit();
 }
+
+$email = strtolower($email);
 
 $stmt = $conn->prepare("
     SELECT id, full_name, email, password, role, is_verified, last_login_ip
@@ -38,14 +40,14 @@ if ($result && $result->num_rows === 1) {
     $user = $result->fetch_assoc();
     $storedPassword = $user['password'];
 
-    // Check if email is verified
-    if (!$user['is_verified']) {
-        $_SESSION['login_error'] = 'Please verify your email before logging in. Check your email for the verification link.';
-        header('Location: ../public/HTML/login.html');
-        exit();
-    }
-
     if (password_verify($password, $storedPassword)) {
+        // Check if email is verified
+        if (!$user['is_verified']) {
+            $_SESSION['login_error'] = 'Please verify your email before logging in.';
+            header('Location: ../public/HTML/login.html');
+            exit();
+        }
+
         // Get current IP
         $clientIP = $_SERVER['HTTP_CF_CONNECTING_IP'] ?? 
                    $_SERVER['HTTP_X_FORWARDED_FOR'] ?? 

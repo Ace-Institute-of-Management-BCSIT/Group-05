@@ -40,6 +40,40 @@ if (!function_exists('ensureColumnExists')) {
     }
 }
 
+if (!function_exists('ensureUniqueIndexExists')) {
+    function ensureUniqueIndexExists($conn, $tableName, $indexName, $columnName) {
+        $stmt = $conn->prepare(
+            'SELECT COUNT(*) AS index_count
+             FROM information_schema.statistics
+             WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?'
+        );
+        if (!$stmt) {
+            return;
+        }
+
+        $stmt->bind_param('ss', $tableName, $indexName);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+
+        if ((int) ($row['index_count'] ?? 0) > 0) {
+            return;
+        }
+
+        $duplicates = $conn->query("
+            SELECT `$columnName`, COUNT(*) AS row_count
+            FROM `$tableName`
+            GROUP BY `$columnName`
+            HAVING row_count > 1
+            LIMIT 1
+        ");
+
+        if ($duplicates && $duplicates->num_rows === 0) {
+            $conn->query("ALTER TABLE `$tableName` ADD UNIQUE KEY `$indexName` (`$columnName`)");
+        }
+    }
+}
+
 $conn->query("
     CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -66,6 +100,11 @@ $conn->query("
         INDEX idx_user_sessions_user_id (user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
+
+ensureColumnExists($conn, 'users', 'is_verified', 'is_verified TINYINT(1) DEFAULT 0 AFTER role');
+ensureColumnExists($conn, 'users', 'last_login', 'last_login DATETIME NULL AFTER is_verified');
+ensureColumnExists($conn, 'users', 'last_login_ip', 'last_login_ip VARCHAR(45) NULL AFTER last_login');
+ensureUniqueIndexExists($conn, 'users', 'uniq_users_email', 'email');
 
 $conn->query("
     CREATE TABLE IF NOT EXISTS places (
@@ -166,7 +205,7 @@ $conn->query("
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
 
-$conn->query("
+$otpTableSql = "
     CREATE TABLE IF NOT EXISTS otp_verifications (
         id INT AUTO_INCREMENT PRIMARY KEY,
         email VARCHAR(190) NOT NULL UNIQUE,
@@ -179,7 +218,15 @@ $conn->query("
         INDEX idx_otp_email (email),
         INDEX idx_otp_expires (expires_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-");
+";
+$conn->query($otpTableSql);
+$conn->query('ALTER TABLE otp_verifications MODIFY otp_code VARCHAR(255) NOT NULL');
+
+$otpEmailColumn = $conn->query("SHOW COLUMNS FROM otp_verifications LIKE 'email'");
+if ($otpEmailColumn && $otpEmailColumn->num_rows === 0) {
+    $conn->query('DROP TABLE otp_verifications');
+    $conn->query($otpTableSql);
+}
 
 $conn->query("
     CREATE TABLE IF NOT EXISTS place_images (
