@@ -4,13 +4,17 @@
  const otpModal = document.getElementById("otpModal");
  const closeBtn = document.querySelector(".close");
 
+if (signUpButton && container) {
  signUpButton.addEventListener("click", () => {
   container.classList.add("right-panel-active");
  });
+}
 
+if (signInButton && container) {
  signInButton.addEventListener("click", () => {
   container.classList.remove("right-panel-active");
  });
+}
 
 // Registration with OTP
 const registerForm = document.getElementById("registerForm");
@@ -160,12 +164,16 @@ if (resendOtpBtn) {
 }
 
 // Close OTP modal
-closeBtn.addEventListener("click", () => {
-  otpModal.style.display = "none";
-});
+if (closeBtn && otpModal) {
+    closeBtn.addEventListener("click", () => {
+        otpModal.style.display = "none";
+    });
+}
 
-window.addEventListener("click", (event) => {
-  if (event.target == otpModal) {
-      otpModal.style.display = "none";
-  }
-});
+if (otpModal) {
+    window.addEventListener("click", (event) => {
+        if (event.target == otpModal) {
+                otpModal.style.display = "none";
+        }
+    });
+}

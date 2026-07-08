@@ -22,7 +22,7 @@ if ($email === '' || $password === '') {
 }
 
 $stmt = $conn->prepare("
-    SELECT id, full_name, email, password, role, is_verified
+    SELECT id, full_name, email, password, role, is_verified, last_login_ip
     FROM users
     WHERE email = ?
 ");
@@ -81,6 +81,19 @@ if ($result && $result->num_rows === 1) {
         $_SESSION['name'] = $user['full_name'];
         $_SESSION['role'] = $user['role'];
         $_SESSION['email'] = $user['email'];
+        $_SESSION['session_token'] = bin2hex(random_bytes(32));
+
+        $sessionCleanup = $conn->prepare('DELETE FROM user_sessions WHERE user_id = ?');
+        if ($sessionCleanup) {
+            $sessionCleanup->bind_param('i', $user['id']);
+            $sessionCleanup->execute();
+        }
+
+        $sessionInsert = $conn->prepare('INSERT INTO user_sessions (user_id, session_token) VALUES (?, ?)');
+        if ($sessionInsert) {
+            $sessionInsert->bind_param('is', $user['id'], $_SESSION['session_token']);
+            $sessionInsert->execute();
+        }
 
         $cookieOptions = [
             'expires' => time() + 3600,

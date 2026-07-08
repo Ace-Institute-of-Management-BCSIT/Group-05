@@ -2,7 +2,7 @@
 session_start();
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
-    header("Location: login.html");
+    header("Location: ../public/HTML/login.html");
     exit();
 }
 ?>

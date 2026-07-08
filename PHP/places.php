@@ -23,6 +23,19 @@ function require_admin() {
     }
 }
 
+function current_user_payload() {
+    if (!isset($_SESSION['id'])) {
+        respond(['success' => false, 'message' => 'Please login first.'], 401);
+    }
+
+    return [
+        'id' => (int) $_SESSION['id'],
+        'name' => $_SESSION['name'] ?? '',
+        'email' => $_SESSION['email'] ?? '',
+        'role' => $_SESSION['role'] ?? 'user'
+    ];
+}
+
 function row_to_place($row) {
     return [
         'id' => (int) $row['id'],
@@ -80,6 +93,13 @@ function bool_field($name) {
 }
 
 $action = $_POST['action'] ?? $_GET['action'] ?? 'approved';
+
+if ($action === 'session') {
+    respond([
+        'success' => true,
+        'user' => current_user_payload()
+    ]);
+}
 
 if ($action === 'approved') {
     $sql = "
@@ -178,8 +198,8 @@ if ($action === 'submit') {
             respond(['success' => false, 'message' => 'Image must be smaller than 5 MB.'], 400);
         }
 
-        $ext = pathinfo($file['name'], PAT HINFO_EXTENSION);
-        $uploadDir = dirname(__DIR__) . '/Public/uploads/';
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $uploadDir = dirname(__DIR__) . '/public/uploads/';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }

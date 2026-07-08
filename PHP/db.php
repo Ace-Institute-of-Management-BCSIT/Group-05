@@ -18,6 +18,28 @@ $conn->query("CREATE DATABASE IF NOT EXISTS `$database` CHARACTER SET utf8mb4 CO
 $conn->select_db($database);
 $conn->set_charset('utf8mb4');
 
+if (!function_exists('ensureColumnExists')) {
+    function ensureColumnExists($conn, $tableName, $columnName, $columnDefinition) {
+        $stmt = $conn->prepare(
+            'SELECT COUNT(*) AS column_count
+             FROM information_schema.columns
+             WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?'
+        );
+        if (!$stmt) {
+            return;
+        }
+
+        $stmt->bind_param('ss', $tableName, $columnName);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result ? $result->fetch_assoc() : null;
+
+        if ((int) ($row['column_count'] ?? 0) === 0) {
+            $conn->query("ALTER TABLE `$tableName` ADD COLUMN $columnDefinition");
+        }
+    }
+}
+
 $conn->query("
     CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -34,6 +56,18 @@ $conn->query("
 ");
 
 $conn->query("
+    CREATE TABLE IF NOT EXISTS user_sessions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        session_token VARCHAR(255) NOT NULL UNIQUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_seen_at TIMESTAMP NULL DEFAULT NULL,
+        CONSTRAINT fk_user_sessions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_user_sessions_user_id (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+");
+
+$conn->query("
     CREATE TABLE IF NOT EXISTS places (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(190) NOT NULL,
@@ -42,6 +76,9 @@ $conn->query("
         province VARCHAR(100) DEFAULT '',
         district VARCHAR(100) DEFAULT '',
         municipality VARCHAR(150) DEFAULT '',
+        map_latitude DECIMAL(10,7) NULL,
+        map_longitude DECIMAL(10,7) NULL,
+        map_url TEXT,
         category VARCHAR(100) DEFAULT 'Other',
         short_desc TEXT,
         best_time VARCHAR(190) DEFAULT '',
@@ -75,6 +112,10 @@ $conn->query("
         CONSTRAINT fk_places_approved_by FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
+
+ensureColumnExists($conn, 'places', 'map_latitude', 'map_latitude DECIMAL(10,7) NULL AFTER municipality');
+ensureColumnExists($conn, 'places', 'map_longitude', 'map_longitude DECIMAL(10,7) NULL AFTER map_latitude');
+ensureColumnExists($conn, 'places', 'map_url', 'map_url TEXT NULL AFTER map_longitude');
 
 $conn->query("
     CREATE TABLE IF NOT EXISTS saved_places (
