@@ -742,7 +742,7 @@ function openPlaceDetail(id) {
         if (header) header.appendChild(actions);
     }
     actions.innerHTML = `
-        <div class="detail-action-buttons" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <div class="detail-action-buttons">
             <button class="btn btn-outline" id="save-collection-btn">Save to Collection</button>
             <button class="btn btn-outline" id="add-note-btn">Add Note</button>
             <button class="btn btn-primary" id="plan-trip-btn">Plan Trip</button>

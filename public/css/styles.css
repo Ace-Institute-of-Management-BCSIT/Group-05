@@ -1859,6 +1859,7 @@ textarea:focus {
     justify-content: center;
     position: relative;
     overflow: hidden;
+    isolation: isolate;
 }
 
 .detail-cover-image {
@@ -1868,6 +1869,7 @@ textarea:focus {
     height: 100%;
     object-fit: cover;
     display: none;
+    z-index: 0;
 }
 
 .detail-hero.has-image .detail-cover-image {
@@ -1888,6 +1890,28 @@ textarea:focus {
     font-size: 2rem;
     margin: 0 0 0.5rem;
     color: var(--text-primary);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.modal-large .detail-content {
+    position: relative;
+    z-index: 1;
+    padding-top: 2.5rem;
+}
+
+.modal-large .detail-card:first-child {
+    margin-top: 0;
+}
+
+.detail-actions {
+    margin-top: 1.5rem;
+}
+
+.detail-action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
 }
 
 .detail-local {
