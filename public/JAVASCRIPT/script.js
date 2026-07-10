@@ -560,7 +560,7 @@ function renderPlaces() {
             
             const imageUrl = getPlaceImageUrl(place.coverImage);
             if (imageUrl) {
-                imageContent = `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(place.name)}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                imageContent = `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(place.name)}">`;
             }
             
             return `
@@ -570,15 +570,17 @@ function renderPlaces() {
                         <div class="place-category">${escapeHtml(place.category)}</div>
                     </div>
                     <div class="place-info">
-                        <h3 class="place-name">${escapeHtml(place.name)}</h3>
-                        <div class="place-location">
-                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle cx="12" cy="10" r="3"></circle>
-                            </svg>
-                            <span>${escapeHtml(place.location)}</span>
+                        <div class="place-info-top">
+                            <h3 class="place-name">${escapeHtml(place.name)}</h3>
+                            <div class="place-location-info">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                                <span>${escapeHtml(place.location)}</span>
+                            </div>
                         </div>
-                        <div class="place-meta">
+                        <div class="place-footer-meta">
                             <div class="place-rating">
                                 <span class="rating-badge">${Number(place.rating || 0).toFixed(1)} / 5</span>
                             </div>
