@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nepal Travel - Discover Hidden Natural Retreats</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="../css/styles.css?v=20260710-detail-align-fix">
+    <link rel="stylesheet" href="../css/styles.css?v=20260710-nav-filter-fix">
 
 </head>
 <body>
@@ -23,14 +23,14 @@
                 </div>
 
                 <div class="nav-links">
-                    <button class="nav-link">
+                    <button class="nav-link active" type="button" data-view="explore">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <circle cx="12" cy="12" r="10"></circle>
                             <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
                         </svg>
                         <span>Explore</span>
                     </button>
-                    <button class="nav-link">
+                    <button class="nav-link" type="button" data-view="top-rated">
                         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
                             <polyline points="17 6 23 6 23 12"></polyline>
@@ -108,14 +108,14 @@
             </div>
 
             <div class="mobile-menu" id="mobile-menu">
-                <button class="nav-link">
+                <button class="nav-link active" type="button" data-view="explore">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
                     </svg>
                     <span>Explore</span>
                 </button>
-                <button class="nav-link">
+                <button class="nav-link" type="button" data-view="top-rated">
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
                         <polyline points="17 6 23 6 23 12"></polyline>
@@ -156,6 +156,40 @@
                     </div>
 
                     <div class="categories" id="categories"></div>
+
+                    <div class="place-filters" id="place-filters" aria-label="Destination filters">
+                        <label>
+                            <span>Rating</span>
+                            <select id="rating-filter">
+                                <option value="0">Any rating</option>
+                                <option value="4.5">4.5+ stars</option>
+                                <option value="4">4+ stars</option>
+                                <option value="3">3+ stars</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Budget</span>
+                            <select id="budget-filter">
+                                <option value="all">Any budget</option>
+                                <option value="5000">Under NPR 5,000</option>
+                                <option value="10000">Under NPR 10,000</option>
+                                <option value="25000">Under NPR 25,000</option>
+                                <option value="50000">Under NPR 50,000</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Difficulty</span>
+                            <select id="difficulty-filter">
+                                <option value="All">Any difficulty</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Location</span>
+                            <select id="region-filter">
+                                <option value="All">All Nepal</option>
+                            </select>
+                        </label>
+                    </div>
                 </div>
             </div>
         </section>
@@ -724,7 +758,7 @@
         <div><strong>Success!</strong><div style="font-size:12px;opacity:.85">Operation completed</div></div>
     </div>
 
-    <script src="../JAVASCRIPT/script.js?v=20260710-detail-align-fix"></script>
+    <script src="../JAVASCRIPT/script.js?v=20260710-nav-filter-fix"></script>
 </body>
 
 </html>

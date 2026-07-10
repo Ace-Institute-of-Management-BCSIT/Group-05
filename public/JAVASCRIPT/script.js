@@ -4,6 +4,11 @@ const categories = ['All', 'Nature', 'Beach', 'Historical', 'Urban', 'Adventure'
 
 let currentFilter = 'All';
 let searchQuery = '';
+let currentView = 'explore';
+let minRatingFilter = 0;
+let budgetFilter = 'all';
+let difficultyFilter = 'All';
+let regionFilter = 'All';
 let selectedPlace = null;
 let userRating = 0;
 
@@ -23,6 +28,11 @@ const mobileMenu = document.getElementById('mobile-menu');
 let profileHideTimer = null;
 const searchInput = document.getElementById('search-input');
 const categoriesContainer = document.getElementById('categories');
+const navViewButtons = document.querySelectorAll('[data-view]');
+const ratingFilter = document.getElementById('rating-filter');
+const budgetFilterSelect = document.getElementById('budget-filter');
+const difficultyFilterSelect = document.getElementById('difficulty-filter');
+const regionFilterSelect = document.getElementById('region-filter');
 const placesGrid = document.getElementById('places-grid');
 const noResults = document.getElementById('no-results');
 const placeDetailModal = document.getElementById('place-detail-modal');
@@ -45,6 +55,7 @@ async function init() {
     }
     refreshCategories();
     renderCategories();
+    renderAdvancedFilters();
     renderPlaces();
     updateStats();
     initializeUserProfile();
@@ -89,6 +100,34 @@ function refreshCategories() {
     ).sort((a, b) => a.localeCompare(b));
 
     categories.splice(0, categories.length, 'All', ...dynamicCategories);
+}
+
+function getUniquePlaceValues(fields) {
+    return Array.from(new Set(
+        places
+            .flatMap(place => fields.map(field => (place[field] || '').toString().trim()))
+            .filter(Boolean)
+    )).sort((a, b) => a.localeCompare(b));
+}
+
+function renderAdvancedFilters() {
+    if (difficultyFilterSelect) {
+        const difficulties = getUniquePlaceValues(['difficulty']);
+        difficultyFilterSelect.innerHTML = [
+            '<option value="All">Any difficulty</option>',
+            ...difficulties.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)
+        ].join('');
+        difficultyFilterSelect.value = difficultyFilter;
+    }
+
+    if (regionFilterSelect) {
+        const regions = getUniquePlaceValues(['district', 'province', 'municipality']);
+        regionFilterSelect.innerHTML = [
+            '<option value="All">All Nepal</option>',
+            ...regions.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)
+        ].join('');
+        regionFilterSelect.value = regionFilter;
+    }
 }
 
 function normalizePlace(place) {
@@ -224,6 +263,9 @@ function attachEventListeners() {
     if (userBtn) userBtn.addEventListener('click', toggleUserProfile);
     if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
     if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+    navViewButtons.forEach(btn => {
+        btn.addEventListener('click', () => setDestinationView(btn.dataset.view || 'explore'));
+    });
     document.addEventListener('click', (event) => {
         if (event.target.closest('#travel-features')) {
             handleTravelFeatureClick(event);
@@ -233,6 +275,34 @@ function attachEventListeners() {
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value;
+            filterPlaces();
+        });
+    }
+
+    if (ratingFilter) {
+        ratingFilter.addEventListener('change', (e) => {
+            minRatingFilter = Number(e.target.value) || 0;
+            filterPlaces();
+        });
+    }
+
+    if (budgetFilterSelect) {
+        budgetFilterSelect.addEventListener('change', (e) => {
+            budgetFilter = e.target.value;
+            filterPlaces();
+        });
+    }
+
+    if (difficultyFilterSelect) {
+        difficultyFilterSelect.addEventListener('change', (e) => {
+            difficultyFilter = e.target.value;
+            filterPlaces();
+        });
+    }
+
+    if (regionFilterSelect) {
+        regionFilterSelect.addEventListener('change', (e) => {
+            regionFilter = e.target.value;
             filterPlaces();
         });
     }
@@ -538,6 +608,16 @@ function setCategory(category) {
     filterPlaces();
 }
 
+function setDestinationView(view) {
+    currentView = view === 'top-rated' ? 'top-rated' : 'explore';
+    navViewButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === currentView);
+    });
+    if (mobileMenu) mobileMenu.classList.remove('active');
+    filterPlaces();
+    document.querySelector('.places-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 // Places
 function renderPlaces() {
     const filteredPlaces = getFilteredPlaces();
@@ -608,10 +688,21 @@ function getFilteredPlaces() {
         .filter(place => {
             const matchesCategory = currentFilter === 'All' || place.category === currentFilter;
             const searchableLocation = place.location || [place.district, place.province].filter(Boolean).join(', ');
+            const searchableRegion = [place.district, place.province, place.municipality]
+                .filter(Boolean)
+                .map(value => value.toString().toLowerCase());
+            const placeBudget = Number(place.budget || 0);
+            const maxBudget = budgetFilter === 'all' ? Infinity : Number(budgetFilter);
             const matchesSearch = place.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 searchableLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                place.category.toLowerCase().includes(searchQuery.toLowerCase());
-            return matchesCategory && matchesSearch;
+                place.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (place.shortDesc || '').toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesRating = Number(place.rating || 0) >= minRatingFilter;
+            const matchesBudget = budgetFilter === 'all' || placeBudget === 0 || placeBudget <= maxBudget;
+            const matchesDifficulty = difficultyFilter === 'All' || place.difficulty === difficultyFilter;
+            const matchesRegion = regionFilter === 'All' || searchableRegion.includes(regionFilter.toLowerCase());
+            const matchesView = currentView !== 'top-rated' || Number(place.rating || 0) > 0 || Number(place.reviews || 0) > 0;
+            return matchesCategory && matchesSearch && matchesRating && matchesBudget && matchesDifficulty && matchesRegion && matchesView;
         })
         .sort((a, b) => (Number(b.rating || 0) - Number(a.rating || 0)) || (Number(b.reviews || 0) - Number(a.reviews || 0)));
 }
@@ -623,14 +714,24 @@ function filterPlaces() {
 function clearFilters() {
     searchQuery = '';
     currentFilter = 'All';
+    minRatingFilter = 0;
+    budgetFilter = 'all';
+    difficultyFilter = 'All';
+    regionFilter = 'All';
     searchInput.value = '';
+    if (ratingFilter) ratingFilter.value = '0';
+    if (budgetFilterSelect) budgetFilterSelect.value = 'all';
+    if (difficultyFilterSelect) difficultyFilterSelect.value = 'All';
+    if (regionFilterSelect) regionFilterSelect.value = 'All';
     renderCategories();
     renderPlaces();
 }
 
 function updateSectionHeader(count) {
-    const title = currentFilter === 'All' ? 'All Destinations' : `${currentFilter} Destinations`;
-    const subtitle = `Sorted by rating • ${count} ${count === 1 ? 'place' : 'places'}`;
+    const titlePrefix = currentView === 'top-rated' ? 'Top Rated' : 'All';
+    const title = currentFilter === 'All' ? `${titlePrefix} Destinations` : `${titlePrefix} ${currentFilter} Destinations`;
+    const subtitlePrefix = currentView === 'top-rated' ? 'Highest rated uploaded places' : 'Explore all uploaded places';
+    const subtitle = `${subtitlePrefix} • ${count} ${count === 1 ? 'place' : 'places'}`;
 
     document.getElementById('section-title').textContent = title;
     document.getElementById('section-subtitle').textContent = subtitle;
