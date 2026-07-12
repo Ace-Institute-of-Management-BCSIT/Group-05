@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nepal Travel - Discover Hidden Natural Retreats</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="../css/styles.css?v=20260712-review-toast">
 
 </head>
@@ -429,6 +430,7 @@
                             <p id="detail-dest">-</p>
                         </div>
                     </div>
+                    <a id="detail-map-link" class="map-pick-btn detail-directions-link" href="#" target="_blank" rel="noopener" hidden><i class="fa-solid fa-diamond-turn-right"></i> Open directions</a>
                 </div>
 
                 <!-- Budget Information -->
@@ -690,6 +692,15 @@
                             <div class="ico"><i class="fa-solid fa-route"></i></div>
                             <div><h3>Route & Accessibility</h3><p>How does one actually get there?</p></div>
                         </div>
+                        <div class="map-pick">
+                            <label>Exact map location</label>
+                            <p class="helper">Drop a pin so travellers can open directions directly to this place.</p>
+                            <input type="hidden" name="mapLatitude" id="mapLatitude">
+                            <input type="hidden" name="mapLongitude" id="mapLongitude">
+                            <input type="hidden" name="mapUrl" id="mapUrl">
+                            <button type="button" class="map-pick-btn" id="openMapPickerBtn"><i class="fa-solid fa-map-location-dot"></i> Choose location on map</button>
+                            <span class="helper" id="selectedMapLocation">No map location selected yet.</span>
+                        </div>
                         <div class="grid" style="margin-top:18px">
                             <div class="field col-12">
                                 <label>Starting Point <span class="req">*</span></label>
@@ -754,11 +765,11 @@
         </div>
     </div>
 
-<!-- Google Maps Picker Modal -->
+<!-- Map location picker -->
     <div class="map-picker-modal" id="mapPickerModal" aria-hidden="true">
         <div class="map-picker-sheet" role="dialog" aria-modal="true" aria-labelledby="mapPickerTitle">
             <div class="map-picker-head">
-                <h3 id="mapPickerTitle">Select a location on Google Maps</h3>
+                <h3 id="mapPickerTitle">Select the exact location</h3>
                 <button type="button" class="map-picker-close" id="closeMapPickerBtn" aria-label="Close map picker">×</button>
             </div>
             <div class="map-picker-body">
@@ -785,7 +796,8 @@
         <div><strong>Success!</strong><div style="font-size:12px;opacity:.85">Operation completed</div></div>
     </div>
 
-    <script src="../JAVASCRIPT/script.js?v=20260712-review-toast"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="../JAVASCRIPT/script.js?v=20260712-map-picker"></script>
 </body>
 
 </html>

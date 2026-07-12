@@ -160,6 +160,9 @@ function normalizePlace(place) {
         homestay: false,
         parking: false,
         toilets: false,
+        mapLatitude: '',
+        mapLongitude: '',
+        mapUrl: '',
         ...place,
         location: place.location || [place.district, place.province].filter(Boolean).join(', ') || place.destination || 'Nepal',
         status: place.status || 'approved'
@@ -193,6 +196,9 @@ function buildPlaceFromForm(formElement) {
         province: field('province'),
         district: field('district'),
         municipality: field('municipality'),
+        mapLatitude: field('mapLatitude'),
+        mapLongitude: field('mapLongitude'),
+        mapUrl: field('mapUrl'),
         category: field('category'),
         shortDesc: field('shortDesc'),
         bestTime: field('bestTime'),
@@ -820,6 +826,21 @@ function openPlaceDetail(id) {
     document.getElementById('detail-route').textContent = selectedPlace.routeDesc || '-';
     document.getElementById('detail-dest').textContent = selectedPlace.destination || '-';
 
+    const mapLink = document.getElementById('detail-map-link');
+    const rawLatitude = String(selectedPlace.mapLatitude ?? '').trim();
+    const rawLongitude = String(selectedPlace.mapLongitude ?? '').trim();
+    const latitude = Number(rawLatitude);
+    const longitude = Number(rawLongitude);
+    const hasCoordinates = rawLatitude !== '' && rawLongitude !== '' &&
+        Number.isFinite(latitude) && Number.isFinite(longitude) &&
+        latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180;
+    if (mapLink) {
+        mapLink.hidden = !hasCoordinates;
+        mapLink.href = hasCoordinates
+            ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${latitude},${longitude}`)}`
+            : '#';
+    }
+
     // Budget
     document.getElementById('detail-budget').textContent = `NPR ${selectedPlace.budget.toLocaleString()}`;
     document.getElementById('detail-transport').textContent = `NPR ${selectedPlace.transport.toLocaleString()}`;
@@ -1048,7 +1069,104 @@ function validateStep(n) {
     return ok;
 }
 
+// ===== MAP LOCATION PICKER =====
+let locationMap;
+let locationMarker;
+let pendingLocation;
+
+function setMapLocation(lat, lng, label = 'Selected location') {
+    const latitude = Number(lat);
+    const longitude = Number(lng);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+
+    pendingLocation = { lat: latitude, lng: longitude, label };
+    if (locationMap && window.L) {
+        if (locationMarker) locationMarker.setLatLng([latitude, longitude]);
+        else locationMarker = L.marker([latitude, longitude]).addTo(locationMap);
+        locationMap.setView([latitude, longitude], Math.max(locationMap.getZoom(), 13));
+    }
+    const coords = document.getElementById('mapSelectionCoords');
+    const selected = document.getElementById('mapSelectionLabel');
+    if (coords) coords.textContent = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+    if (selected) selected.textContent = label;
+}
+
+function initialiseLocationMap() {
+    const canvas = document.getElementById('mapPickerCanvas');
+    if (!canvas || locationMap || !window.L) return;
+
+    locationMap = L.map(canvas).setView([28.3949, 84.1240], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(locationMap);
+    locationMap.on('click', event => setMapLocation(event.latlng.lat, event.latlng.lng, 'Pinned location'));
+}
+
+function setupMapPicker() {
+    const modal = document.getElementById('mapPickerModal');
+    const openButton = document.getElementById('openMapPickerBtn');
+    const closeButtons = [document.getElementById('closeMapPickerBtn'), document.getElementById('mapPickerCancelBtn')];
+    const useButton = document.getElementById('useMapLocationBtn');
+    const searchInput = document.getElementById('mapSearchInput');
+    const searchButton = document.getElementById('mapSearchBtn');
+
+    if (!modal || !openButton) return;
+    const close = () => {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+    };
+    const open = () => {
+        initialiseLocationMap();
+        if (!locationMap) {
+            showToast('Map could not be loaded. Please check your internet connection.', 'fa-triangle-exclamation');
+            return;
+        }
+        const savedLat = document.getElementById('mapLatitude')?.value;
+        const savedLng = document.getElementById('mapLongitude')?.value;
+        if (savedLat && savedLng) setMapLocation(savedLat, savedLng, 'Current selected location');
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        setTimeout(() => locationMap.invalidateSize(), 100);
+    };
+    const search = async () => {
+        const query = searchInput?.value.trim();
+        if (!query) return;
+        searchButton.disabled = true;
+        searchButton.textContent = 'Searching…';
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query + ', Nepal')}`);
+            const results = await response.json();
+            if (!results.length) throw new Error('not found');
+            setMapLocation(results[0].lat, results[0].lon, results[0].display_name);
+        } catch (error) {
+            showToast('Location not found. Try a more specific place name.', 'fa-triangle-exclamation');
+        } finally {
+            searchButton.disabled = false;
+            searchButton.textContent = 'Search';
+        }
+    };
+
+    openButton.addEventListener('click', open);
+    closeButtons.forEach(button => button?.addEventListener('click', close));
+    modal.addEventListener('click', event => { if (event.target === modal) close(); });
+    useButton?.addEventListener('click', () => {
+        if (!pendingLocation) {
+            showToast('Click the map or search for a location first.', 'fa-triangle-exclamation');
+            return;
+        }
+        document.getElementById('mapLatitude').value = pendingLocation.lat.toFixed(7);
+        document.getElementById('mapLongitude').value = pendingLocation.lng.toFixed(7);
+        document.getElementById('mapUrl').value = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${pendingLocation.lat},${pendingLocation.lng}`)}`;
+        document.getElementById('selectedMapLocation').textContent = `Location selected: ${pendingLocation.lat.toFixed(6)}, ${pendingLocation.lng.toFixed(6)}`;
+        close();
+    });
+    searchButton?.addEventListener('click', search);
+    searchInput?.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); search(); } });
+}
+
 if (form) {
+    setupMapPicker();
     if (nextBtn) nextBtn.addEventListener('click', () => { if (validateStep(current)) showStep(Math.min(current + 1, total)); });
     if (prevBtn) prevBtn.addEventListener('click', () => showStep(Math.max(current - 1, 1)));
     steps.forEach(s => s.addEventListener('click', () => {

@@ -2141,6 +2141,12 @@ textarea:focus {
     color: #fff;
 }
 
+.detail-directions-link {
+    width: fit-content;
+    margin-top: 1.25rem;
+    text-decoration: none;
+}
+
 .detail-location {
     font-size: 1rem;
     color: var(--text-primary);

@@ -200,10 +200,6 @@ if ($action === 'submit') {
     $startPoint = text_field('start');
     $routeDesc = text_field('routeDesc');
     $destination = text_field('dest');
-    $mapLatitude = text_field('mapLatitude');
-    $mapLongitude = text_field('mapLongitude');
-    $mapUrl = text_field('mapUrl');
-
     if ($name === '' || $category === '' || $shortDesc === '' || $startPoint === '' || $routeDesc === '' || $destination === '') {
         respond(['success' => false, 'message' => 'Please complete all required fields.'], 400);
     }
@@ -255,7 +251,17 @@ if ($action === 'submit') {
     $municipality = text_field('municipality');
     $mapLatitude = text_field('mapLatitude');
     $mapLongitude = text_field('mapLongitude');
-    $mapUrl = text_field('mapUrl');
+    $mapUrl = '';
+    if ($mapLatitude !== '' || $mapLongitude !== '') {
+        if (!is_numeric($mapLatitude) || !is_numeric($mapLongitude)
+            || (float) $mapLatitude < -90 || (float) $mapLatitude > 90
+            || (float) $mapLongitude < -180 || (float) $mapLongitude > 180) {
+            respond(['success' => false, 'message' => 'Invalid map location. Please choose the location again.'], 400);
+        }
+        $mapLatitude = number_format((float) $mapLatitude, 7, '.', '');
+        $mapLongitude = number_format((float) $mapLongitude, 7, '.', '');
+        $mapUrl = 'https://www.google.com/maps/dir/?api=1&destination=' . rawurlencode($mapLatitude . ',' . $mapLongitude);
+    }
     $bestTime = text_field('bestTime');
     $duration = text_field('duration');
     $things = text_field('things');
