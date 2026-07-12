@@ -260,7 +260,7 @@ function attachEventListeners() {
 
     if (loginForm) loginForm.addEventListener('submit', handleLogin);
     if (signupForm) signupForm.addEventListener('submit', handleLogin);
-    if (userBtn) userBtn.addEventListener('click', toggleUserProfile);
+    if (userBtn) userBtn.addEventListener('click', openUserProfile);
     if (logoutBtn) logoutBtn.addEventListener('click', logoutUser);
     if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', toggleMobileMenu);
     navViewButtons.forEach(btn => {
@@ -413,20 +413,13 @@ function isUserLoggedIn() {
     return Boolean(localStorage.getItem('isAdmin') === 'true' || localStorage.getItem('userRole') || getCookie('userRole'));
 }
 
-function toggleUserProfile() {
+function openUserProfile() {
     if (!isUserLoggedIn()) {
         window.location.href = 'login.html';
         return;
     }
-
-    if (profileCard?.classList.contains('active')) {
-        hideProfileCard();
-    } else {
-        showProfileCard();
-        updateTravelBoard();
-    }
+    window.location.href = 'profile.html';
 }
-
 function setTravelStatus(message) {
     if (travelStatus) {
         travelStatus.textContent = message;

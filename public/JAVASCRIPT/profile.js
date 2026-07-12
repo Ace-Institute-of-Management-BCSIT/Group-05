@@ -360,12 +360,13 @@ function bindEvents() {
     });
 }
 
+
 async function initProfile() {
-    if (!isUserLoggedIn()) {
+
+     if (!isUserLoggedIn()) {
         window.location.href = 'login.html';
         return;
     }
-
     renderIdentity();
     bindEvents();
     await loadPlaces();
