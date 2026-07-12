@@ -38,7 +38,24 @@ async function initializeAdminDashboard() {
     // Modal functionality
     setupModal();
 
-    await renderSubmittedPlaces();
+    await Promise.all([renderSubmittedPlaces(), loadAdminOverview()]);
+}
+
+async function loadAdminOverview() {
+    const response = await fetch('../../PHP/admin_data.php', {
+        method: 'GET',
+        credentials: 'same-origin'
+    });
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Unable to load dashboard data.');
+    }
+
+    renderDashboardOverview(data.stats || {});
+    renderAdminUsers(data.users || []);
+    renderDashboardActivity(data.activities || []);
+    renderCommunityActivity(data.stats || {}, data.activities || []);
 }
 
 async function fetchPlaces(action) {
@@ -155,15 +172,104 @@ function formatDate(value) {
     });
 }
 
-function updateDashboardStats(pendingPlaces = [], allPlaces = [], reviews = []) {
-    const pendingCount = pendingPlaces.length;
-    const approvedCount = allPlaces.filter(place => place.status === 'approved').length;
-    const statNumbers = document.querySelectorAll('.stat-number');
+function renderDashboardOverview(stats = {}) {
+    const statNumbers = document.querySelectorAll('#dashboard .stat-number');
+    if (statNumbers[0]) statNumbers[0].textContent = `${stats.approvedPlaces || 0}`;
+    if (statNumbers[1]) statNumbers[1].textContent = `${stats.users || 0}`;
+    if (statNumbers[2]) statNumbers[2].textContent = `${stats.reviews || 0}`;
 
-    if (statNumbers[0]) statNumbers[0].textContent = `${approvedCount}`;
-    if (statNumbers[3]) statNumbers[3].textContent = `${reviews.length}`;
-    const pendingLabel = document.querySelector('.stat-icon.photos')?.closest('.stat-card')?.querySelector('.stat-label');
-    if (pendingLabel) pendingLabel.textContent = `Pending verification: ${pendingCount}`;
+    const placeLabel = statNumbers[0]?.closest('.stat-card')?.querySelector('.stat-label');
+    if (placeLabel) placeLabel.textContent = `${stats.pendingPlaces || 0} pending approval`;
+}
+
+function renderAdminUsers(users = []) {
+    const tbody = document.getElementById('admin-users-body');
+    if (!tbody) return;
+
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5">No users found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = users.map(user => {
+        const status = user.verified ? 'Verified' : 'Unverified';
+        const badge = user.verified ? 'badge-active' : 'badge-inactive';
+        return `
+            <tr>
+                <td>${escapeHtml(user.username || user.fullName)}</td>
+                <td>${escapeHtml(user.email)}</td>
+                <td>${formatDate(user.createdAt)}</td>
+                <td><span class="badge ${badge}">${status}</span></td>
+                <td>${escapeHtml(user.role === 'admin' ? 'Administrator' : (user.lastLogin ? `Last login: ${formatDate(user.lastLogin)}` : 'No recorded login'))}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderDashboardActivity(activities = []) {
+    const list = document.getElementById('dashboard-activity-list');
+    if (!list) return;
+
+    const typeDetails = {
+        place: { icon: 'fa-map-location-dot', label: 'Place submitted', css: 'new-place' },
+        user: { icon: 'fa-user-plus', label: 'User registered', css: 'new-user' },
+        review: { icon: 'fa-star', label: 'Review submitted', css: 'review-flagged' }
+    };
+
+    if (activities.length === 0) {
+        list.innerHTML = '<p class="empty-state">No activity recorded yet.</p>';
+        return;
+    }
+
+    list.innerHTML = activities.map(activity => {
+        const detail = typeDetails[activity.type] || typeDetails.place;
+        return `
+            <div class="activity-item">
+                <span class="activity-icon ${detail.css}"><i class="fas ${detail.icon}"></i></span>
+                <div class="activity-content">
+                    <p><strong>${detail.label}</strong> - ${escapeHtml(activity.title)}</p>
+                    <small>${escapeHtml(activity.actor || 'Traveler')} · ${formatDate(activity.occurredAt)}</small>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderCommunityActivity(stats = {}, activities = []) {
+    const statsContainer = document.getElementById('community-stats');
+    const activityContainer = document.getElementById('community-activity-list');
+    const renderPeriod = (title, values = {}) => `
+        <div class="activity-stat-card">
+            <h4>${title}</h4>
+            <div class="stat-breakdown">
+                <div class="stat-item"><span class="stat-label">Place submissions:</span><span class="stat-value">${values.places || 0}</span></div>
+                <div class="stat-item"><span class="stat-label">Reviews:</span><span class="stat-value">${values.reviews || 0}</span></div>
+                <div class="stat-item"><span class="stat-label">New users:</span><span class="stat-value">${values.users || 0}</span></div>
+                <div class="stat-item"><span class="stat-label">Pending places:</span><span class="stat-value">${values.pendingPlaces || 0}</span></div>
+            </div>
+        </div>
+    `;
+
+    if (statsContainer) {
+        statsContainer.innerHTML = renderPeriod("Today's Activity", stats.today) + renderPeriod("This Week's Activity", stats.week);
+    }
+
+    if (!activityContainer) return;
+    if (activities.length === 0) {
+        activityContainer.innerHTML = '<p class="empty-state">No recent community activity.</p>';
+        return;
+    }
+
+    activityContainer.innerHTML = activities.map(activity => `
+        <div class="post-item">
+            <div class="post-info">
+                <h4>${escapeHtml(activity.title)}</h4>
+                <p>${escapeHtml(activity.type === 'user' ? 'Registered user' : 'Activity by')}: <strong>${escapeHtml(activity.actor || 'Traveler')}</strong></p>
+                <small>${escapeHtml(activity.type)} · ${formatDate(activity.occurredAt)}</small>
+            </div>
+            <span class="badge badge-active">Recorded</span>
+        </div>
+    `).join('');
 }
 
 async function renderSubmittedPlaces() {
@@ -177,7 +283,6 @@ async function renderSubmittedPlaces() {
     renderPendingSubmissions(pendingPlaces);
     renderManagedPlaces(allPlaces);
     renderAdminReviews(reviews);
-    updateDashboardStats(pendingPlaces, allPlaces, reviews);
 }
 
 function renderPendingSubmissions(pendingPlaces = []) {
@@ -513,53 +618,6 @@ function setupTableSearch() {
 // Initialize table search when section is displayed
 document.addEventListener('DOMContentLoaded', () => {
     setupTableSearch();
-});
-
-// Photo management
-function setupPhotoManagement() {
-    const approveButtons = document.querySelectorAll('#manage-photos .photo-card .btn-approve');
-    const rejectButtons = document.querySelectorAll('#manage-photos .photo-card .btn-reject');
-
-    approveButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const photoCard = this.closest('.photo-card');
-            if (!photoCard) return;
-            const photoName = photoCard.querySelector('h4').textContent;
-            openModal('Photo Approved', `Photo "${photoName}" has been approved and published.`);
-            setTimeout(() => {
-                photoCard.remove();
-                closeModal();
-            }, 2000);
-        });
-    });
-
-    rejectButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const photoCard = this.closest('.photo-card');
-            if (!photoCard) return;
-            const photoName = photoCard.querySelector('h4').textContent;
-            openModal('Photo Rejected', `Photo "${photoName}" has been rejected.`);
-            setTimeout(() => {
-                photoCard.remove();
-                closeModal();
-            }, 2000);
-        });
-    });
-}
-
-// Initialize on page load
-window.addEventListener('load', () => {
-    setupPhotoManagement();
-});
-
-// Add place button
-document.addEventListener('DOMContentLoaded', () => {
-    const addPlaceBtn = document.getElementById('addPlaceBtn');
-    if (addPlaceBtn) {
-        addPlaceBtn.addEventListener('click', () => {
-            openModal('Add New Place', 'This feature would open a form to add a new place to the directory.');
-        });
-    }
 });
 
 // Confirm action function (used by modal)
