@@ -752,6 +752,31 @@
         </div>
     </div>
 
+<!-- Google Maps Picker Modal -->
+    <div class="map-picker-modal" id="mapPickerModal" aria-hidden="true">
+        <div class="map-picker-sheet" role="dialog" aria-modal="true" aria-labelledby="mapPickerTitle">
+            <div class="map-picker-head">
+                <h3 id="mapPickerTitle">Select a location on Google Maps</h3>
+                <button type="button" class="map-picker-close" id="closeMapPickerBtn" aria-label="Close map picker">×</button>
+            </div>
+            <div class="map-picker-body">
+                <div class="map-picker-search">
+                    <input type="text" id="mapSearchInput" placeholder="Search a place, district, or landmark">
+                    <button type="button" id="mapSearchBtn">Search</button>
+                </div>
+                <div class="map-picker-canvas" id="mapPickerCanvas"></div>
+                <div class="map-picker-meta">
+                    <span id="mapSelectionLabel">Click the map to place a pin.</span>
+                    <span id="mapSelectionCoords">No location selected yet.</span>
+                </div>
+                <div class="map-picker-actions">
+                    <button type="button" class="btn btn-outline" id="mapPickerCancelBtn">Cancel</button>
+                    <button type="button" class="use-location" id="useMapLocationBtn">Use this location</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div class="toast" id="toast">
         <i class="fa-solid fa-check"></i>
