@@ -1,7 +1,7 @@
 <?php
 mysqli_report(MYSQLI_REPORT_OFF);
 
-$host = '127.0.0.1';
+$host = 'localhost';
 $user = 'root';
 $password = '';
 $database = 'nepal_travel';
