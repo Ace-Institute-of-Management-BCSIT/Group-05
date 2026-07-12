@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
   --green-900:#0f3d2e;
@@ -155,6 +156,7 @@ label .req{color:var(--danger);margin-left:3px}
   position:relative;display:flex;align-items:flex-end;color:#fff;padding:14px;
 }
 .map .pill{background:rgba(0,0,0,.4);backdrop-filter:blur(4px);padding:8px 12px;border-radius:999px;font-size:12px;display:inline-flex;gap:8px;align-items:center}
+.map-picker{display:none;position:fixed;inset:0;z-index:60;background:rgba(12,31,26,.6);align-items:center;justify-content:center;padding:20px}.map-picker.show{display:flex}.map-picker-sheet{width:min(900px,100%);background:#fff;border-radius:18px;padding:20px;box-shadow:var(--shadow)}.map-picker-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.map-picker-head h3{margin:0;font-family:'Fraunces',serif}.map-picker-canvas{height:420px;border:1px solid var(--border);border-radius:14px;overflow:hidden}.map-picker-search{display:flex;gap:10px;margin-bottom:12px}.map-picker-search input{flex:1;border:1px solid var(--border);border-radius:10px;padding:11px;font:inherit}.map-picker-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}.map-location-status{font-size:12px;color:var(--muted);margin-top:8px}.map-select-btn{margin-top:12px}
 
 /* Footer actions */
 .actions{
@@ -367,7 +369,12 @@ label .req{color:var(--danger);margin-left:3px}
           <div><h3>Route & Accessibility</h3><p>How does one actually get there?</p></div>
         </div>
 
-        <div class="map"><span class="pill"><i class="fa-solid fa-map-location-dot"></i> Google Maps integration placeholder</span></div>
+        <div class="map"><span class="pill"><i class="fa-solid fa-map-location-dot"></i> Add the exact location for travellers</span></div>
+        <input type="hidden" name="mapLatitude" id="mapLatitude">
+        <input type="hidden" name="mapLongitude" id="mapLongitude">
+        <input type="hidden" name="mapUrl" id="mapUrl">
+        <button type="button" class="btn btn-primary map-select-btn" id="openMapPicker"><i class="fa-solid fa-map-location-dot"></i> Choose location on map</button>
+        <div class="map-location-status" id="mapLocationStatus">No map location selected yet.</div>
 
         <div class="grid" style="margin-top:18px">
           <div class="col-12">
@@ -519,6 +526,16 @@ label .req{color:var(--danger);margin-left:3px}
 </div>
 
 <!-- Preview Modal -->
+<div class="map-picker" id="mapPicker" aria-hidden="true">
+  <div class="map-picker-sheet" role="dialog" aria-modal="true" aria-labelledby="mapPickerHeading">
+    <div class="map-picker-head"><h3 id="mapPickerHeading">Choose the exact location</h3><button type="button" class="btn btn-ghost" id="closeMapPicker">Close</button></div>
+    <div class="map-picker-search"><input id="mapSearch" placeholder="Search a place or landmark in Nepal"><button type="button" class="btn btn-outline" id="searchMap">Search</button></div>
+    <div class="map-picker-canvas" id="mapCanvas"></div>
+    <div class="map-location-status" id="mapPickerStatus">Click anywhere on the map to place a pin.</div>
+    <div class="map-picker-actions"><button type="button" class="btn btn-outline" id="cancelMapPicker">Cancel</button><button type="button" class="btn btn-primary" id="useMapLocation">Use this location</button></div>
+  </div>
+</div>
+
 <div class="modal" id="modal">
   <div class="sheet">
     <h3>Destination Preview</h3>
@@ -533,6 +550,7 @@ label .req{color:var(--danger);margin-left:3px}
   <div><strong>Destination published!</strong><div style="font-size:12px;opacity:.85">Thanks for sharing a hidden gem 🌿</div></div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const form = document.getElementById('placeForm');
 const pages = [...document.querySelectorAll('.page')];
@@ -644,6 +662,51 @@ setupDrop('galleryDrop','galleryInput',true,(files)=>{
   galleryFiles = galleryFiles.concat(files);renderGallery();
 });
 
+// Let contributors select a pin instead of entering coordinates themselves.
+let mapPickerInstance, mapPickerMarker, selectedMapPoint;
+const mapPicker = document.getElementById('mapPicker');
+const mapPickerStatus = document.getElementById('mapPickerStatus');
+
+function setSelectedMapPoint(lat, lng, label='Pinned location'){
+  selectedMapPoint = {lat:Number(lat), lng:Number(lng)};
+  if(mapPickerMarker) mapPickerMarker.setLatLng([selectedMapPoint.lat, selectedMapPoint.lng]);
+  else mapPickerMarker = L.marker([selectedMapPoint.lat, selectedMapPoint.lng]).addTo(mapPickerInstance);
+  mapPickerInstance.setView([selectedMapPoint.lat, selectedMapPoint.lng], Math.max(mapPickerInstance.getZoom(),13));
+  mapPickerStatus.textContent = `${label}: ${selectedMapPoint.lat.toFixed(6)}, ${selectedMapPoint.lng.toFixed(6)}`;
+}
+function openLocationPicker(){
+  if(!mapPickerInstance){
+    mapPickerInstance = L.map('mapCanvas').setView([28.3949,84.1240],7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(mapPickerInstance);
+    mapPickerInstance.on('click',event=>setSelectedMapPoint(event.latlng.lat,event.latlng.lng));
+  }
+  const lat = document.getElementById('mapLatitude').value;
+  const lng = document.getElementById('mapLongitude').value;
+  if(lat && lng) setSelectedMapPoint(lat,lng,'Current selected location');
+  mapPicker.classList.add('show'); mapPicker.setAttribute('aria-hidden','false');
+  setTimeout(()=>mapPickerInstance.invalidateSize(),100);
+}
+function closeLocationPicker(){mapPicker.classList.remove('show');mapPicker.setAttribute('aria-hidden','true');}
+document.getElementById('openMapPicker').addEventListener('click',openLocationPicker);
+document.getElementById('closeMapPicker').addEventListener('click',closeLocationPicker);
+document.getElementById('cancelMapPicker').addEventListener('click',closeLocationPicker);
+document.getElementById('useMapLocation').addEventListener('click',()=>{
+  if(!selectedMapPoint){toast('Click the map or search for a location first.','fa-triangle-exclamation');return;}
+  document.getElementById('mapLatitude').value=selectedMapPoint.lat.toFixed(7);
+  document.getElementById('mapLongitude').value=selectedMapPoint.lng.toFixed(7);
+  document.getElementById('mapUrl').value=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${selectedMapPoint.lat},${selectedMapPoint.lng}`)}`;
+  document.getElementById('mapLocationStatus').textContent=`Location selected: ${selectedMapPoint.lat.toFixed(6)}, ${selectedMapPoint.lng.toFixed(6)}`;
+  closeLocationPicker();
+});
+document.getElementById('searchMap').addEventListener('click',async()=>{
+  const input=document.getElementById('mapSearch'); const query=input.value.trim(); if(!query)return;
+  try{
+    const response=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query+', Nepal')}`);
+    const results=await response.json(); if(!results.length)throw new Error('not found');
+    setSelectedMapPoint(results[0].lat,results[0].lon,results[0].display_name);
+  }catch(error){toast('Location not found. Try a more specific name.','fa-triangle-exclamation');}
+});
+
 // Cancel & Draft
 document.getElementById('cancelBtn').addEventListener('click',()=>{
   if(confirm('Discard this submission?')){form.reset();coverFile=null;galleryFiles=[];renderCover();renderGallery();
@@ -695,6 +758,9 @@ async function submitPlaceForApproval(){
     province: field('province'),
     district: field('district'),
     municipality: field('municipality'),
+    mapLatitude: field('mapLatitude'),
+    mapLongitude: field('mapLongitude'),
+    mapUrl: field('mapUrl'),
     location: [field('district'), field('province')].filter(Boolean).join(', ') || 'Nepal',
     category: field('category'),
     shortDesc: field('shortDesc'),
