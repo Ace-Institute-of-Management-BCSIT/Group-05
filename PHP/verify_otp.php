@@ -42,10 +42,14 @@ if ($action === 'resend') {
 
     $fullName = $_SESSION['pending_registration']['full_name'] ?? 'Traveler';
     $body = "Hello {$fullName},\n\nYour new verification code is:\n\n  $otp\n\nExpires in 10 minutes.\n\n— Nepal Discovery Team";
-    @mail($email, 'Nepal Discovery - New Verification Code', $body, "From: noreply@nepaldiscovery.com\r\n");
+    if (!sendVerificationEmail($email, $otp)) {
+        $delOtpStmt = $conn->prepare('DELETE FROM otp_verifications WHERE email = ?');
+        $delOtpStmt->bind_param('s', $email);
+        $delOtpStmt->execute();
+        respond(['success' => false, 'message' => 'We could not send the verification email. Please try again later.'], 500);
+    }
 
     $_SESSION['otp_email'] = $email;
-    $_SESSION['otp_dev'] = $otp;
     respond(['success' => true, 'message' => 'New OTP sent.']);
 }
 

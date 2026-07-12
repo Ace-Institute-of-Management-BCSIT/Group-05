@@ -30,6 +30,18 @@
 ---
 
 ### 2. **EMAIL VERIFICATION WITH OTP** ✅
+
+### Gmail SMTP setup
+
+The OTP system sends real email through Gmail SMTP. Before testing it:
+
+1. Enable two-step verification on the Gmail account that will send the messages.
+2. Create a Google App Password for "Mail" and keep the 16-character password private.
+3. Copy `PHP/mail_config.local.php.example` to `PHP/mail_config.local.php`.
+4. Replace the placeholder address and password with the Gmail address and its App Password.
+5. Run `composer install` after cloning or deploying the project.
+
+`PHP/mail_config.local.php` is ignored by Git. Do not use your normal Gmail password and do not commit the App Password.
 **Security Feature Added:** Prevents unverified registrations
 **Components Created:**
 - `PHP/otp.php` - OTP generation, sending, and verification

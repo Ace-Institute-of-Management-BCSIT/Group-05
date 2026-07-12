@@ -4,21 +4,6 @@
  const otpModal = document.getElementById("otpModal");
  const closeBtn = document.querySelector(".close");
 
-function showDevOtpHint(otp) {
-    const hint = document.getElementById("devOtpHint");
-    if (!hint) {
-        return;
-    }
-
-    if (otp) {
-        hint.textContent = `Dev OTP: ${otp}`;
-        hint.style.display = "block";
-    } else {
-        hint.textContent = "";
-        hint.style.display = "none";
-    }
-}
-
 if (signUpButton && container) {
  signUpButton.addEventListener("click", () => {
   container.classList.add("right-panel-active");
@@ -86,7 +71,6 @@ if (registerForm) {
               errorDiv.textContent = "";
               document.getElementById("otpCode").value = "";
               document.getElementById("otpError").textContent = "";
-              showDevOtpHint(result.dev_otp || "");
           } else {
               errorDiv.textContent = result.message || "Failed to send OTP";
           }
@@ -192,7 +176,6 @@ if (resendOtpBtn) {
               errorDiv.textContent = "OTP sent successfully!";
               errorDiv.style.color = "green";
               document.getElementById("otpCode").value = "";
-              showDevOtpHint(result.dev_otp || "");
           } else {
               errorDiv.textContent = result.message || "Failed to resend OTP";
               errorDiv.style.color = "red";
@@ -207,7 +190,6 @@ if (resendOtpBtn) {
 // Close OTP modal
 if (closeBtn && otpModal) {
     closeBtn.addEventListener("click", () => {
-        showDevOtpHint("");
         otpModal.style.display = "none";
     });
 }
@@ -215,7 +197,6 @@ if (closeBtn && otpModal) {
 if (otpModal) {
     window.addEventListener("click", (event) => {
         if (event.target == otpModal) {
-                showDevOtpHint("");
                 otpModal.style.display = "none";
         }
     });

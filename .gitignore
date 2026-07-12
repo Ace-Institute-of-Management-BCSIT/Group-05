@@ -2,3 +2,5 @@
 # Ignore uploaded files
 uploads/
 .vscode/tasks.json
+PHP/mail_config.local.php
+/vendor/

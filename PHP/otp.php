@@ -3,6 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 require_once 'db.php';
+require_once 'mailer.php';
 
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
     header('Content-Type: application/json');
@@ -20,14 +21,6 @@ function otpMatches($storedOtp, $enteredOtp) {
     }
 
     return hash_equals((string) $storedOtp, (string) $enteredOtp);
-}
-
-function isLocalOtpDevMode() {
-    $host = $_SERVER['HTTP_HOST'] ?? '';
-    return $host === ''
-        || str_starts_with($host, 'localhost')
-        || str_starts_with($host, '127.0.0.1')
-        || str_starts_with($host, '[::1]');
 }
 
 // Generate and send OTP
@@ -74,38 +67,15 @@ function sendOTP($email, $conn) {
         ];
     }
     
-    // Send OTP via email
-    $subject = 'Nepal Travel - Email Verification Code';
-    $message = "Your verification code is: " . $otp . "\n\nThis code will expire in 10 minutes.\n\nDo not share this code with anyone.";
-    $headers = "From: noreply@nepaltravel.com\r\n";
-    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-    
+    if (!sendVerificationEmail($email, $otp)) {
+        $deleteFailedOtp = $conn->prepare('DELETE FROM otp_verifications WHERE email = ?');
+        $deleteFailedOtp->bind_param('s', $email);
+        $deleteFailedOtp->execute();
+        return ['success' => false, 'message' => 'We could not send the verification email. Please try again later.'];
+    }
+
     $_SESSION['otp_email'] = $email;
-    $_SESSION['otp_dev'] = $otp;
-
-    // Using mail() function - make sure XAMPP has mail configured
-    $mailSent = @mail($email, $subject, $message, $headers);
-
-    if (!$mailSent || isLocalOtpDevMode()) {
-        error_log("OTP for $email: $otp");
-    }
-
-    $response = [
-        'success' => true,
-        'mail_sent' => $mailSent,
-        'message' => $mailSent
-            ? 'OTP sent to your email'
-            : 'Email is not configured locally. Use the dev OTP shown below.'
-    ];
-
-    if (isLocalOtpDevMode()) {
-        $response['dev_otp'] = $otp;
-        if ($mailSent) {
-            $response['message'] = 'OTP generated. If it does not arrive by email, use the dev OTP shown below.';
-        }
-    }
-
-    return $response;
+    return ['success' => true, 'message' => 'OTP sent to your email'];
 }
 
 // Verify OTP
