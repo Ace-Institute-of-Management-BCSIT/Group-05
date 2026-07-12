@@ -523,13 +523,17 @@ function savePlaceToCollection(placeId) {
         credentials: 'same-origin'
     })
         .then(response => response.json())
-        .then(() => {
+        .then(result => {
+            if (!result.success) throw new Error(result.message || 'Unable to save right now.');
             showProfileCard();
             setTravelStatus('Saved to your collection.');
             updateTravelBoard('saved');
+            showToast('Saved to your collection.', 'fa-bookmark');
         })
-        .catch(() => {
-            setTravelStatus('Unable to save right now.');
+        .catch(error => {
+            const message = error.message || 'Unable to save right now.';
+            setTravelStatus(message);
+            showToast(message, 'fa-triangle-exclamation');
         });
 }
 
@@ -547,13 +551,17 @@ function addNoteToPlace(placeId, note) {
         credentials: 'same-origin'
     })
         .then(response => response.json())
-        .then(() => {
+        .then(result => {
+            if (!result.success) throw new Error(result.message || 'Unable to save note right now.');
             showProfileCard();
             setTravelStatus('Note saved to your travel board.');
             updateTravelBoard('notes');
+            showToast('Trip note saved.', 'fa-note-sticky');
         })
-        .catch(() => {
-            setTravelStatus('Unable to save note right now.');
+        .catch(error => {
+            const message = error.message || 'Unable to save note right now.';
+            setTravelStatus(message);
+            showToast(message, 'fa-triangle-exclamation');
         });
 }
 
@@ -570,13 +578,17 @@ function organizeTrip(placeId) {
         credentials: 'same-origin'
     })
         .then(response => response.json())
-        .then(() => {
+        .then(result => {
+            if (!result.success) throw new Error(result.message || 'Unable to plan trip right now.');
             showProfileCard();
             setTravelStatus('Added to your future trips.');
             updateTravelBoard('future');
+            showToast('Added to your trip plan.', 'fa-calendar-check');
         })
-        .catch(() => {
-            setTravelStatus('Unable to plan trip right now.');
+        .catch(error => {
+            const message = error.message || 'Unable to plan trip right now.';
+            setTravelStatus(message);
+            showToast(message, 'fa-triangle-exclamation');
         });
 }
 
@@ -1168,6 +1180,7 @@ if (form) {
     function showToast(msg, icon) {
         const t = document.getElementById('toast');
         if (!t) return;
+        document.body.appendChild(t);
         t.querySelector('div strong').textContent = msg;
         t.querySelector('i').className = `fa-solid ${icon || 'fa-check'}`;
         t.classList.add('show');

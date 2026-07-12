@@ -3047,7 +3047,7 @@ label .req {
     opacity: 0;
     pointer-events: none;
     transition: all 0.3s;
-    z-index: 50;
+    z-index: 10000;
 }
 
 .toast.show {
