@@ -3,4 +3,5 @@
 uploads/
 .vscode/tasks.json
 PHP/mail_config.local.php
+PHP/mail_config_local.php
 /vendor/
