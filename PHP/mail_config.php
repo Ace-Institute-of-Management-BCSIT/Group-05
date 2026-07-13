@@ -4,17 +4,11 @@
  * Never commit a Gmail app password to the repository.
  */
 
-$localConfigFiles = [
-    __DIR__ . '/mail_config.local.php',
-    __DIR__ . '/mail_config_local.php', // Backwards-compatible local filename.
-];
-
-foreach ($localConfigFiles as $localConfig) {
-    if (is_file($localConfig)) {
-        $settings = require $localConfig;
-        if (is_array($settings)) {
-            return $settings;
-        }
+$localConfig = __DIR__ . '/mail_config.local.php';
+if (is_file($localConfig)) {
+    $settings = require $localConfig;
+    if (is_array($settings)) {
+        return $settings;
     }
 }
 
