@@ -34,6 +34,7 @@ const budgetFilterSelect = document.getElementById('budget-filter');
 const difficultyFilterSelect = document.getElementById('difficulty-filter');
 const regionFilterSelect = document.getElementById('region-filter');
 const placesGrid = document.getElementById('places-grid');
+const spotlightGrid = document.querySelector('.spotlight-grid');
 const noResults = document.getElementById('no-results');
 const placeDetailModal = document.getElementById('place-detail-modal');
 const addPlaceBtns = document.querySelectorAll('#add-place-btn, #cta-add-btn, #featured-add-btn, .mobile-add-btn');
@@ -57,6 +58,7 @@ async function init() {
     renderCategories();
     renderAdvancedFilters();
     renderPlaces();
+    renderSpotlight();
     updateStats();
     initializeUserProfile();
     attachEventListeners();
@@ -275,6 +277,18 @@ function attachEventListeners() {
     document.addEventListener('click', (event) => {
         if (event.target.closest('#travel-features')) {
             handleTravelFeatureClick(event);
+        }
+
+        const spotlightCard = event.target.closest('[data-spotlight-place-id]');
+        if (spotlightCard) {
+            openPlaceDetail(Number(spotlightCard.dataset.spotlightPlaceId));
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('[data-spotlight-place-id]')) {
+            event.preventDefault();
+            openPlaceDetail(Number(event.target.dataset.spotlightPlaceId));
         }
     });
 
@@ -694,6 +708,65 @@ function renderPlaces() {
     updateSectionHeader(filteredPlaces.length);
 }
 
+function spotlightImage(place, className = '') {
+    const imageUrl = getPlaceImageUrl(place.coverImage);
+    if (imageUrl) {
+        return `<img class="${className}" src="${escapeHtml(imageUrl)}" alt="${escapeHtml(place.name)}">`;
+    }
+
+    return `
+        <svg class="icon-large ${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+    `;
+}
+
+function renderSpotlight() {
+    if (!spotlightGrid) return;
+
+    const spotlightPlaces = [...places]
+        .sort((a, b) => (Number(b.rating || 0) - Number(a.rating || 0)) || (Number(b.reviews || 0) - Number(a.reviews || 0)))
+        .slice(0, 3);
+
+    if (spotlightPlaces.length === 0) {
+        spotlightGrid.innerHTML = '<p class="spotlight-empty">No approved places are available yet. Check back soon.</p>';
+        return;
+    }
+
+    const [featured, ...remaining] = spotlightPlaces;
+    const featuredLocation = featured.location || 'Nepal';
+    spotlightGrid.innerHTML = `
+        <article class="spotlight-card" data-spotlight-place-id="${Number(featured.id)}" role="button" tabindex="0" aria-label="View details for ${escapeHtml(featured.name)}">
+            <div class="spotlight-media">
+                ${spotlightImage(featured)}
+                <span class="spotlight-badge">Top pick</span>
+            </div>
+            <div class="spotlight-body">
+                <p class="spotlight-pill">${escapeHtml(featured.category)}</p>
+                <h3>${escapeHtml(featured.name)}</h3>
+                <p>${escapeHtml(featured.shortDesc || featured.tagline || 'Discover this approved destination in Nepal.')}</p>
+                <div class="spotlight-meta">
+                    <span class="spotlight-pill">★ ${Number(featured.rating || 0).toFixed(1)} (${Number(featured.reviews || 0)} reviews)</span>
+                    <span class="spotlight-pill">${escapeHtml(featuredLocation)}</span>
+                </div>
+            </div>
+        </article>
+        <div class="spotlight-stack">
+            ${remaining.map(place => `
+                <article class="mini-card" data-spotlight-place-id="${Number(place.id)}" role="button" tabindex="0" aria-label="View details for ${escapeHtml(place.name)}">
+                    <div class="mini-icon">${spotlightImage(place, 'mini-image')}</div>
+                    <div>
+                        <h4>${escapeHtml(place.name)}</h4>
+                        <p>${escapeHtml(place.shortDesc || place.tagline || place.location || 'Approved destination')}</p>
+                        <span class="mini-meta">★ ${Number(place.rating || 0).toFixed(1)} · ${Number(place.reviews || 0)} reviews</span>
+                    </div>
+                </article>
+            `).join('')}
+        </div>
+    `;
+}
+
 function getFilteredPlaces() {
     return places
         .filter(place => {
@@ -1003,6 +1076,7 @@ async function handleReviewSubmit(e) {
         refreshCategories();
         renderCategories();
         renderPlaces();
+        renderSpotlight();
         selectedPlace = places.find(place => Number(place.id) === Number(selectedPlace.id)) || selectedPlace;
     } catch (error) {
         // Keep current UI state if place reload fails.
