@@ -11,10 +11,10 @@
 <body>
     <div class="admin-container">
         <!-- Sidebar Navigation -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="adminSidebar">
             <div class="sidebar-header">
-                <h2><i class="fas fa-crown"></i> Admin Panel</h2>
-                <button class="toggle-sidebar" id="toggleSidebar">
+                <h2><i class="fas fa-crown"></i> <span>Admin Panel</span></h2>
+                <button class="toggle-sidebar" id="toggleSidebar" type="button" aria-label="Collapse sidebar" aria-controls="adminSidebar" aria-expanded="true">
                     <i class="fas fa-bars"></i>
                 </button>
             </div>
@@ -54,6 +54,9 @@
             <!-- Top Bar -->
             <header class="top-bar">
                 <div class="top-bar-left">
+                    <button class="mobile-sidebar-toggle" id="mobileSidebarToggle" type="button" aria-label="Open navigation" aria-controls="adminSidebar" aria-expanded="false">
+                        <i class="fas fa-bars"></i>
+                    </button>
                     <h1 id="pageTitle">Dashboard</h1>
                 </div>
                 <div class="top-bar-right">
@@ -117,12 +120,8 @@
 
                     <div class="filter-bar">
                         <input type="text" class="search-input" placeholder="Search places...">
-                        <select class="filter-select">
-                            <option>All Locations</option>
-                            <option>Kathmandu</option>
-                            <option>Pokhara</option>
-                            <option>Bhaktapur</option>
-                            <option>Chitwan</option>
+                        <select class="filter-select" id="place-location-filter">
+                            <option value="all">All Locations</option>
                         </select>
                     </div>
 
@@ -154,11 +153,10 @@
 
                     <div class="filter-bar">
                         <input type="text" class="search-input" placeholder="Search users by name or email...">
-                        <select class="filter-select">
-                            <option>All Users</option>
-                            <option>Active</option>
-                            <option>Inactive</option>
-                            <option>Banned</option>
+                        <select class="filter-select" id="user-status-filter">
+                            <option value="all">All Users</option>
+                            <option value="verified">Verified</option>
+                            <option value="unverified">Unverified</option>
                         </select>
                     </div>
 
@@ -195,12 +193,13 @@
 
                     <div class="filter-bar">
                         <input type="text" class="search-input" placeholder="Search reviews...">
-                        <select class="filter-select">
-                            <option>All Reviews</option>
-                            <option>Flagged</option>
-                            <option>Under Review</option>
-                            <option>Spam</option>
-                            <option>Offensive</option>
+                        <select class="filter-select" id="review-rating-filter">
+                            <option value="all">All Reviews</option>
+                            <option value="5">5 stars</option>
+                            <option value="4">4 stars</option>
+                            <option value="3">3 stars</option>
+                            <option value="2">2 stars</option>
+                            <option value="1">1 star</option>
                         </select>
                     </div>
 

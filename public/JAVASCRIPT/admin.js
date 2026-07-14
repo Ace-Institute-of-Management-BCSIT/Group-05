@@ -195,7 +195,7 @@ function renderAdminUsers(users = []) {
         const status = user.verified ? 'Verified' : 'Unverified';
         const badge = user.verified ? 'badge-active' : 'badge-inactive';
         return `
-            <tr>
+            <tr data-status="${user.verified ? 'verified' : 'unverified'}">
                 <td>${escapeHtml(user.username || user.fullName)}</td>
                 <td>${escapeHtml(user.email)}</td>
                 <td>${formatDate(user.createdAt)}</td>
@@ -204,6 +204,7 @@ function renderAdminUsers(users = []) {
             </tr>
         `;
     }).join('');
+    applySectionFilters(document.getElementById('manage-users'));
 }
 
 function renderDashboardActivity(activities = []) {
@@ -283,6 +284,12 @@ async function renderSubmittedPlaces() {
     renderPendingSubmissions(pendingPlaces);
     renderManagedPlaces(allPlaces);
     renderAdminReviews(reviews);
+    applySectionFilters(document.getElementById('manage-places'));
+    applySectionFilters(document.getElementById('delete-reviews'));
+}
+
+async function refreshAdminData() {
+    await Promise.all([renderSubmittedPlaces(), loadAdminOverview()]);
 }
 
 function renderPendingSubmissions(pendingPlaces = []) {
@@ -343,6 +350,7 @@ function renderManagedPlaces(allPlaces = []) {
 
     const approvedPlaces = allPlaces.filter(place => place.status === 'approved');
     if (approvedPlaces.length === 0) {
+        populatePlaceLocationFilter([]);
         tbody.innerHTML = `
             <tr>
                 <td colspan="5">No approved places yet.</td>
@@ -351,8 +359,9 @@ function renderManagedPlaces(allPlaces = []) {
         return;
     }
 
+    populatePlaceLocationFilter(approvedPlaces);
     tbody.innerHTML = approvedPlaces.map(place => `
-        <tr>
+        <tr data-location="${escapeHtml([place.district, place.province].filter(Boolean).join(', ') || 'Nepal').toLowerCase()}">
             <td>${escapeHtml(place.name)}</td>
             <td>${escapeHtml([place.district, place.province].filter(Boolean).join(', ') || 'Nepal')}</td>
             <td>${escapeHtml(place.submittedBy || 'Traveler')}</td>
@@ -395,7 +404,7 @@ function renderAdminReviews(reviews = []) {
     }
 
     reviewList.innerHTML = reviews.map(review => `
-        <div class="review-card approved">
+        <div class="review-card approved" data-rating="${Number(review.rating || 0)}">
             <div class="review-header">
                 <div>
                     <h4>${escapeHtml(review.placeName || 'Place')}</h4>
@@ -420,7 +429,7 @@ async function approvePlace(placeId) {
     try {
         const ok = await postPlaceAction('approve', placeId);
         if (!ok) return;
-        await renderSubmittedPlaces();
+        await refreshAdminData();
         openModal('Place Approved', 'The place is now published on the website.');
         setTimeout(closeModal, 2000);
     } catch (error) {
@@ -432,7 +441,7 @@ async function rejectPlace(placeId) {
     try {
         const ok = await postPlaceAction('reject', placeId);
         if (!ok) return;
-        await renderSubmittedPlaces();
+        await refreshAdminData();
         openModal('Place Rejected', 'The place has been rejected.');
         setTimeout(closeModal, 2000);
     } catch (error) {
@@ -445,7 +454,7 @@ async function deletePlace(placeId) {
     try {
         const ok = await postPlaceAction('delete', placeId);
         if (!ok) return;
-        await renderSubmittedPlaces();
+        await refreshAdminData();
         openModal('Place Deleted', 'The place has been removed.');
         setTimeout(closeModal, 2000);
     } catch (error) {
@@ -479,6 +488,11 @@ function setupNavigation() {
                 // Update page title
                 document.getElementById('pageTitle').textContent = 
                     link.querySelector('span').textContent;
+
+                if (window.matchMedia('(max-width: 768px)').matches) {
+                    document.querySelector('.sidebar')?.classList.remove('active');
+                    document.getElementById('mobileSidebarToggle')?.setAttribute('aria-expanded', 'false');
+                }
             }
         });
     });
@@ -486,13 +500,30 @@ function setupNavigation() {
 
 function setupSidebarToggle() {
     const toggleBtn = document.getElementById('toggleSidebar');
+    const mobileToggleBtn = document.getElementById('mobileSidebarToggle');
     const sidebar = document.querySelector('.sidebar');
     const mainContent = document.querySelector('.main-content');
 
-    if (toggleBtn) {
+    if (toggleBtn && sidebar && mainContent) {
         toggleBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('sidebar-collapsed');
+            if (window.matchMedia('(max-width: 768px)').matches) {
+                sidebar.classList.remove('active');
+                mobileToggleBtn?.setAttribute('aria-expanded', 'false');
+                return;
+            }
+
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('sidebar-collapsed', isCollapsed);
+            toggleBtn.setAttribute('aria-expanded', String(!isCollapsed));
+            toggleBtn.setAttribute('aria-label', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            toggleBtn.querySelector('i').className = isCollapsed ? 'fas fa-chevron-right' : 'fas fa-bars';
+        });
+    }
+
+    if (mobileToggleBtn && sidebar) {
+        mobileToggleBtn.addEventListener('click', () => {
+            const isOpen = sidebar.classList.toggle('active');
+            mobileToggleBtn.setAttribute('aria-expanded', String(isOpen));
         });
     }
 }
@@ -501,9 +532,19 @@ function setupLogout() {
     const logoutBtn = document.getElementById('logoutBtn');
     
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
+        logoutBtn.addEventListener('click', async () => {
             if (confirm('Are you sure you want to logout?')) {
-                // Clear admin session
+                try {
+                    const formData = new FormData();
+                    formData.append('action', 'logout');
+                    await fetch('../../PHP/places.php', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin'
+                    });
+                } catch (error) {
+                    // Continue clearing the local session even if the request cannot complete.
+                }
                 localStorage.removeItem('isAdmin');
                 localStorage.removeItem('adminName');
                 localStorage.removeItem('userRole');
@@ -574,7 +615,7 @@ async function deleteReview(reviewId) {
     try {
         const ok = await postReviewDelete(reviewId);
         if (!ok) return;
-        await renderSubmittedPlaces();
+        await refreshAdminData();
         openModal('Review Deleted', 'The review has been permanently deleted.');
         setTimeout(closeModal, 2000);
     } catch (error) {
@@ -596,22 +637,41 @@ function banUser(userId) {
 
 // Table Search and Filter Functions
 function setupTableSearch() {
-    const searchInputs = document.querySelectorAll('.search-input');
-    const tables = document.querySelectorAll('.admin-table');
+    document.querySelectorAll('.search-input, .filter-select').forEach(control => {
+        control.addEventListener('input', () => applySectionFilters(control.closest('.section')));
+        control.addEventListener('change', () => applySectionFilters(control.closest('.section')));
+    });
+}
 
-    searchInputs.forEach((input, index) => {
-        input.addEventListener('keyup', () => {
-            const filter = input.value.toLowerCase();
-            const table = tables[index];
-            
-            if (table) {
-                const rows = table.querySelectorAll('tbody tr');
-                rows.forEach(row => {
-                    const text = row.innerText.toLowerCase();
-                    row.style.display = text.includes(filter) ? '' : 'none';
-                });
-            }
-        });
+function populatePlaceLocationFilter(places = []) {
+    const select = document.getElementById('place-location-filter');
+    if (!select) return;
+
+    const selectedValue = select.value;
+    const locations = [...new Set(places.map(place => [place.district, place.province].filter(Boolean).join(', ') || 'Nepal'))]
+        .sort((a, b) => a.localeCompare(b));
+    select.innerHTML = '<option value="all">All Locations</option>' + locations
+        .map(location => `<option value="${escapeHtml(location.toLowerCase())}">${escapeHtml(location)}</option>`)
+        .join('');
+    select.value = [...select.options].some(option => option.value === selectedValue) ? selectedValue : 'all';
+}
+
+function applySectionFilters(section) {
+    if (!section) return;
+
+    const query = (section.querySelector('.search-input')?.value || '').trim().toLowerCase();
+    const filter = section.querySelector('.filter-select')?.value || 'all';
+    const items = section.id === 'delete-reviews'
+        ? section.querySelectorAll('.review-card')
+        : section.querySelectorAll('tbody tr');
+
+    items.forEach(item => {
+        const matchesSearch = item.textContent.toLowerCase().includes(query);
+        let matchesFilter = true;
+        if (section.id === 'manage-places' && filter !== 'all') matchesFilter = item.dataset.location === filter;
+        if (section.id === 'manage-users' && filter !== 'all') matchesFilter = item.dataset.status === filter;
+        if (section.id === 'delete-reviews' && filter !== 'all') matchesFilter = item.dataset.rating === filter;
+        item.style.display = matchesSearch && matchesFilter ? '' : 'none';
     });
 }
 
