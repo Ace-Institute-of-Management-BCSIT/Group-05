@@ -40,6 +40,7 @@ body {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     color: white;
     overflow-y: auto;
+    overflow-x: hidden;
     z-index: 1000;
     transition: width 0.3s ease;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
@@ -71,12 +72,24 @@ body {
     color: white;
     cursor: pointer;
     font-size: 20px;
-    padding: 5px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.toggle-sidebar:hover,
+.toggle-sidebar:focus-visible {
+    background: rgba(255, 255, 255, 0.16);
+    outline: none;
 }
 
 .sidebar.collapsed .sidebar-header {
-    justify-content: center;
-    padding: 20px 10px;
+    justify-content: space-between;
+    padding: 20px 12px;
 }
 
 .sidebar.collapsed .sidebar-header h2 span {
@@ -84,7 +97,7 @@ body {
 }
 
 .sidebar.collapsed .sidebar-header h2 {
-    display: none;
+    display: flex;
 }
 
 .sidebar-nav ul {
