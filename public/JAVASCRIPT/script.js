@@ -13,6 +13,7 @@ let selectedPlace = null;
 let userRating = 0;
 
 let currentPlaceReviews = [];
+let travelerCount = 0;
 
 // DOM Elements
 const loginPage = document.getElementById('login-page');
@@ -53,6 +54,11 @@ async function init() {
         places = await loadApprovedPlaces();
     } catch (error) {
         places = [];
+    }
+    try {
+        travelerCount = await loadTravelerCount();
+    } catch (error) {
+        travelerCount = 0;
     }
     refreshCategories();
     renderCategories();
@@ -183,6 +189,20 @@ async function loadApprovedPlaces() {
     }
 
     return (data.places || []).map(normalizePlace);
+}
+
+async function loadTravelerCount() {
+    const response = await fetch('../../PHP/places.php?action=stats', {
+        method: 'GET',
+        credentials: 'same-origin'
+    });
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Unable to load traveler count.');
+    }
+
+    return Number(data.travelerCount || 0);
 }
 
 function buildPlaceFromForm(formElement) {
@@ -830,10 +850,12 @@ function updateStats() {
     const placesEl = document.getElementById('stat-places');
     const reviewsEl = document.getElementById('stat-reviews');
     const avgEl = document.getElementById('stat-avg-rating');
+    const travelersEl = document.getElementById('stat-travelers');
 
     if (placesEl) placesEl.textContent = `${totalPlaces}`;
     if (reviewsEl) reviewsEl.textContent = `${totalReviews}`;
     if (avgEl) avgEl.textContent = averageRating.toFixed(1);
+    if (travelersEl) travelersEl.textContent = `${travelerCount}`;
 }
 
 function openAddPlaceModal() {

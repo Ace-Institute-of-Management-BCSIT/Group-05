@@ -125,6 +125,16 @@ if ($action === 'session') {
     ]);
 }
 
+if ($action === 'stats') {
+    $result = $conn->query("SELECT COUNT(*) AS traveler_count FROM users WHERE role = 'user'");
+    $row = $result ? $result->fetch_assoc() : [];
+
+    respond([
+        'success' => true,
+        'travelerCount' => (int) ($row['traveler_count'] ?? 0)
+    ]);
+}
+
 if ($action === 'approved') {
     $sql = "
         SELECT places.*, users.full_name AS submitted_by_name,
