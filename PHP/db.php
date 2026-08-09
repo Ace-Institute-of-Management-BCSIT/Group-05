@@ -242,25 +242,26 @@ $conn->query("
 
 $adminEmail = 'admin@gmail.com';
 $adminPasswordPlain = 'admin123';
+$adminFullName = 'Administrator';
 $adminCheck = $conn->prepare("SELECT id, full_name, email, password FROM users WHERE role = 'admin' LIMIT 1");
 $adminCheck->execute();
 $adminResult = $adminCheck->get_result();
 
 if ($adminResult->num_rows === 0) {
     $adminPassword = password_hash($adminPasswordPlain, PASSWORD_DEFAULT);
-    $adminStmt = $conn->prepare("INSERT IGNORE INTO users (username, full_name, email, password, role, is_verified) VALUES ('admin', 'Admin User', ?, ?, 'admin', 1)");
-    $adminStmt->bind_param('ss', $adminEmail, $adminPassword);
+    $adminStmt = $conn->prepare("INSERT IGNORE INTO users (username, full_name, email, password, role, is_verified) VALUES ('admin', ?, ?, ?, 'admin', 1)");
+    $adminStmt->bind_param('sss', $adminFullName, $adminEmail, $adminPassword);
     $adminStmt->execute();
 } else {
     $adminRow = $adminResult->fetch_assoc();
     $needsAdminRefresh = $adminRow['email'] !== $adminEmail
         || !password_verify($adminPasswordPlain, $adminRow['password'])
-        || $adminRow['full_name'] !== 'Admin User';
+        || $adminRow['full_name'] !== $adminFullName;
 
     if ($needsAdminRefresh) {
         $adminPassword = password_hash($adminPasswordPlain, PASSWORD_DEFAULT);
-        $adminUpdate = $conn->prepare("UPDATE users SET username = 'admin', full_name = 'Admin User', email = ?, password = ?, role = 'admin', is_verified = 1 WHERE id = ?");
-        $adminUpdate->bind_param('ssi', $adminEmail, $adminPassword, $adminRow['id']);
+        $adminUpdate = $conn->prepare("UPDATE users SET username = 'admin', full_name = ?, email = ?, password = ?, role = 'admin', is_verified = 1 WHERE id = ?");
+        $adminUpdate->bind_param('sssi', $adminFullName, $adminEmail, $adminPassword, $adminRow['id']);
         $adminUpdate->execute();
     }
 }

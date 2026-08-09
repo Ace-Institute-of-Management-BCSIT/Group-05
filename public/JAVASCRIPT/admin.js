@@ -23,7 +23,7 @@ async function initializeAdminDashboard() {
         throw new Error('Admin access required.');
     }
 
-    const adminName = data.user?.name || 'Admin User';
+    const adminName = data.user?.name || 'Administrator';
     document.getElementById('adminName').textContent = adminName;
 
     // Navigation
