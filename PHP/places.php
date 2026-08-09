@@ -413,6 +413,11 @@ if ($action === 'get_reviews' || $action === 'reviews') {
 
 if ($action === 'submit_review' || $action === 'add_review') {
     require_login();
+
+    if (($_SESSION['role'] ?? '') === 'admin') {
+        respond(['success' => false, 'message' => 'Administrator accounts cannot submit traveler reviews. Please sign in with a traveler account.'], 403);
+    }
+
     $placeId = (int) ($_POST['place_id'] ?? 0);
     $rating = (int) ($_POST['rating'] ?? 0);
     $comment = trim($_POST['comment'] ?? '');

@@ -539,12 +539,25 @@ function handleTravelFeatureClick(event) {
     updateTravelBoard(feature);
 }
 
-function logoutUser() {
+async function logoutUser() {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'logout');
+        await fetch('../../PHP/places.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        });
+    } catch (error) {
+        // Clear browser data even when the server cannot be reached.
+    }
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('userRole');
     localStorage.removeItem('userName');
+    document.cookie = 'isAdmin=; path=/; max-age=0';
     document.cookie = 'userRole=; path=/; max-age=0';
     document.cookie = 'userName=; path=/; max-age=0';
+    document.cookie = 'userId=; path=/; max-age=0';
     hideProfileCard();
     window.location.href = 'login.html';
 }
