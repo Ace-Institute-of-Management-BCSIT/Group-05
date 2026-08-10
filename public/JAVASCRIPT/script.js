@@ -472,6 +472,23 @@ function initializeUserProfile() {
     if (userName && userName !== 'Traveler') {
         userBtn?.setAttribute('aria-label', 'Open user profile');
     }
+
+    loadHomepageAvatar();
+}
+
+async function loadHomepageAvatar() {
+    if (!userBtn || !isUserLoggedIn()) return;
+    try {
+        const response = await fetch('../../PHP/user.php?action=me', { credentials: 'same-origin' });
+        if (!response.ok) return;
+        const data = await response.json();
+        const avatar = data?.user?.avatar || '';
+        if (!data?.success || !avatar) return;
+        userBtn.style.backgroundImage = `url(../../PHP/serve_image.php?path=${encodeURIComponent(avatar)})`;
+        userBtn.classList.add('with-image');
+    } catch (error) {
+        // The normal profile icon remains visible if the avatar cannot be loaded.
+    }
 }
 
 function showProfileCard() {
@@ -1085,19 +1102,19 @@ function renderReviews() {
         return;
     }
 
-    reviewsList.innerHTML = currentPlaceReviews.map(review => `
+    reviewsList.innerHTML = currentPlaceReviews.map(review => {
+        const author = review.author || 'Traveler';
+        const avatar = review.avatar
+            ? `<img src="../../PHP/serve_image.php?path=${encodeURIComponent(review.avatar)}" alt="${escapeHtml(author)}'s profile photo">`
+            : `<span aria-hidden="true">${escapeHtml(author.charAt(0).toUpperCase())}</span>`;
+        return `
         <div class="review-item">
             <div class="review-header">
-                <div class="review-avatar">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                </div>
+                <div class="review-avatar">${avatar}</div>
                 <div class="review-info">
                     <div class="review-top">
                         <div>
-                            <h4 class="review-author">${escapeHtml(review.author || 'Traveler')}</h4>
+                            <h4 class="review-author">${escapeHtml(author)}</h4>
                             <div class="review-date">${formatDate(review.createdAt)}</div>
                         </div>
                         <span class="rating-badge rating-badge-sm">${Number(review.rating || 0)}/5</span>
@@ -1106,7 +1123,8 @@ function renderReviews() {
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function setRating(rating) {

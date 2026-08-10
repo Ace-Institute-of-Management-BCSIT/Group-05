@@ -404,7 +404,7 @@ if ($action === 'get_reviews' || $action === 'reviews') {
     }
     
     $stmt = $conn->prepare("
-        SELECT r.*, u.username, u.full_name 
+        SELECT r.*, u.username, u.full_name, u.avatar
         FROM place_reviews r
         JOIN users u ON u.id = r.user_id
         WHERE r.place_id = ?
@@ -419,6 +419,7 @@ if ($action === 'get_reviews' || $action === 'reviews') {
             'id' => (int) $row['id'],
             'username' => $row['username'],
             'author' => $row['full_name'],
+            'avatar' => $row['avatar'] ?? '',
             'rating' => (int) $row['rating'],
             'comment' => $row['comment'],
             'date' => $row['created_at'],
@@ -470,7 +471,7 @@ if ($action === 'submit_review' || $action === 'add_review') {
 if ($action === 'all_reviews') {
     require_admin();
     $result = $conn->query("
-        SELECT r.*, u.username, u.full_name, p.name AS place_name
+        SELECT r.*, u.username, u.full_name, u.avatar, p.name AS place_name
         FROM place_reviews r
         JOIN users u ON u.id = r.user_id
         JOIN places p ON p.id = r.place_id
@@ -484,6 +485,7 @@ if ($action === 'all_reviews') {
             'placeName' => $row['place_name'],
             'username' => $row['username'],
             'fullName' => $row['full_name'],
+            'avatar' => $row['avatar'] ?? '',
             'rating' => (int) $row['rating'],
             'comment' => $row['comment'],
             'createdAt' => $row['created_at']
