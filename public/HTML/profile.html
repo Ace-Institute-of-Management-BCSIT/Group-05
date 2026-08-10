@@ -108,6 +108,10 @@
                             <i class="fa-solid fa-note-sticky"></i>
                             Trip Notes
                         </button>
+                        <button class="profile-tab" type="button" data-feature="places">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                            Your Places
+                        </button>
                         <button class="profile-tab" type="button" data-feature="pending">
                             <i class="fa-solid fa-hourglass-half"></i>
                             Pending Approval
@@ -165,6 +169,33 @@
             </section>
         </section>
     </main>
+
+    <div class="profile-edit-modal" id="place-edit-modal" hidden aria-hidden="true">
+        <div class="profile-edit-dialog" role="dialog" aria-modal="true" aria-labelledby="place-edit-title">
+            <div class="profile-edit-header">
+                <div><h2 id="place-edit-title">Edit your place</h2><p>Saving changes sends the place back for review.</p></div>
+                <button class="profile-modal-close" id="close-place-edit-btn" type="button" aria-label="Close">&times;</button>
+            </div>
+            <form id="place-edit-form" class="profile-edit-form">
+                <input type="hidden" id="edit-place-id" name="place_id">
+                <label><span>Place name *</span><input id="edit-place-name" name="name" required></label>
+                <label><span>Category *</span><input id="edit-place-category" name="category" required></label>
+                <div class="profile-edit-grid">
+                    <label><span>Province</span><input id="edit-place-province" name="province"></label>
+                    <label><span>District</span><input id="edit-place-district" name="district"></label>
+                    <label><span>Municipality</span><input id="edit-place-municipality" name="municipality"></label>
+                </div>
+                <label><span>Short description *</span><textarea id="edit-place-description" name="shortDesc" required></textarea></label>
+                <label><span>Starting point *</span><input id="edit-place-start" name="start" required></label>
+                <label><span>Route details *</span><textarea id="edit-place-route" name="routeDesc" required></textarea></label>
+                <label><span>Destination *</span><input id="edit-place-destination" name="dest" required></label>
+                <div class="profile-edit-actions">
+                    <button class="btn btn-outline" id="cancel-place-edit-btn" type="button">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div class="toast" id="profile-toast">
         <i class="fa-solid fa-check"></i>

@@ -220,6 +220,71 @@ if ($action === 'all') {
     respond(['success' => true, 'places' => $places]);
 }
 
+if ($action === 'mine') {
+    require_login();
+    $userId = (int) $_SESSION['id'];
+    $sql = "
+        SELECT places.*, users.full_name AS submitted_by_name,
+               COALESCE(AVG(pr.rating), 0.0) AS avg_rating,
+               COUNT(pr.id) AS review_count
+        FROM places
+        LEFT JOIN users ON users.id = places.submitted_by
+        LEFT JOIN place_reviews pr ON pr.place_id = places.id
+        WHERE places.submitted_by = ?
+        GROUP BY places.id
+        ORDER BY places.submitted_at DESC
+    ";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $places = [];
+
+    while ($row = $result->fetch_assoc()) {
+        $places[] = row_to_place($row);
+    }
+
+    respond(['success' => true, 'places' => $places]);
+}
+
+if ($action === 'update_mine') {
+    require_login();
+    $placeId = (int) ($_POST['place_id'] ?? 0);
+    $name = text_field('name');
+    $category = text_field('category');
+    $shortDesc = text_field('shortDesc');
+    $startPoint = text_field('start');
+    $routeDesc = text_field('routeDesc');
+    $destination = text_field('dest');
+
+    if ($placeId <= 0 || $name === '' || $category === '' || $shortDesc === '' || $startPoint === '' || $routeDesc === '' || $destination === '') {
+        respond(['success' => false, 'message' => 'Please complete all required fields.'], 400);
+    }
+
+    $province = text_field('province');
+    $district = text_field('district');
+    $municipality = text_field('municipality');
+    $userId = (int) $_SESSION['id'];
+    $stmt = $conn->prepare("UPDATE places SET name = ?, category = ?, province = ?, district = ?, municipality = ?, short_desc = ?, start_point = ?, route_desc = ?, destination = ?, status = 'pending', approved_by = NULL, approved_at = NULL, rejected_at = NULL WHERE id = ? AND submitted_by = ?");
+    $stmt->bind_param('sssssssssii', $name, $category, $province, $district, $municipality, $shortDesc, $startPoint, $routeDesc, $destination, $placeId, $userId);
+    if (!$stmt->execute()) respond(['success' => false, 'message' => 'Unable to update place.'], 500);
+    if ($stmt->affected_rows === 0) respond(['success' => false, 'message' => 'Place not found or you do not have permission to edit it.'], 404);
+    respond(['success' => true, 'message' => 'Place updated and submitted for review.']);
+}
+
+if ($action === 'delete_mine') {
+    require_login();
+    $placeId = (int) ($_POST['place_id'] ?? 0);
+    if ($placeId <= 0) respond(['success' => false, 'message' => 'Invalid place.'], 400);
+
+    $userId = (int) $_SESSION['id'];
+    $stmt = $conn->prepare('DELETE FROM places WHERE id = ? AND submitted_by = ?');
+    $stmt->bind_param('ii', $placeId, $userId);
+    if (!$stmt->execute()) respond(['success' => false, 'message' => 'Unable to delete place.'], 500);
+    if ($stmt->affected_rows === 0) respond(['success' => false, 'message' => 'Place not found or you do not have permission to delete it.'], 404);
+    respond(['success' => true, 'message' => 'Place deleted.']);
+}
+
 if ($action === 'submit') {
     require_login();
 

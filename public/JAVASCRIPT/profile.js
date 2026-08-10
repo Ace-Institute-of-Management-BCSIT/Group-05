@@ -29,6 +29,18 @@ const els = {
     boardGrid: document.getElementById('profile-board-grid'),
     status: document.getElementById('profile-status'),
     search: document.getElementById('profile-search'),
+    editModal: document.getElementById('place-edit-modal'),
+    editForm: document.getElementById('place-edit-form'),
+    editPlaceId: document.getElementById('edit-place-id'),
+    editPlaceName: document.getElementById('edit-place-name'),
+    editPlaceCategory: document.getElementById('edit-place-category'),
+    editPlaceProvince: document.getElementById('edit-place-province'),
+    editPlaceDistrict: document.getElementById('edit-place-district'),
+    editPlaceMunicipality: document.getElementById('edit-place-municipality'),
+    editPlaceDescription: document.getElementById('edit-place-description'),
+    editPlaceStart: document.getElementById('edit-place-start'),
+    editPlaceRoute: document.getElementById('edit-place-route'),
+    editPlaceDestination: document.getElementById('edit-place-destination'),
     avatarInput: document.getElementById('avatar-input'),
     notifButton: document.getElementById('profile-notif-btn'),
     notifBadge: document.getElementById('profile-notif-badge'),
@@ -242,6 +254,21 @@ function getBoardConfig() {
                 actionLabel: 'Awaiting approval'
             }))
         },
+        places: {
+            title: 'Your Places',
+            subtitle: 'Destinations you submitted',
+            empty: 'You have not submitted any places yet.',
+            status: 'Your submitted places loaded.',
+            items: (state.travel.places || []).map(place => ({
+                key: `place-${place.id}`,
+                icon: 'fa-map-location-dot',
+                title: place.name || `Place ${place.id}`,
+                meta: `${(place.status||'pending').charAt(0).toUpperCase() + (place.status||'pending').slice(1)} • Submitted ${formatDate(place.submitted_at)}`,
+                placeId: place.id,
+                action: 'delete_mine',
+                actionLabel: 'Remove'
+            }))
+        },
         tools: {
             title: 'Travel Tools',
             subtitle: 'Useful shortcuts for shaping your next route.',
@@ -314,7 +341,18 @@ async function postTravelAction(action, payload = {}) {
 
     showToast(data.message || 'Profile updated.');
     await loadTravelBoard();
+    // reload user's submitted places when relevant
+    if (['delete_mine','update_mine','submit'].includes(action)) {
+        await loadMyPlaces();
+        renderBoard();
+    }
     return true;
+}
+
+async function loadMyPlaces() {
+    const data = await fetchJson('../../PHP/places.php?action=mine');
+    if (!data?.success) return;
+    state.travel.places = data.places || [];
 }
 
 function getSelectedPlaceId() {
@@ -344,6 +382,31 @@ async function handleBoardAction(event) {
 
     if (action === 'remove_saved' || action === 'remove_trip') {
         await postTravelAction(action, { place_id: button.dataset.placeId });
+        return;
+    }
+
+    if (action === 'delete_mine') {
+        const placeId = button.dataset.placeId;
+        if (!placeId) return;
+        if (!confirm('Delete this place submission? This cannot be undone.')) return;
+
+        // call places.php delete_mine
+        const form = new FormData();
+        form.append('action', 'delete_mine');
+        form.append('place_id', placeId);
+        const data = await fetchJson('../../PHP/places.php', { method: 'POST', body: form });
+        if (!data) return;
+        if (!data.success) {
+            showToast(data.message || 'Unable to delete place.', 'fa-triangle-exclamation');
+            return;
+        }
+
+        showToast(data.message || 'Place deleted.');
+        await loadMyPlaces();
+        renderBoard();
+        // also refresh travel board in case saved/trips reference removed place
+        await loadTravelBoard();
+        return;
     }
 }
 
@@ -418,6 +481,8 @@ async function initProfile() {
     await loadPlaces();
     await loadTravelBoard();
     await loadUserInfo();
+    await loadMyPlaces();
+    renderBoard();
     await loadNotifications();
 }
 
