@@ -23,6 +23,15 @@ function require_admin() {
     }
 }
 
+function create_notification($conn, $userId, $actorId, $type, $data) {
+    if ($userId <= 0) return;
+    $json = json_encode($data, JSON_UNESCAPED_UNICODE);
+    $stmt = $conn->prepare('INSERT INTO notifications (user_id, actor_id, type, data) VALUES (?, ?, ?, ?)');
+    if (!$stmt) return;
+    $stmt->bind_param('iiss', $userId, $actorId, $type, $json);
+    $stmt->execute();
+}
+
 function current_user_payload() {
     if (!isset($_SESSION['id'])) {
         respond(['success' => false, 'message' => 'Please login first.'], 401);
@@ -340,10 +349,13 @@ if ($action === 'submit') {
         respond(['success' => false, 'message' => 'Unable to submit place.'], 500);
     }
 
+    $newPlaceId = (int) $stmt->insert_id;
+    create_notification($conn, $userId, $userId, 'place_submitted', ['place_id' => $newPlaceId, 'place_name' => $name]);
+
     respond([
         'success' => true,
         'message' => 'Place submitted for approval.',
-        'id' => $stmt->insert_id,
+        'id' => $newPlaceId,
         'coverImage' => $coverImage
     ]);
 }
@@ -375,6 +387,12 @@ if ($action === 'approve' || $action === 'reject' || $action === 'delete') {
     }
 
     $stmt->execute();
+
+    $ownerStmt = $conn->prepare('SELECT submitted_by, name FROM places WHERE id = ? LIMIT 1');
+    $ownerStmt->bind_param('i', $placeId);
+    $ownerStmt->execute();
+    $owner = $ownerStmt->get_result()->fetch_assoc();
+    create_notification($conn, (int)($owner['submitted_by'] ?? 0), $adminId, $status === 'approved' ? 'place_approved' : 'place_rejected', ['place_id' => $placeId, 'place_name' => $owner['name'] ?? '']);
 
     respond(['success' => true, 'message' => $status === 'approved' ? 'Place approved.' : 'Place rejected.']);
 }
@@ -435,6 +453,14 @@ if ($action === 'submit_review' || $action === 'add_review') {
     $stmt->bind_param('iiis', $placeId, $userId, $rating, $comment);
     
     if ($stmt->execute()) {
+        $placeStmt = $conn->prepare('SELECT submitted_by, name FROM places WHERE id = ? LIMIT 1');
+        $placeStmt->bind_param('i', $placeId);
+        $placeStmt->execute();
+        $place = $placeStmt->get_result()->fetch_assoc();
+        $ownerId = (int) ($place['submitted_by'] ?? 0);
+        if ($ownerId > 0 && $ownerId !== $userId) {
+            create_notification($conn, $ownerId, $userId, 'new_review', ['place_id' => $placeId, 'place_name' => $place['name'] ?? '']);
+        }
         respond(['success' => true, 'message' => 'Review submitted successfully.']);
     } else {
         respond(['success' => false, 'message' => 'Unable to save review.'], 500);

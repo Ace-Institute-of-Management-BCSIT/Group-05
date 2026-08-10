@@ -14,6 +14,7 @@ const state = {
     places: [],
     travel: { saved: [], trips: [], notes: [] }
 };
+state.user = { avatar: '' };
 
 const els = {
     avatar: document.getElementById('profile-avatar'),
@@ -28,6 +29,12 @@ const els = {
     boardGrid: document.getElementById('profile-board-grid'),
     status: document.getElementById('profile-status'),
     search: document.getElementById('profile-search'),
+    avatarInput: document.getElementById('avatar-input'),
+    notifButton: document.getElementById('profile-notif-btn'),
+    notifBadge: document.getElementById('profile-notif-badge'),
+    notifPanel: document.getElementById('profile-notification-panel'),
+    notifList: document.getElementById('profile-notification-list'),
+    notifMarkAll: document.getElementById('profile-notif-mark-all'),
     placeSelect: document.getElementById('quick-place-select'),
     noteText: document.getElementById('quick-note-text'),
     quickSave: document.getElementById('quick-save-btn'),
@@ -136,7 +143,16 @@ function renderIdentity() {
     const userRole = getUserRole();
     if (els.name) els.name.textContent = userName;
     if (els.role) els.role.textContent = `${userRole.charAt(0).toUpperCase()}${userRole.slice(1)} account`;
-    if (els.avatar) els.avatar.textContent = userName.charAt(0).toUpperCase();
+    if (els.avatar) {
+        if (state.user.avatar) {
+            els.avatar.style.backgroundImage = `url(../../PHP/serve_image.php?path=${encodeURIComponent(state.user.avatar)})`;
+            els.avatar.classList.add('with-image');
+        } else {
+            els.avatar.style.backgroundImage = '';
+            els.avatar.classList.remove('with-image');
+        }
+        els.avatar.childNodes[0].nodeValue = state.user.avatar ? '' : userName.charAt(0).toUpperCase();
+    }
 }
 
 function updateCounts() {
@@ -213,6 +229,19 @@ function getBoardConfig() {
                 actionLabel: 'Delete'
             }))
         },
+        pending: {
+            title: 'Pending Approval',
+            subtitle: 'Destinations you submitted that are waiting for an admin decision.',
+            empty: 'You have no destinations waiting for approval.',
+            status: 'Pending submissions loaded.',
+            items: (state.travel.pending || []).map(place => ({
+                key: `pending-${place.id}`,
+                icon: 'fa-hourglass-half',
+                title: place.name || `Destination ${place.id}`,
+                meta: `Submitted ${formatDate(place.submitted_at)}`,
+                actionLabel: 'Awaiting approval'
+            }))
+        },
         tools: {
             title: 'Travel Tools',
             subtitle: 'Useful shortcuts for shaping your next route.',
@@ -251,7 +280,9 @@ function renderBoard() {
 function renderBoardCard(item) {
     const button = item.href
         ? `<a class="profile-card-action" href="${item.href}">Open</a>`
-        : `<button class="profile-card-action" type="button" data-action="${item.action || ''}" data-place-id="${item.placeId || ''}" data-note-id="${item.noteId || ''}">${item.actionLabel || 'Open'}</button>`;
+        : item.action
+            ? `<button class="profile-card-action" type="button" data-action="${item.action}" data-place-id="${item.placeId || ''}" data-note-id="${item.noteId || ''}">${item.actionLabel || 'Open'}</button>`
+            : `<span class="profile-card-action profile-card-static">${item.actionLabel || 'Pending'}</span>`;
 
     return `
         <article class="profile-board-card">
@@ -382,8 +413,73 @@ async function initProfile() {
     }
     renderIdentity();
     bindEvents();
+    bindAvatarUpload();
+    bindNotifications();
     await loadPlaces();
     await loadTravelBoard();
+    await loadUserInfo();
+    await loadNotifications();
+}
+
+async function loadUserInfo() {
+    const data = await fetchJson('../../PHP/user.php?action=me');
+    if (!data?.success) return;
+    state.user = data.user || { avatar: '' };
+    state.travel.pending = data.pending || [];
+    renderIdentity();
+    renderBoard();
+}
+
+function bindAvatarUpload() {
+    els.avatarInput?.addEventListener('change', async event => {
+        const image = event.target.files?.[0];
+        if (!image) return;
+        if (image.size > 5 * 1024 * 1024) { showToast('Profile image must be under 5 MB.', 'fa-triangle-exclamation'); return; }
+        const upload = new FormData(); upload.append('image', image);
+        const result = await fetchJson('../../PHP/upload.php', { method: 'POST', body: upload });
+        if (!result?.success) { showToast(result?.message || 'Image upload failed.', 'fa-triangle-exclamation'); return; }
+        const update = new FormData(); update.append('action', 'update_avatar'); update.append('avatar', result.image_path);
+        const saved = await fetchJson('../../PHP/user.php', { method: 'POST', body: update });
+        if (!saved?.success) { showToast(saved?.message || 'Unable to save profile image.', 'fa-triangle-exclamation'); return; }
+        state.user.avatar = saved.avatar; renderIdentity(); showToast('Profile image updated.'); event.target.value = '';
+    });
+}
+
+function notificationText(note) {
+    const name = escapeHtml(note.data?.place_name || 'your destination');
+    if (note.type === 'place_approved') return `Your destination “${name}” was approved.`;
+    if (note.type === 'place_rejected') return `Your destination “${name}” was not approved.`;
+    if (note.type === 'new_review') return `Someone reviewed “${name}”.`;
+    if (note.type === 'place_submitted') return `Your destination “${name}” is awaiting approval.`;
+    return 'You have a new notification.';
+}
+async function loadNotifications() {
+    const data = await fetchJson('../../PHP/notifications.php?action=get');
+    if (!data?.success) return;
+    const unread = Number(data.unread || 0); els.notifBadge.hidden = unread === 0; els.notifBadge.textContent = String(unread);
+    els.notifList.innerHTML = (data.notifications || []).map(note => `<article class="notification-item ${note.is_read ? '' : 'unread'}"><div><strong>${notificationText(note)}</strong><small>${escapeHtml(formatDate(note.created_at))}</small></div>${note.is_read ? '' : `<button class="notification-mark-all" data-note-id="${note.id}" type="button">Mark read</button>`}</article>`).join('') || '<p class="empty-state">No notifications yet.</p>';
+}
+function bindNotifications() {
+    els.notifButton?.addEventListener('click', async () => {
+        const isHidden = els.notifPanel.hasAttribute('hidden');
+        if (isHidden) {
+            els.notifPanel.removeAttribute('hidden');
+            els.notifPanel.setAttribute('aria-hidden', 'false');
+            try { await loadNotifications(); } catch (error) { els.notifList.innerHTML = '<p class="empty-state">No notifications yet.</p>'; }
+        } else {
+            els.notifPanel.setAttribute('hidden', '');
+            els.notifPanel.setAttribute('aria-hidden', 'true');
+        }
+    });
+    els.notifList?.addEventListener('click', async event => { const button = event.target.closest('[data-note-id]'); if (!button) return; await fetchJson('../../PHP/notifications.php', { method: 'POST', body: new URLSearchParams({ action: 'mark_read', id: button.dataset.noteId }) }); await loadNotifications(); });
+    els.notifMarkAll?.addEventListener('click', async () => { await fetchJson('../../PHP/notifications.php', { method: 'POST', body: new URLSearchParams({ action: 'mark_all' }) }); await loadNotifications(); });
+    document.addEventListener('click', event => {
+        if (!els.notifPanel || els.notifPanel.hasAttribute('hidden')) return;
+        if (!els.notifPanel.parentElement.contains(event.target)) {
+            els.notifPanel.setAttribute('hidden', '');
+            els.notifPanel.setAttribute('aria-hidden', 'true');
+        }
+    });
 }
 
 initProfile();

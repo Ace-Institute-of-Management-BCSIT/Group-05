@@ -104,6 +104,7 @@ $conn->query("
 ensureColumnExists($conn, 'users', 'is_verified', 'is_verified TINYINT(1) DEFAULT 0 AFTER role');
 ensureColumnExists($conn, 'users', 'last_login', 'last_login DATETIME NULL AFTER is_verified');
 ensureColumnExists($conn, 'users', 'last_login_ip', 'last_login_ip VARCHAR(45) NULL AFTER last_login');
+ensureColumnExists($conn, 'users', 'avatar', 'avatar VARCHAR(255) NULL AFTER created_at');
 ensureUniqueIndexExists($conn, 'users', 'uniq_users_email', 'email');
 
 $conn->query("
@@ -239,6 +240,19 @@ $conn->query("
         INDEX idx_images_place (place_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
 ");
+
+$conn->query("CREATE TABLE IF NOT EXISTS notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    actor_id INT NULL,
+    type VARCHAR(100) NOT NULL,
+    data JSON NULL,
+    is_read TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_notifications_actor FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_notifications_user_read (user_id, is_read, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 $adminEmail = 'admin@gmail.com';
 $adminPasswordPlain = 'admin123';

@@ -6,7 +6,7 @@
     <title>Nepal Travel - Discover Hidden Natural Retreats</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="../css/styles.css?v=20260712-review-toast">
+    <link rel="stylesheet" href="../css/styles.css?v=20260810-notification-popup">
 
 </head>
 <body>
@@ -46,6 +46,13 @@
                         <span>Add Place</span>
                       </button>
                     <div class="user-menu-wrapper">
+                        <button class="profile-icon-btn" id="notif-btn" type="button" aria-label="Notifications" title="Notifications">
+                            <i class="fa-solid fa-bell"></i><span class="notification-badge" id="notif-badge" hidden>0</span>
+                        </button>
+                        <div class="notification-panel" id="notification-panel" aria-hidden="true" hidden>
+                            <div class="notification-header"><h4>Notifications</h4><div class="notification-header-actions"><button class="notification-mark-all" id="notif-mark-all" type="button" title="Mark all as read"><i class="fa-solid fa-check"></i></button></div></div>
+                            <div class="notification-list" id="notification-list"><p class="empty-state">No notifications.</p></div>
+                        </div>
                         <button class="user-btn" id="user-btn" type="button" aria-label="Open your profile">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -797,7 +804,7 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="../JAVASCRIPT/script.js?v=20260712-map-picker"></script>
+    <script src="../JAVASCRIPT/script.js?v=20260810-notifications"></script>
 </body>
 
 </html>

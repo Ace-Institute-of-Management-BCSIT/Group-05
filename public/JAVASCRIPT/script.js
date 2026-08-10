@@ -67,7 +67,52 @@ async function init() {
     renderSpotlight();
     updateStats();
     initializeUserProfile();
+    initializeNotifications();
     attachEventListeners();
+}
+
+function initializeNotifications() {
+    const button = document.getElementById('notif-btn');
+    const panel = document.getElementById('notification-panel');
+    const list = document.getElementById('notification-list');
+    const badge = document.getElementById('notif-badge');
+    const markAll = document.getElementById('notif-mark-all');
+    if (!button || !panel || !list || !badge) return;
+    const text = note => {
+        const name = escapeHtml(note.data?.place_name || 'your destination');
+        if (note.type === 'place_approved') return `Your destination “${name}” was approved.`;
+        if (note.type === 'place_rejected') return `Your destination “${name}” was not approved.`;
+        if (note.type === 'new_review') return `Someone reviewed “${name}”.`;
+        return `Your destination “${name}” is awaiting approval.`;
+    };
+    const load = async () => {
+        const response = await fetch('../../PHP/notifications.php?action=get', { credentials: 'same-origin' });
+        if (!response.ok) return;
+        const data = await response.json(); if (!data.success) return;
+        const unread = Number(data.unread || 0); badge.hidden = unread === 0; badge.textContent = String(unread);
+        list.innerHTML = (data.notifications || []).map(note => `<article class="notification-item ${note.is_read ? '' : 'unread'}"><div><strong>${text(note)}</strong><small>${escapeHtml(formatDate(note.created_at))}</small></div>${note.is_read ? '' : `<button class="notification-mark-all" data-note-id="${note.id}" type="button">Mark read</button>`}</article>`).join('') || '<p class="empty-state">No notifications yet.</p>';
+    };
+    button.addEventListener('click', async () => {
+        if (!isUserLoggedIn()) { window.location.href = 'login.html'; return; }
+        const hidden = panel.hasAttribute('hidden');
+        if (hidden) {
+            panel.removeAttribute('hidden');
+            panel.setAttribute('aria-hidden', 'false');
+            try { await load(); } catch (error) { list.innerHTML = '<p class="empty-state">No notifications yet.</p>'; }
+        } else {
+            panel.setAttribute('hidden', '');
+            panel.setAttribute('aria-hidden', 'true');
+        }
+    });
+    list.addEventListener('click', async event => { const target = event.target.closest('[data-note-id]'); if (!target) return; await fetch('../../PHP/notifications.php', { method: 'POST', credentials: 'same-origin', body: new URLSearchParams({ action: 'mark_read', id: target.dataset.noteId }) }); await load(); });
+    markAll?.addEventListener('click', async () => { await fetch('../../PHP/notifications.php', { method: 'POST', credentials: 'same-origin', body: new URLSearchParams({ action: 'mark_all' }) }); await load(); });
+    document.addEventListener('click', event => {
+        if (!panel.hasAttribute('hidden') && !panel.parentElement.contains(event.target)) {
+            panel.setAttribute('hidden', '');
+            panel.setAttribute('aria-hidden', 'true');
+        }
+    });
+    if (isUserLoggedIn()) load();
 }
 
 function escapeHtml(value = '') {
