@@ -7,7 +7,7 @@ if (!isset($_SESSION['id'])) notification_response(['success' => false, 'message
 $userId = (int) $_SESSION['id'];
 $action = $_POST['action'] ?? $_GET['action'] ?? 'get';
 if ($action === 'get') {
-    $stmt = $conn->prepare('SELECT id, type, data, is_read, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50');
+    $stmt = $conn->prepare('SELECT id, type, data, is_read, created_at FROM notifications WHERE user_id = ? AND is_read = 0 ORDER BY created_at DESC LIMIT 50');
     $stmt->bind_param('i', $userId); $stmt->execute(); $result = $stmt->get_result(); $notifications = [];
     while ($row = $result->fetch_assoc()) { $row['id'] = (int)$row['id']; $row['is_read'] = (bool)$row['is_read']; $row['data'] = json_decode($row['data'] ?: '{}', true) ?: []; $notifications[] = $row; }
     $stmt = $conn->prepare('SELECT COUNT(*) AS unread FROM notifications WHERE user_id = ? AND is_read = 0');
