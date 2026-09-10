@@ -1,10 +1,11 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth.php';
+app_session_start();
 require 'db.php';
 header('Content-Type: application/json');
 
 function user_response($data, $status = 200) { http_response_code($status); echo json_encode($data, JSON_UNESCAPED_UNICODE); exit; }
-function user_login_required() { if (!isset($_SESSION['id'])) user_response(['success' => false, 'message' => 'Please login first.'], 401); }
+function user_login_required() { global $conn; if (!has_active_login($conn)) user_response(['success' => false, 'message' => 'Please login first.'], 401); }
 
 $action = $_POST['action'] ?? $_GET['action'] ?? 'me';
 user_login_required();

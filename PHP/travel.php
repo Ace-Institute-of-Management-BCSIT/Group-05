@@ -1,10 +1,11 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth.php';
+app_session_start();
 include 'db.php';
 
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['id'])) {
+if (!has_active_login($conn)) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Please login first.']);
     exit();

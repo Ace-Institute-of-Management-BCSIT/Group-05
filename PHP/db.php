@@ -4,7 +4,7 @@ mysqli_report(MYSQLI_REPORT_OFF);
 $host = 'localhost';
 $user = 'root';
 $password = '';
-$database = 'nepal_travel';
+$database = 'nepaltravel';
 
 $conn = mysqli_connect($host, $user, $password);
 
@@ -14,8 +14,9 @@ if (!$conn) {
 
 mysqli_set_charset($conn, 'utf8');
 
-$conn->query("CREATE DATABASE IF NOT EXISTS `$database` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-$conn->select_db($database);
+if (!mysqli_select_db($conn, $database)) {
+    die('Database selection failed: ' . mysqli_error($conn));
+}
 $conn->set_charset('utf8mb4');
 
 if (!function_exists('ensureColumnExists')) {
@@ -254,8 +255,8 @@ $conn->query("CREATE TABLE IF NOT EXISTS notifications (
     INDEX idx_notifications_user_read (user_id, is_read, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-$adminEmail = 'admin@gmail.com';
-$adminPasswordPlain = 'admin123';
+$adminEmail = 'ashish100200@gmail.com';
+$adminPasswordPlain = 'Karkey@123';
 $adminFullName = 'Administrator';
 $adminCheck = $conn->prepare("SELECT id, full_name, email, password FROM users WHERE role = 'admin' LIMIT 1");
 $adminCheck->execute();

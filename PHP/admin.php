@@ -1,7 +1,9 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth.php';
+app_session_start();
+require_once __DIR__ . '/db.php';
 
-if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
+if (!has_active_login($conn) || ($_SESSION['role'] ?? '') !== 'admin') {
     header("Location: ../public/HTML/login.html");
     exit();
 }

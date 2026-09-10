@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth.php';
+app_session_start();
 require_once 'db.php';
 
 header('Content-Type: application/json');
@@ -10,7 +11,7 @@ function adminDataResponse($data, $status = 200) {
     exit;
 }
 
-if (($_SESSION['role'] ?? '') !== 'admin') {
+if (!has_active_login($conn) || ($_SESSION['role'] ?? '') !== 'admin') {
     adminDataResponse(['success' => false, 'message' => 'Admin access required.'], 403);
 }
 

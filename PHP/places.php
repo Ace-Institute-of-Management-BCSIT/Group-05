@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth.php';
+app_session_start();
 include 'db.php';
 
 header('Content-Type: application/json');
@@ -11,7 +12,8 @@ function respond($data, $status = 200) {
 }
 
 function require_login() {
-    if (!isset($_SESSION['id'])) {
+    global $conn;
+    if (!has_active_login($conn)) {
         respond(['success' => false, 'message' => 'Please login first.'], 401);
     }
 }
@@ -33,7 +35,8 @@ function create_notification($conn, $userId, $actorId, $type, $data) {
 }
 
 function current_user_payload() {
-    if (!isset($_SESSION['id'])) {
+    global $conn;
+    if (!has_active_login($conn)) {
         respond(['success' => false, 'message' => 'Please login first.'], 401);
     }
 
@@ -128,12 +131,7 @@ function existing_upload_path($path) {
 $action = $_POST['action'] ?? $_GET['action'] ?? 'approved';
 
 if ($action === 'logout') {
-    $_SESSION = [];
-    if (ini_get('session.use_cookies')) {
-        $params = session_get_cookie_params();
-        setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
-    }
-    session_destroy();
+    clear_login_session($conn);
     respond(['success' => true]);
 }
 

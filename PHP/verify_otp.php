@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth.php';
+app_session_start();
 require_once 'db.php';
 require_once 'otp.php';
 
@@ -177,10 +178,10 @@ $insStmt->execute();
 $_SESSION['session_token'] = $sessionToken;
 
 // Set cookies for JS
-setcookie('userRole',  $user['role'],      time() + 3600, '/');
-setcookie('userName',  $user['full_name'], time() + 3600, '/');
-setcookie('isAdmin',   $user['role'] === 'admin' ? 'true' : 'false', time() + 3600, '/');
-setcookie('userId',    (string)$user['id'], time() + 3600, '/');
+setcookie('userRole', $user['role'], 0, '/');
+setcookie('userName', $user['full_name'], 0, '/');
+setcookie('isAdmin', $user['role'] === 'admin' ? 'true' : 'false', 0, '/');
+setcookie('userId', (string) $user['id'], 0, '/');
 
 $redirect = $user['role'] === 'admin' ? '../public/HTML/admin.html' : '../public/HTML/index.html';
 respond(['success' => true, 'message' => 'Email verified! Logging you in...', 'redirect' => $redirect]);

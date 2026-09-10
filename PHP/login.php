@@ -3,7 +3,8 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-session_start();
+require_once __DIR__ . '/auth.php';
+app_session_start();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../public/HTML/login.html');
@@ -98,7 +99,6 @@ if ($result && $result->num_rows === 1) {
         }
 
         $cookieOptions = [
-            'expires' => time() + 3600,
             'path' => '/',
             'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
             'httponly' => false,

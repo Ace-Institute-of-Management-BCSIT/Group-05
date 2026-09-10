@@ -1,9 +1,10 @@
 <?php
-session_start();
+require_once __DIR__ . '/auth.php';
+app_session_start();
 require 'db.php';
 header('Content-Type: application/json');
 function notification_response($data, $status = 200) { http_response_code($status); echo json_encode($data, JSON_UNESCAPED_UNICODE); exit; }
-if (!isset($_SESSION['id'])) notification_response(['success' => false, 'message' => 'Please login first.'], 401);
+if (!has_active_login($conn)) notification_response(['success' => false, 'message' => 'Please login first.'], 401);
 $userId = (int) $_SESSION['id'];
 $action = $_POST['action'] ?? $_GET['action'] ?? 'get';
 if ($action === 'get') {
