@@ -2,9 +2,11 @@
 
 A PHP and MySQL web application for discovering travel destinations across Nepal. It helps visitors browse places, plan trips, estimate travel costs, create an account with email verification, and manage their profile. Administrators can manage destination data.
 
-## Live preview
+## Live Demo
 
-[View the Nepal Travel website](https://nepaltravel.rf.gd/)
+> **Explore Nepal Travel online:** [nepaltravel.rf.gd](https://nepaltravel.rf.gd/)
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Website-0f766e?style=for-the-badge&logo=googlechrome&logoColor=white)](https://nepaltravel.rf.gd/)
 
 ## Features
 
