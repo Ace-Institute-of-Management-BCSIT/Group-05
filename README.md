@@ -2,6 +2,10 @@
 
 A PHP and MySQL web application for discovering travel destinations across Nepal. It helps visitors browse places, plan trips, estimate travel costs, create an account with email verification, and manage their profile. Administrators can manage destination data.
 
+## Live preview
+
+[View the Nepal Travel website](https://nepaltravel.rf.gd/)
+
 ## Features
 
 - Browse Nepal travel destinations and view their details.
@@ -103,7 +107,6 @@ Do not commit these files or directories:
 - `PHP/mail_config.local.php` — contains SMTP credentials
 - `uploads/` — runtime uploaded content
 
-The repository's `.gitignore` already excludes these private or generated items. If an SMTP password was ever committed or shared, revoke and replace it immediately.
 
 ## What we learned
 
